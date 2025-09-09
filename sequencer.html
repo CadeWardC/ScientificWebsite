@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FASTQ Analyzer - Scientific Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-black: #0a0a0a;
+            --soft-black: #1a1a1a;
+            --pure-white: #ffffff;
+            --off-white: #f8f9fa;
+            --muted-blue: #4a90a4;
+            --light-blue: rgba(74, 144, 164, 0.1);
+            --border-color: rgba(74, 144, 164, 0.2);
+            --success-green: #28a745;
+            --warning-orange: #fd7e14;
+            --danger-red: #dc3545;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--primary-black);
+            background: var(--pure-white);
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-black);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--primary-black);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--muted-blue);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            background: linear-gradient(135deg, var(--pure-white) 0%, var(--off-white) 100%);
+        }
+
+        .hero-content {
+            width: 100%;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--primary-black), var(--muted-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: rgba(10, 10, 10, 0.7);
+            margin-bottom: 2.5rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: var(--muted-blue);
+            color: var(--pure-white);
+            text-decoration: none;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(74, 144, 164, 0.3);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(74, 144, 164, 0.4);
+        }
+
+        /* Analysis Section */
+        .analysis-section {
+            display: none;
+            padding: 4rem 0;
+            background: var(--off-white);
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .analysis-section.show {
+            opacity: 1;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-header h2 {
+            font-size: clamp(2rem, 4vw, 2.5rem);
+            margin-bottom: 1rem;
+            color: var(--primary-black);
+        }
+
+        .section-header p {
+            font-size: 1.1rem;
+            color: rgba(10, 10, 10, 0.7);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* File Uploader */
+        .file-uploader-section {
+            margin-bottom: 3rem;
+        }
+
+        .drop-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 3rem;
+            background: var(--light-blue);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .drop-zone.drag-over {
+            border-color: var(--muted-blue);
+            background: rgba(74, 144, 164, 0.2);
+        }
+
+        .drop-zone p {
+            font-size: 1.1rem;
+            color: var(--primary-black);
+            margin-bottom: 0.5rem;
+            pointer-events: none;
+        }
+
+        .drop-zone span {
+            display: block;
+            margin-bottom: 1rem;
+            color: rgba(10, 10, 10, 0.6);
+            pointer-events: none;
+        }
+
+        .choose-file-btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--muted-blue);
+            color: var(--pure-white);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            font-weight: 500;
+        }
+
+        .choose-file-btn:hover {
+            background: #3a7a8a;
+        }
+
+        /* File Info */
+        .file-info {
+            display: none;
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .file-info h3 {
+            margin-bottom: 1rem;
+            color: var(--primary-black);
+        }
+
+        .file-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--light-blue);
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--muted-blue);
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: rgba(10, 10, 10, 0.7);
+        }
+
+        /* Quality Analysis */
+        .quality-analysis {
+            display: none;
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .quality-analysis.show {
+            display: block;
+        }
+
+        .quality-chart {
+            width: 100%;
+            height: 300px;
+            margin: 1rem 0;
+        }
+
+        /* Sequence Preview */
+        .sequence-preview {
+            display: none;
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .sequence-preview.show {
+            display: block;
+        }
+
+        .sequence-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: #f8f9fa;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .sequence-entry {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sequence-entry:last-child {
+            border-bottom: none;
+        }
+
+        .sequence-header {
+            color: var(--muted-blue);
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .sequence-data {
+            color: var(--primary-black);
+            word-break: break-all;
+            margin-bottom: 0.25rem;
+        }
+
+        .quality-data {
+            color: rgba(10, 10, 10, 0.6);
+            word-break: break-all;
+        }
+
+        .sequence-data mark.highlight {
+            background-color: var(--light-blue);
+            color: var(--primary-black);
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        /* Filters */
+        .filters-section {
+            display: none;
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .filters-section.show {
+            display: block;
+        }
+
+        .filter-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-toggle-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-toggle-header label {
+            font-weight: 500;
+            color: var(--primary-black);
+            cursor: pointer;
+        }
+
+        .filter-toggle-header input[type="checkbox"] {
+            width: auto;
+        }
+
+        .filter-group label {
+            font-weight: 500;
+            color: var(--primary-black);
+        }
+
+        .filter-group input {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .filter-group input:disabled {
+            background-color: #f0f0f0;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .filter-group input:focus {
+            outline: none;
+            border-color: var(--muted-blue);
+        }
+
+        .sequence-search-group {
+            grid-column: 1 / -1; /* Make this group span the full width */
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 1rem; /* Increased gap for better spacing */
+            margin-top: 0.5rem;
+        }
+
+        .checkbox-wrapper label {
+            font-weight: normal;
+            font-size: 0.9rem;
+        }
+
+        .checkbox-wrapper input {
+            width: auto; /* Override default input width */
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .filter-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn.primary {
+            background: var(--muted-blue);
+            color: var(--pure-white);
+        }
+
+        .filter-btn.primary:hover {
+            background: #3a7a8a;
+        }
+
+        .filter-btn.secondary {
+            background: var(--border-color);
+            color: var(--primary-black);
+        }
+
+        .filter-btn.secondary:hover {
+            background: rgba(74, 144, 164, 0.3);
+        }
+
+        .filter-btn.tertiary {
+            background: var(--success-green);
+            color: var(--pure-white);
+        }
+
+        .filter-btn.tertiary:hover {
+            background: #218838;
+        }
+
+        /* Export Section */
+        .export-section {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .export-section.show {
+            display: block;
+        }
+
+        .export-options {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            display: none;
+            margin: 1rem 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--muted-blue);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: rgba(10, 10, 10, 0.7);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--soft-black);
+            color: var(--pure-white);
+            padding: 3rem 0;
+            text-align: center;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            color: var(--muted-blue);
+        }
+
+        .footer-section a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: var(--muted-blue);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 2rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .container {
+                padding: 0 1rem;
+            }
+
+            .filter-controls {
+                grid-template-columns: 1fr;
+            }
+
+            .export-options {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 4px 15px rgba(74, 144, 164, 0.3); }
+            50% { box-shadow: 0 8px 25px rgba(74, 144, 164, 0.5); }
+            100% { box-shadow: 0 4px 15px rgba(74, 144, 164, 0.3); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <a href="#" class="logo">Scientific Tools</a>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#analysis">Analysis</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section id="home" class="hero">
+        <div class="container">
+            <div class="hero-content fade-in">
+                <h1>FASTQ Analyzer</h1>
+                <p>Advanced sequencing data analysis with quality assessment, filtering capabilities, and comprehensive statistics. Upload your FASTQ files for instant analysis and visualization.</p>
+                <button class="cta-button" onclick="startAnalysis()">Start Analysis</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="analysis" class="analysis-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>FASTQ File Analysis</h2>
+                <p>Upload your FASTQ files to begin comprehensive sequencing data analysis</p>
+            </div>
+
+            <!-- File Uploader -->
+            <div class="file-uploader-section">
+                <div id="dropZone" class="drop-zone">
+                    <p>🧬 Drop FASTQ files here</p>
+                    <span>Supports .fastq, .fq, .txt, .fastq.gz, .fq.gz files</span>
+                    <button id="chooseFileBtn" class="choose-file-btn">Choose Files</button>
+                </div>
+                <input type="file" id="fileInput" accept=".fastq,.fq,.txt,.fastq.gz,.fq.gz" multiple style="display: none;">
+                
+                <div id="progressContainer" class="progress-container">
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill"></div>
+                    </div>
+                    <div id="progressText" class="progress-text">Processing files...</div>
+                </div>
+            </div>
+
+            <!-- File Information -->
+            <div id="fileInfo" class="file-info">
+                <h3>File Summary</h3>
+                <div id="fileStats" class="file-stats">
+                    <!-- Stats will be populated here -->
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div id="filtersSection" class="filters-section">
+                <h3>Filter Sequences</h3>
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <div class="filter-toggle-header">
+                            <input type="checkbox" id="enableMinLength" checked>
+                            <label for="enableMinLength">Minimum Length</label>
+                        </div>
+                        <input type="number" id="minLength" min="1" value="20">
+                    </div>
+                    <div class="filter-group">
+                        <div class="filter-toggle-header">
+                            <input type="checkbox" id="enableMaxLength" checked>
+                            <label for="enableMaxLength">Maximum Length</label>
+                        </div>
+                        <input type="number" id="maxLength" min="1" value="1000">
+                    </div>
+                    <div class="filter-group">
+                        <div class="filter-toggle-header">
+                            <input type="checkbox" id="enablePrimer">
+                            <label for="enablePrimer">Primer</label>
+                        </div>
+                        <input type="text" id="primerSequence" placeholder="e.g., GGTCTC" disabled>
+                    </div>
+                    <div class="filter-group sequence-search-group">
+                        <label for="sequenceSearch">Find Sequence (after primer)</label>
+                        <input type="text" id="sequenceSearch" placeholder="e.g., ATCGATCG">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" id="exactMatch">
+                            <label for="exactMatch">Exact match</label>
+                            <input type="checkbox" id="is5prime">
+                            <label for="is5prime">5'</label>
+                            <input type="checkbox" id="is3prime">
+                            <label for="is3prime">3'</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button class="filter-btn primary" onclick="applyFilters()">Apply Filters</button>
+                    <button class="filter-btn tertiary" onclick="addFilterResultsToStats()">Add to Statistics</button>
+                    <button class="filter-btn secondary" onclick="resetFilters()">Reset</button>
+                </div>
+            </div>
+
+            <!-- Sequence Preview -->
+            <div id="sequencePreview" class="sequence-preview">
+                <h3>Sequence Preview (First 10 reads)</h3>
+                <div id="sequenceContainer" class="sequence-container">
+                    <!-- Sequences will be populated here -->
+                </div>
+            </div>
+
+            <!-- Export Section -->
+            <div id="exportSection" class="export-section">
+                <h3>Export Results</h3>
+                <div class="export-options">
+                    <button class="choose-file-btn" onclick="exportFiltered('fastq')">Export as .fastq</button>
+                    <button class="choose-file-btn" onclick="exportFiltered('txt')">Export as .txt</button>
+                    <button class="choose-file-btn" onclick="exportStats()">Export Statistics</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>CadeWardInc</h3>
+                    <a href="#">About Us</a>
+                    <a href="#">Contact</a>
+                </div>
+                <div class="footer-section">
+                    <h3>Tools</h3>
+                    <a href="#">FASTQ Analyzer</a>
+                    <a href="#">Gel Electrophoresis</a>
+                    <a href="#">Size Selection</a>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 CadeWardInc. All rights reserved. | Advanced sequencing analysis tools.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <script>
+        // ===== STATE MANAGEMENT =====
+        let fastqData = [];
+        let filteredData = [];
+        let qualityStats = {};
+        let collectedStats = [];
+        
+        // ===== UTILITY FUNCTIONS =====
+        function startAnalysis() {
+            const analysisSection = document.getElementById('analysis');
+            analysisSection.style.display = 'block';
+            setTimeout(() => {
+                analysisSection.classList.add('show');
+                analysisSection.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }, 100);
+        }
+
+        function showProgress(show, text = 'Processing files...', progress = 0) {
+            const container = document.getElementById('progressContainer');
+            const fill = document.getElementById('progressFill');
+            const textEl = document.getElementById('progressText');
+            
+            if (show) {
+                container.style.display = 'block';
+                textEl.textContent = text;
+                fill.style.width = progress + '%';
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        function updateProgress(progress, text) {
+            const fill = document.getElementById('progressFill');
+            const textEl = document.getElementById('progressText');
+            fill.style.width = progress + '%';
+            if (text) textEl.textContent = text;
+        }
+
+        // ===== FILE HANDLING =====
+        function setupFileUploader() {
+            const dropZone = document.getElementById('dropZone');
+            const chooseFileBtn = document.getElementById('chooseFileBtn');
+            const fileInput = document.getElementById('fileInput');
+
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+
+            // Highlight drop zone when item is dragged over
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over'), false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over'), false);
+            });
+
+            // Handle dropped files
+            dropZone.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFiles(files);
+                }
+            }, false);
+
+            // Handle button click
+            chooseFileBtn.addEventListener('click', () => fileInput.click());
+            dropZone.addEventListener('click', (e) => {
+                if (e.target.id === 'dropZone') fileInput.click();
+            });
+
+            // Handle file selection
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFiles(e.target.files);
+                }
+            });
+        }
+
+        async function handleFiles(files) {
+            showProgress(true, 'Initializing...', 0);
+            fastqData = [];
+            let filesToProcess = files.length;
+            let filesCompleted = 0;
+
+            if (filesToProcess === 0) {
+                showProgress(false);
+                return;
+            }
+
+            const workerScript = document.getElementById('fastq-worker').textContent;
+            const workerBlob = new Blob([workerScript], { type: 'application/javascript' });
+            const workerUrl = URL.createObjectURL(workerBlob);
+
+            for (const file of files) {
+                const worker = new Worker(workerUrl);
+
+                worker.onmessage = (event) => {
+                    const { type, data, progress, text } = event.data;
+
+                    if (type === 'progress') {
+                        const overallProgress = ((filesCompleted / filesToProcess) * 100) + (progress / filesToProcess);
+                        updateProgress(overallProgress, text || `Processing ${file.name}...`);
+                    } else if (type === 'result') {
+                        fastqData = fastqData.concat(data);
+                        filesCompleted++;
+                        worker.terminate();
+
+                        if (filesCompleted === filesToProcess) {
+                            URL.revokeObjectURL(workerUrl);
+                            updateProgress(95, 'Finalizing analysis...');
+                            if (fastqData.length > 0) {
+                                filteredData = [...fastqData];
+                                analyzeData();
+                                displayResults();
+                                updateProgress(100, 'Analysis complete!');
+                                setTimeout(() => showProgress(false), 1500);
+                            } else {
+                                showProgress(false);
+                                alert('No valid FASTQ sequences found in the uploaded files.');
+                            }
+                        }
+                    } else if (type === 'error') {
+                        console.error(`Worker error processing ${file.name}:`, data);
+                        alert(`Error processing ${file.name}: ${data}`);
+                        filesCompleted++;
+                        worker.terminate();
+                        if (filesCompleted === filesToProcess) {
+                            URL.revokeObjectURL(workerUrl);
+                            if (fastqData.length === 0) showProgress(false);
+                        }
+                    }
+                };
+
+                worker.onerror = (error) => {
+                    console.error(`Unhandled worker error for ${file.name}:`, error.message);
+                    alert(`A critical error occurred while processing ${file.name}. See console for details.`);
+                    filesCompleted++;
+                    worker.terminate();
+                    if (filesCompleted === filesToProcess) {
+                        URL.revokeObjectURL(workerUrl);
+                        if (fastqData.length === 0) showProgress(false);
+                    }
+                };
+
+                // Start the worker
+                worker.postMessage({
+                    file: file,
+                    pakoUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js'
+                });
+            }
+        }
+
+        function readFileAsText(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(new Error('Failed to read file'));
+                reader.readAsText(file);
+            });
+        }
+
+        function readFileAsArrayBuffer(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(new Error('Failed to read file'));
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // ===== DATA ANALYSIS =====
+        function analyzeData() {
+            if (fastqData.length === 0) {
+                qualityStats = {
+                    totalSequences: 0, totalBases: 0, avgLength: 0, minLength: 0, maxLength: 0,
+                    avgQuality: 0, minQuality: 0, maxQuality: 0
+                };
+                return;
+            }
+
+            let totalBases = 0;
+            let totalQualitySum = 0;
+            let minLength = Infinity;
+            let maxLength = -Infinity;
+            let minQuality = Infinity;
+            let maxQuality = -Infinity;
+
+            // Perform all calculations in a single loop to avoid blocking the main thread.
+            for (const seq of fastqData) {
+                const len = seq.length;
+                const qual = seq.avgQuality;
+
+                totalBases += len;
+                totalQualitySum += qual;
+
+                if (len < minLength) minLength = len;
+                if (len > maxLength) maxLength = len;
+                if (qual < minQuality) minQuality = qual;
+                if (qual > maxQuality) maxQuality = qual;
+            }
+
+            qualityStats = {
+                totalSequences: fastqData.length,
+                totalBases: totalBases,
+                avgLength: totalBases / fastqData.length,
+                minLength: minLength,
+                maxLength: maxLength,
+                avgQuality: totalQualitySum / fastqData.length,
+                minQuality: minQuality,
+                maxQuality: maxQuality
+            };
+        }
+
+        // ===== DISPLAY FUNCTIONS =====
+        function displayResults() {
+            displayFileStats();
+            displaySequencePreview();
+            
+            // Show all sections
+            document.getElementById('fileInfo').classList.add('show');
+            document.getElementById('filtersSection').classList.add('show');
+            document.getElementById('sequencePreview').classList.add('show');
+            document.getElementById('exportSection').classList.add('show');
+        }
+
+        function displayFileStats() {
+            const container = document.getElementById('fileStats');
+            container.innerHTML = `
+                <div class="stat-item">
+                    <span class="stat-value">${qualityStats.totalSequences.toLocaleString()}</span>
+                    <span class="stat-label">Total Reads</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">${(qualityStats.totalBases / 1000000).toFixed(1)}M</span>
+                    <span class="stat-label">Total Bases</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">${qualityStats.avgLength.toFixed(0)}</span>
+                    <span class="stat-label">Avg Length</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">${qualityStats.avgQuality.toFixed(1)}</span>
+                    <span class="stat-label">Avg Quality</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">${qualityStats.minLength}-${qualityStats.maxLength}</span>
+                    <span class="stat-label">Length Range</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">${qualityStats.minQuality.toFixed(1)}-${qualityStats.maxQuality.toFixed(1)}</span>
+                    <span class="stat-label">Quality Range</span>
+                </div>
+            `;
+        }
+
+        function displaySequencePreview() {
+            const container = document.getElementById('sequenceContainer');
+            const previewData = filteredData.slice(0, 10);
+
+            // Get filter values to apply highlighting
+            const primerEnabled = document.getElementById('enablePrimer').checked;
+            const primerSequence = document.getElementById('primerSequence').value;
+            const searchTerm = document.getElementById('sequenceSearch').value;
+            const isExactMatch = document.getElementById('exactMatch').checked;
+            const is5prime = document.getElementById('is5prime').checked;
+            const is3prime = document.getElementById('is3prime').checked;
+
+            container.innerHTML = previewData.map(seq => {
+                let displaySequence = seq.sequence;
+
+                // Determine the searchable region based on the primer
+                let searchOffset = 0;
+                let searchableSequence = seq.sequence;
+                if (primerEnabled && primerSequence) {
+                    const primerIndex = seq.sequence.indexOf(primerSequence);
+                    if (primerIndex !== -1) {
+                        searchOffset = primerIndex + primerSequence.length;
+                        searchableSequence = seq.sequence.substring(searchOffset);
+                    } else {
+                        searchableSequence = ""; // Primer not found, so nothing to search
+                    }
+                }
+
+                if (searchTerm && searchableSequence) {
+                    try {
+                        let regexPattern = '';
+                        const regexFlags = isExactMatch ? 'g' : 'gi';
+
+                        // Special case for "exact run" match (e.g., GG not GGG)
+                        if (isExactMatch && !searchTerm.includes('*') && !searchTerm.toUpperCase().includes('N') && searchTerm.length > 0) {
+                            const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                            const firstChar = searchTerm[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                            const lastChar = searchTerm[searchTerm.length - 1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                            
+                            regexPattern = `(?<!${firstChar})${escapedTerm}(?!${lastChar})`;
+
+                        } else {
+                            // General case: Wildcard search (* or N) or non-exact search
+                            for (let i = 0; i < searchTerm.length; i++) {
+                                const char = searchTerm[i];
+                                if (char === '*' && i + 1 < searchTerm.length) {
+                                    const nextChar = searchTerm[i + 1];
+                                    const escapedNextChar = nextChar.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                                    regexPattern += `[^${escapedNextChar}]`;
+                                    i++;
+                                } else if (char.toUpperCase() === 'N') {
+                                    regexPattern += '.'; // 'N' becomes a wildcard for any character
+                                } else {
+                                    const escapedChar = char.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                                    regexPattern += escapedChar;
+                                }
+                            }
+                        }
+                        
+                        if (regexPattern) {
+                            if (is5prime) regexPattern = '^' + regexPattern;
+                            if (is3prime) regexPattern = regexPattern + '$';
+                            
+                            const regex = new RegExp(regexPattern, regexFlags);
+                            
+                            // Apply regex to the searchable part only
+                            const highlightedSearchable = searchableSequence.replace(regex, (match) => `<mark class="highlight">${match}</mark>`);
+                            
+                            // Reconstruct the full sequence string
+                            if (searchOffset > 0) {
+                                displaySequence = seq.sequence.substring(0, searchOffset) + highlightedSearchable;
+                            } else {
+                                displaySequence = highlightedSearchable;
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Error creating highlight regex:", e);
+                        displaySequence = seq.sequence; // Fallback on error
+                    }
+                }
+
+                return `
+                    <div class="sequence-entry">
+                        <div class="sequence-header">@${seq.header}</div>
+                        <div class="sequence-data">${displaySequence}</div>
+                        <div class="quality-data">Quality: ${seq.quality}</div>
+                        <div style="font-size: 0.8rem; color: #666; margin-top: 0.25rem;">
+                            Length: ${seq.length}bp | Avg Quality: ${seq.avgQuality.toFixed(1)} | N's: ${seq.nPercentage.toFixed(1)}%
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ===== FILTERING =====
+        function applyFilters() {
+            const minLengthEnabled = document.getElementById('enableMinLength').checked;
+            const maxLengthEnabled = document.getElementById('enableMaxLength').checked;
+            const minLength = parseInt(document.getElementById('minLength').value) || 0;
+            const maxLength = parseInt(document.getElementById('maxLength').value) || Infinity;
+            
+            const primerEnabled = document.getElementById('enablePrimer').checked;
+            const primerSequence = document.getElementById('primerSequence').value;
+            const searchTerm = document.getElementById('sequenceSearch').value;
+            const isExactMatch = document.getElementById('exactMatch').checked;
+            const is5prime = document.getElementById('is5prime').checked;
+            const is3prime = document.getElementById('is3prime').checked;
+            
+            filteredData = fastqData.filter(seq => {
+                const lengthMatch = 
+                    (!minLengthEnabled || seq.length >= minLength) &&
+                    (!maxLengthEnabled || seq.length <= maxLength);
+
+                if (!lengthMatch) return false;
+
+                // Determine the searchable region based on the primer
+                let searchableSequence = seq.sequence;
+                if (primerEnabled && primerSequence) {
+                    const primerIndex = seq.sequence.indexOf(primerSequence);
+                    if (primerIndex === -1) {
+                        return false; // Primer not found, so this read fails the filter
+                    }
+                    searchableSequence = seq.sequence.substring(primerIndex + primerSequence.length);
+                }
+                
+                let searchMatch = true;
+                if (searchTerm) {
+                    try {
+                        let regexPattern = '';
+                        const regexFlags = isExactMatch ? '' : 'i';
+
+                        // Special case for "exact run" match (e.g., GG not GGG)
+                        if (isExactMatch && !searchTerm.includes('*') && !searchTerm.toUpperCase().includes('N') && searchTerm.length > 0) {
+                            const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                            const firstChar = searchTerm[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                            const lastChar = searchTerm[searchTerm.length - 1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                            regexPattern = `(?<!${firstChar})${escapedTerm}(?!${lastChar})`;
+                        } else {
+                            // General case: Wildcard search (* or N) or non-exact search
+                            for (let i = 0; i < searchTerm.length; i++) {
+                                const char = searchTerm[i];
+                                if (char === '*' && i + 1 < searchTerm.length) {
+                                    const nextChar = searchTerm[i + 1];
+                                    const escapedNextChar = nextChar.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                                    regexPattern += `[^${escapedNextChar}]`;
+                                    i++;
+                                } else if (char.toUpperCase() === 'N') {
+                                    regexPattern += '.';
+                                } else {
+                                    const escapedChar = char.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                                    regexPattern += escapedChar;
+                                }
+                            }
+                        }
+
+                        if (regexPattern) {
+                            if (is5prime) regexPattern = '^' + regexPattern;
+                            if (is3prime) regexPattern = regexPattern + '$';
+                            
+                            const regex = new RegExp(regexPattern, regexFlags);
+                            searchMatch = regex.test(searchableSequence);
+                        } else {
+                            searchMatch = true; // No valid pattern, so don't filter
+                        }
+                    } catch (e) {
+                        console.error("Invalid search pattern:", e);
+                        searchMatch = false;
+                    }
+                }
+                
+                return lengthMatch && searchMatch;
+            });
+            
+            displaySequencePreview();
+            
+            // Update filtered stats
+            const filteredCount = filteredData.length;
+            const filteredPercent = fastqData.length > 0 ? ((filteredCount / fastqData.length) * 100).toFixed(1) : '0.0';
+            
+            document.getElementById('sequencePreview').querySelector('h3').textContent = 
+                `Sequence Preview (${filteredCount} of ${fastqData.length} reads, ${filteredPercent}% passed filters)`;
+        }
+
+        function resetFilters() {
+            document.getElementById('minLength').value = 20;
+            document.getElementById('maxLength').value = 1000;
+            document.getElementById('primerSequence').value = '';
+            document.getElementById('sequenceSearch').value = '';
+            document.getElementById('exactMatch').checked = false;
+            document.getElementById('is5prime').checked = false;
+            document.getElementById('is3prime').checked = false;
+
+            // Reset and enable length filters by default
+            document.getElementById('enableMinLength').checked = true;
+            document.getElementById('enableMaxLength').checked = true;
+            document.getElementById('minLength').disabled = false;
+            document.getElementById('maxLength').disabled = false;
+
+            // Reset and disable primer filter by default
+            document.getElementById('enablePrimer').checked = false;
+            document.getElementById('primerSequence').disabled = true;
+            
+            filteredData = [...fastqData];
+            displaySequencePreview();
+            
+            document.getElementById('sequencePreview').querySelector('h3').textContent = 
+                'Sequence Preview (First 10 reads)';
+        }
+
+        // ===== EXPORT FUNCTIONS =====
+        function addFilterResultsToStats() {
+            if (filteredData.length === 0) {
+                alert('There are no filtered sequences to add. Please apply filters first.');
+                return;
+            }
+
+            const defaultName = `Filter Set ${collectedStats.length + 1}`;
+            const setName = prompt("Enter a name for this filter set:", defaultName);
+
+            if (!setName) {
+                return; // User cancelled the prompt
+            }
+
+            // 1. Calculate stats for the current filteredData
+            let totalBases = 0;
+            let totalQualitySum = 0;
+            let minLength = Infinity;
+            let maxLength = -Infinity;
+            let minQuality = Infinity;
+            let maxQuality = -Infinity;
+
+            for (const seq of filteredData) {
+                const len = seq.length;
+                const qual = seq.avgQuality;
+                totalBases += len;
+                totalQualitySum += qual;
+                if (len < minLength) minLength = len;
+                if (len > maxLength) maxLength = len;
+                if (qual < minQuality) minQuality = qual;
+                if (qual > maxQuality) maxQuality = qual;
+            }
+
+            const currentStats = {
+                totalSequences: filteredData.length,
+                totalBases: totalBases,
+                avgLength: filteredData.length > 0 ? totalBases / filteredData.length : 0,
+                minLength: minLength,
+                maxLength: maxLength,
+                avgQuality: filteredData.length > 0 ? totalQualitySum / filteredData.length : 0,
+                minQuality: minQuality,
+                maxQuality: maxQuality
+            };
+
+            // 2. Capture the current filter settings
+            const filters = {
+                minLength: document.getElementById('enableMinLength').checked ? document.getElementById('minLength').value : 'N/A',
+                maxLength: document.getElementById('enableMaxLength').checked ? document.getElementById('maxLength').value : 'N/A',
+                primer: document.getElementById('enablePrimer').checked ? document.getElementById('primerSequence').value : 'N/A',
+                searchTerm: document.getElementById('sequenceSearch').value,
+                exactMatch: document.getElementById('exactMatch').checked,
+                is5prime: document.getElementById('is5prime').checked,
+                is3prime: document.getElementById('is3prime').checked
+            };
+
+            // 3. Add to the collected stats array
+            collectedStats.push({
+                name: setName,
+                stats: currentStats,
+                filters: filters
+            });
+
+            alert(`"${setName}" added to statistics. You can now export all collected sets using the "Export Statistics" button.`);
+        }
+
+        function exportFiltered(format) {
+            if (filteredData.length === 0) {
+                alert('No sequences to export. Please check your filters.');
+                return;
+            }
+            
+            const fastqContent = filteredData.map(seq => 
+                `@${seq.header}\n${seq.sequence}\n+\n${seq.quality}`
+            ).join('\n');
+            
+            const filename = `filtered_sequences.${format}`;
+            downloadFile(fastqContent, filename, 'text/plain');
+        }
+
+        function exportStats() {
+            if (collectedStats.length === 0) {
+                alert('No statistics have been added. Use the "Add to Statistics" button after filtering to create a set.');
+                return;
+            }
+
+            const headers = [
+                'SetName', 'TotalReads', 'TotalBases', 'AvgLength', 'MinLength', 'MaxLength',
+                'AvgQuality', 'MinQuality', 'MaxQuality', 'Filter_MinLength', 'Filter_MaxLength',
+                'Filter_Primer', 'Filter_SearchTerm', 'Filter_ExactMatch', 'Filter_5prime', 'Filter_3prime'
+            ];
+
+            const rows = collectedStats.map(item => {
+                const s = item.stats;
+                const f = item.filters;
+                const rowData = [
+                    item.name,
+                    s.totalSequences,
+                    s.totalBases,
+                    s.avgLength.toFixed(2),
+                    s.minLength === Infinity ? 'N/A' : s.minLength,
+                    s.maxLength === -Infinity ? 'N/A' : s.maxLength,
+                    s.avgQuality.toFixed(2),
+                    s.minQuality === Infinity ? 'N/A' : s.minQuality.toFixed(2),
+                    s.maxQuality === -Infinity ? 'N/A' : s.maxQuality.toFixed(2),
+                    `"${f.minLength}"`,
+                    `"${f.maxLength}"`,
+                    `"${f.primer}"`,
+                    `"${f.searchTerm}"`,
+                    f.exactMatch,
+                    f.is5prime,
+                    f.is3prime
+                ];
+                return rowData.join(',');
+            });
+
+            const csvContent = [headers.join(','), ...rows].join('\n');
+            downloadFile(csvContent, 'collected_fastq_statistics.csv', 'text/csv');
+        }
+
+        function downloadFile(content, filename, type) {
+            const blob = new Blob([content], { type: type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ===== EVENT LISTENERS =====
+        window.addEventListener('load', () => {
+            setupFileUploader();
+
+            // Add listeners for filter toggles
+            const minLengthToggle = document.getElementById('enableMinLength');
+            const minLengthInput = document.getElementById('minLength');
+            minLengthToggle.addEventListener('change', () => {
+                minLengthInput.disabled = !minLengthToggle.checked;
+            });
+
+            const maxLengthToggle = document.getElementById('enableMaxLength');
+            const maxLengthInput = document.getElementById('maxLength');
+            maxLengthToggle.addEventListener('change', () => {
+                maxLengthInput.disabled = !maxLengthToggle.checked;
+            });
+
+            const primerToggle = document.getElementById('enablePrimer');
+            const primerInput = document.getElementById('primerSequence');
+            primerToggle.addEventListener('change', () => {
+                primerInput.disabled = !primerToggle.checked;
+            });
+        });
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Header background opacity on scroll
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            const scrolled = window.pageYOffset;
+            const opacity = Math.min(scrolled / 100, 1);
+            header.style.background = `rgba(255, 255, 255, ${0.95 + opacity * 0.05})`;
+        });
+    </script>
+
+    <script type="text/worker-javascript" id="fastq-worker">
+        self.onmessage = async (event) => {
+            const { file, pakoUrl } = event.data;
+
+            try {
+                importScripts(pakoUrl);
+
+                const readFileAsArrayBuffer = (file) => {
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => resolve(e.target.result);
+                        reader.onerror = (e) => reject(new Error('Failed to read file'));
+                        reader.readAsArrayBuffer(file);
+                    });
+                };
+                
+                const readFileAsText = (file) => {
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => resolve(e.target.result);
+                        reader.onerror = (e) => reject(new Error('Failed to read file'));
+                        reader.readAsText(file);
+                    });
+                };
+
+                self.postMessage({ type: 'progress', progress: 10, text: `Reading ${file.name}...` });
+
+                let content;
+                if (file.name.endsWith('.gz')) {
+                    const buffer = await readFileAsArrayBuffer(file);
+                    self.postMessage({ type: 'progress', progress: 25, text: `Decompressing ${file.name}...` });
+                    const decompressed = pako.inflate(buffer);
+                    content = new TextDecoder().decode(decompressed);
+                } else {
+                    content = await readFileAsText(file);
+                }
+
+                self.postMessage({ type: 'progress', progress: 50, text: `Parsing ${file.name}...` });
+
+                const calculateAverageQuality = (qualityString) => {
+                    let sum = 0;
+                    for (let char of qualityString) {
+                        sum += char.charCodeAt(0) - 33;
+                    }
+                    return sum / qualityString.length;
+                };
+
+                const parseFASTQ = (content) => {
+                    const sequences = [];
+                    let currentIndex = 0;
+                    let lineCount = 0;
+                    const recordLines = [];
+
+                    while (currentIndex < content.length) {
+                        const nextIndex = content.indexOf('\n', currentIndex);
+                        const line = content.substring(currentIndex, nextIndex === -1 ? content.length : nextIndex).trim();
+                        
+                        // Skip empty lines which can result from \r\n or trailing newlines
+                        if (!line && nextIndex !== -1) {
+                            currentIndex = nextIndex + 1;
+                            continue;
+                        }
+
+                        recordLines.push(line);
+                        lineCount++;
+
+                        if (lineCount === 4) {
+                            const [header, sequence, optional, quality] = recordLines;
+
+                            if (header && sequence && optional && quality && header.startsWith('@') && optional.startsWith('+')) {
+                                const avgQuality = calculateAverageQuality(quality);
+                                const nCount = (sequence.match(/N/g) || []).length;
+                                const nPercentage = (nCount / sequence.length) * 100;
+                                
+                                sequences.push({
+                                    header: header.substring(1),
+                                    sequence: sequence,
+                                    quality: quality,
+                                    length: sequence.length,
+                                    avgQuality: avgQuality,
+                                    nPercentage: nPercentage
+                                });
+                            }
+                            
+                            // Reset for the next record
+                            recordLines.length = 0;
+                            lineCount = 0;
+                        }
+                        
+                        if (nextIndex === -1) break;
+                        currentIndex = nextIndex + 1;
+                    }
+                    return sequences;
+                };
+
+                const sequences = parseFASTQ(content);
+                self.postMessage({ type: 'result', data: sequences });
+
+            } catch (error) {
+                self.postMessage({ type: 'error', data: error.message });
+            }
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scientific Tools</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-black: #0a0a0a;
+            --soft-black: #1a1a1a;
+            --pure-white: #ffffff;
+            --off-white: #f8f9fa;
+            --muted-blue: #4a90a4;
+            --light-blue: rgba(74, 144, 164, 0.1);
+            --border-color: rgba(74, 144, 164, 0.2);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--primary-black);
+            background: var(--pure-white);
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-black);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--primary-black);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--muted-blue);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            background: linear-gradient(135deg, var(--pure-white) 0%, var(--off-white) 100%);
+        }
+
+        .hero-content {
+            width: 100%;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--primary-black), var(--muted-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: rgba(10, 10, 10, 0.7);
+            margin-bottom: 2.5rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .selection-button {
+            display: inline-block;
+            padding: 1.5rem 3rem;
+            background: var(--muted-blue);
+            color: var(--pure-white);
+            text-decoration: none;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(74, 144, 164, 0.3);
+            min-width: 150px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .selection-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .selection-button:hover::before {
+            left: 100%;
+        }
+
+        .selection-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(74, 144, 164, 0.4);
+        }
+
+        .selection-button:active {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(74, 144, 164, 0.5);
+        }
+
+        .big-button {
+            background: linear-gradient(135deg, var(--muted-blue), #5a9fb4);
+        }
+
+        .small-button {
+            background: linear-gradient(135deg, #3a7a8a, var(--muted-blue));
+        }
+
+        /* Results Section */
+        .results-section {
+            display: none; /* Hidden by default */
+            padding: 4rem 0;
+            background: var(--off-white);
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .results-section.show {
+            opacity: 1;
+        }
+
+        .label-configuration h2 {
+            text-align: center;
+            font-size: clamp(2rem, 4vw, 2.5rem);
+            margin-bottom: 1rem;
+            color: var(--primary-black);
+        }
+
+        .label-configuration p {
+            text-align: center;
+            font-size: 1.1rem;
+            color: rgba(10, 10, 10, 0.7);
+            margin-bottom: 3rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .label-slots-container {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .ladder-selection-container {
+            padding: 1rem;
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            max-width: 400px;
+            margin: 1.5rem auto 3rem auto;
+            opacity: 0; /* For fade-in animation */
+        }
+
+        .ladder-selection-container h3 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--primary-black);
+            text-align: left;
+        }
+
+        .select-wrapper {
+            position: relative;
+        }
+
+        .select-wrapper::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: 1rem;
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 6px solid var(--primary-black);
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        #ladderType {
+            width: 100%;
+            padding: 0.5rem 2.5rem 0.5rem 0.5rem; /* Added right padding for arrow */
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+            background-color: var(--pure-white);
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        #ladderType:focus {
+            outline: none;
+            border-color: var(--muted-blue);
+        }
+
+        .date-toggle-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .date-toggle-label {
+            font-size: 0.9rem;
+            color: var(--primary-black);
+        }
+
+        .date-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+
+        .date-switch input { display: none; }
+
+        .date-slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background-color: #ccc;
+            border-radius: 28px;
+            transition: .4s;
+        }
+
+        .date-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            border-radius: 50%;
+            transition: .4s;
+        }
+
+        input:checked + .date-slider {
+            background-color: var(--muted-blue);
+        }
+
+        input:checked + .date-slider:before {
+            transform: translateX(22px);
+        }
+
+        /* Layout for 'big' (8 slots) */
+        .big-layout {
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        }
+
+        /* Layout for 'small' (12 slots) */
+        .small-layout {
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+        }
+
+        .label-slot {
+            background: var(--pure-white);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            opacity: 0; /* For fade-in animation */
+        }
+
+        .label-slot.active {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(74, 144, 164, 0.2);
+            border-color: var(--muted-blue);
+        }
+
+        .label-slot-number {
+            font-weight: 600;
+            color: var(--muted-blue);
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .label-slot-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .label-slot-input:focus {
+            outline: none;
+            border-color: var(--muted-blue);
+        }
+
+        /* Recent Labels Section */
+        .recent-labels-section {
+            margin-top: 3rem;
+            text-align: center;
+            display: none; /* Hidden by default */
+        }
+
+        .recent-labels-section.show {
+            display: block;
+        }
+
+        .recent-labels-section h3 {
+            margin-bottom: 1.5rem;
+            color: var(--primary-black);
+            font-size: 1.5rem;
+        }
+
+        .recent-labels-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .recent-label-tag {
+            position: relative; /* Required for positioning the 'x' button */
+            background: var(--light-blue);
+            color: var(--muted-blue);
+            padding: 0.5rem 2rem 0.5rem 1rem; /* Adjusted padding for the 'x' */
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .recent-label-tag:hover {
+            background: var(--muted-blue);
+            color: var(--pure-white);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(74, 144, 164, 0.2);
+        }
+
+        .remove-label-btn {
+            position: absolute;
+            top: 50%;
+            right: 8px;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: inherit;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            padding: 0 5px;
+            line-height: 1;
+        }
+
+        .recent-label-tag:hover .remove-label-btn {
+            opacity: 0.7;
+        }
+
+        .remove-label-btn:hover {
+            opacity: 1;
+        }
+
+        /* Annotation Section */
+        .annotation-section {
+            margin-top: 4rem;
+            text-align: center;
+            display: none; /* Hidden by default */
+            opacity: 0; /* For fade-in animation */
+        }
+
+        .annotation-section.show {
+            display: block;
+        }
+
+        .annotation-section h3 {
+            margin-bottom: 1.5rem;
+            color: var(--primary-black);
+            font-size: 1.5rem;
+        }
+
+        .annotation-textarea {
+            width: 100%;
+            max-width: 800px; /* Match image preview width */
+            min-height: 120px;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            line-height: 1.6;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+            background: var(--pure-white);
+        }
+
+        .annotation-textarea:focus {
+            outline: none;
+            border-color: var(--muted-blue);
+        }
+
+        /* Export Section */
+        .export-section {
+            text-align: center;
+            margin: 2rem 0 4rem 0;
+            display: none; /* Hidden by default */
+            opacity: 0;
+        }
+
+        .export-section.show {
+            display: block;
+        }
+
+        /* Image Uploader Section */
+        .image-uploader-section {
+            margin-top: 4rem;
+            text-align: center;
+            display: none; /* Hidden by default */
+        }
+
+        .image-uploader-section.show {
+            display: block;
+        }
+
+        .image-uploader-section h3 {
+            margin-bottom: 1.5rem;
+            color: var(--primary-black);
+            font-size: 1.5rem;
+        }
+
+        .drop-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 3rem;
+            background: var(--light-blue);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .drop-zone.drag-over {
+            border-color: var(--muted-blue);
+            background: rgba(74, 144, 164, 0.2);
+        }
+
+        .drop-zone p {
+            font-size: 1.1rem;
+            color: var(--primary-black);
+            margin-bottom: 0.5rem;
+            pointer-events: none;
+        }
+
+        .drop-zone span {
+            display: block;
+            margin-bottom: 1rem;
+            color: rgba(10, 10, 10, 0.6);
+            pointer-events: none;
+        }
+
+        .choose-file-btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--muted-blue);
+            color: var(--pure-white);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            font-weight: 500;
+        }
+
+        .choose-file-btn:hover {
+            background: #3a7a8a;
+        }
+
+        .image-preview-container {
+            position: relative;
+            max-width: 800px; /* Re-apply max-width */
+            margin: 0 auto 2rem; /* Re-apply margin */
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--pure-white);
+            padding: 0.5rem;
+        }
+
+        #imagePreview {
+            width: 100%; /* Make image element fill the container width */
+            aspect-ratio: 16 / 9; /* Force a uniform 16:9 shape for the preview area */
+            object-fit: contain; /* Fit the cropped image inside without distortion */
+            background: #f0f2f5; /* Add a background to show the preview area bounds */
+            display: block;
+            border-radius: 8px;
+        }
+
+        .remove-image-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 1.5rem;
+            line-height: 28px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .remove-image-btn:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        /* Cropping Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: var(--pure-white);
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 0.5rem;
+        }
+        .modal-content p {
+            margin-bottom: 1.5rem;
+            color: rgba(10, 10, 10, 0.7);
+        }
+
+        .crop-container {
+            flex-grow: 1;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        #imageToCrop {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+        .modal-actions .secondary {
+            background: #6c757d;
+        }
+        .modal-actions .secondary:hover {
+            background: #5a6268;
+        }
+
+        /* Ladder Labels (Vertical) */
+        .ladder-labels-container {
+            position: absolute; /* Position inside the preview container */
+            width: 50px;
+            pointer-events: auto; /* Allow mouse interactions */
+        }
+
+        .ladder-label-marker {
+            position: absolute;
+            right: 0.5rem; /* Align to the right edge of the container */
+            transform: translateY(-50%); /* Vertically center the marker on its 'top' position */
+            font-size: 0.6rem;
+            color: var(--primary-black);
+            font-weight: 500;
+            cursor: grab;
+            user-select: none; /* Prevent text selection during drag */
+            padding: 1px 3px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 3px;
+            transition: background-color 0.2s, box-shadow 0.2s, right 0.2s ease-out;
+        }
+
+        .ladder-label-marker.dragging {
+            cursor: grabbing;
+            z-index: 10; /* Bring to front while dragging */
+            background-color: rgba(255, 255, 255, 1);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* Preview Labels */
+        .preview-labels-container {
+            position: relative; /* Establish a positioning context for the labels */
+            padding: 2rem 0 1rem 0; /* Adjust vertical padding as needed */
+            min-height: 100px;
+            margin: 0 auto; /* Center the container when width is set */
+        }
+
+        .preview-label {
+            position: absolute; /* Position each label independently */
+            bottom: 1rem; /* Align to the bottom padding area */
+            font-size: 0.8rem;
+            color: var(--primary-black);
+            white-space: nowrap;
+            transform-origin: bottom left;
+            transform: rotate(-45deg);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--soft-black);
+            color: var(--pure-white);
+            padding: 3rem 0;
+            text-align: center;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            color: var(--muted-blue);
+        }
+
+        .footer-section a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: var(--muted-blue);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 2rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .container {
+                padding: 0 1rem;
+            }
+
+            .button-container {
+                gap: 1rem;
+            }
+
+            .selection-button {
+                padding: 1.25rem 2.5rem;
+                font-size: 1rem;
+                min-width: 120px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .button-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .selection-button {
+                width: 100%;
+                max-width: 250px;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 4px 15px rgba(74, 144, 164, 0.3);
+            }
+            50% {
+                box-shadow: 0 8px 25px rgba(74, 144, 164, 0.5);
+            }
+            100% {
+                box-shadow: 0 4px 15px rgba(74, 144, 164, 0.3);
+            }
+        }
+
+        .selection-button.selected {
+            animation: pulse 1s ease-in-out;
+        }
+
+        .date-toggle-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 1rem;
+        }
+
+        .date-toggle-label {
+            font-size: 0.9rem;
+            color: var(--primary-black);
+        }
+
+        .date-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+
+        .date-switch input { display: none; }
+
+        .date-slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background-color: #ccc;
+            border-radius: 28px;
+            transition: .4s;
+        }
+
+        .date-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            border-radius: 50%;
+            transition: .4s;
+        }
+
+        input:checked + .date-slider {
+            background-color: var(--muted-blue);
+        }
+
+        input:checked + .date-slider:before {
+            transform: translateX(22px);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <a href="#" class="logo">Scientific Tools</a>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#selection">Selection</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section id="home" class="hero">
+        <div class="container">
+            <div class="hero-content fade-in">
+                <h1>Size Selection</h1>
+                <p>Choose your preferred option from the selections below. Each choice offers different capabilities tailored to your specific needs.</p>
+                
+                <div class="button-container" id="selection">
+                    <button class="selection-button big-button" onclick="handleSelection('big')">
+                        Big
+                    </button>
+                    <button class="selection-button small-button" onclick="handleSelection('small')">
+                        Small
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section id="results" class="results-section">
+        <div class="container">
+            <div class="label-configuration">
+                <h2 id="label-section-title" class="fade-in">Configuration</h2>
+                <p id="label-section-description" class="fade-in">Configure your label slots below.</p>
+                
+                <div id="labelSlots" class="label-slots-container">
+                    <!-- Label slots will be dynamically generated here -->
+                </div>
+
+                <div id="recentLabelsSection" class="recent-labels-section">
+                    <h3>Recent Labels</h3>
+                    <div id="recentLabelsContainer" class="recent-labels-container">
+                        <!-- Recent labels will be dynamically generated here -->
+                    </div>
+                </div>
+
+                <div id="ladder-selection-container" class="ladder-selection-container">
+                    <h3>Ladder Type</h3>
+                    <div class="select-wrapper">
+                        <select id="ladderType" name="ladderType">
+                            <option value="none">None</option>
+                            <option value="100bp" selected>100 BP Ladder</option>
+                            <option value="1kbp">1K BP Ladder</option>
+                        </select>
+                    </div>
+                    <div class="date-toggle-wrapper">
+                        <span class="date-toggle-label">Include Date on Export</span>
+                        <label class="date-switch">
+                            <input type="checkbox" id="dateToggle">
+                            <span class="date-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="imageUploaderSection" class="image-uploader-section">
+                    <h3>Upload Gel Image</h3>
+                    <div id="imagePreviewContainer" class="image-preview-container" style="display: none;">
+                        <div id="previewLabelsContainer" class="preview-labels-container">
+                            <!-- Rotated labels will be dynamically generated here -->
+                        </div>
+                        <div id="ladderLabelsContainer" class="ladder-labels-container">
+                            <!-- Vertical ladder labels will be generated here -->
+                        </div>
+                        <img id="imagePreview" src="#" alt="Image Preview">
+                        <button id="removeImageBtn" class="remove-image-btn" title="Remove Image">&times;</button>
+                    </div>
+                    <div id="dropZone" class="drop-zone">
+                        <p>Drag & drop image here</p>
+                        <span>or</span>
+                        <button id="chooseFileBtn" class="choose-file-btn">Choose File</button>
+                    </div>
+                    <input type="file" id="imageUploadInput" accept="image/*" style="display: none;">
+                </div>
+
+            </div>
+            <div id="annotationSection" class="annotation-section">
+                <h3>Annotations</h3>
+                <textarea id="annotationText" class="annotation-textarea" placeholder="Enter notes about the image..."></textarea>
+            </div>
+            <div id="exportSection" class="export-section">
+                <button id="exportBtn" class="choose-file-btn">Export as Image</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cropping Modal -->
+    <div id="cropModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Crop Image</h2>
+            <p>Adjust the selection to fit the area you want to label.</p>
+            <div class="crop-container">
+                <img id="imageToCrop" alt="Image to crop">
+            </div>
+            <div class="modal-actions">
+                <button id="cropBtn" class="choose-file-btn">Crop & Use Image</button>
+                <button id="cancelCropBtn" class="choose-file-btn secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <footer id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>CadeWardInc</h3>
+                    <a href="#">About Us</a>
+                    <a href="#">Contact</a>
+                </div>
+                <div class="footer-section">
+                    <h3>Tools</h3>
+                    <a href="#">Size Selection</a>
+                    <a href="#">Analysis Tools</a>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 CadeWardInc. All rights reserved. | Advanced selection tools.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // ===== STATE MANAGEMENT =====
+        let recentLabels = JSON.parse(localStorage.getItem('gelRecentLabels')) || [];
+        const MAX_RECENT_LABELS = 12;
+        let cropper = null;
+
+        // ===== UI HANDLERS =====
+        // Handle button selection
+        function handleSelection(size) {
+            const buttons = document.querySelectorAll('.selection-button');
+            const resultsSection = document.getElementById('results');
+            const labelSectionTitle = document.getElementById('label-section-title');
+            const labelSectionDescription = document.getElementById('label-section-description');
+            const ladderContainer = document.getElementById('ladder-selection-container');
+            const annotationSection = document.getElementById('annotationSection');
+            const exportSection = document.getElementById('exportSection');
+            
+            // Remove previous selections
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            
+            // Add selection animation to clicked button
+            event.target.classList.add('selected');
+            
+            // Update content based on selection
+            if (size === 'big') {
+                labelSectionTitle.textContent = 'Big Configuration - 6 Slots';
+                labelSectionDescription.textContent = 'Configure your 6 label slots for the big option';
+                generateLabelSlots(6, 'big');
+            } else {
+                labelSectionTitle.textContent = 'Small Configuration - 10 Slots';
+                labelSectionDescription.textContent = 'Configure your 10 label slots for the small option';
+                generateLabelSlots(10, 'small');
+            }
+            
+            // Show results section
+            resultsSection.style.display = 'block';
+            document.getElementById('recentLabelsSection').classList.add('show');
+            document.getElementById('imageUploaderSection').classList.add('show');
+            annotationSection.classList.add('show');
+            exportSection.classList.add('show');
+            
+            ladderContainer.style.animationDelay = '0.5s';
+            ladderContainer.classList.add('fade-in');
+            annotationSection.style.animationDelay = '0.6s';
+            annotationSection.classList.add('fade-in');
+            exportSection.style.animationDelay = '0.7s';
+            exportSection.classList.add('fade-in');
+
+            resultsSection.offsetHeight; // Force reflow
+            setTimeout(() => {
+                resultsSection.classList.add('show');
+                // Scroll to the results section after it becomes visible
+                resultsSection.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }, 100);
+            
+            // Remove selection animation after animation completes
+            setTimeout(() => {
+                event.target.classList.remove('selected');
+            }, 1000);
+        }
+
+        // Generate label slots dynamically
+        function generateLabelSlots(count, type) {
+            const container = document.getElementById('labelSlots');
+            container.innerHTML = '';
+            
+            // Set the appropriate layout class
+            container.className = `label-slots-container ${type}-layout`;
+            
+            for (let i = 1; i <= count; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'label-slot';
+                slot.innerHTML = `
+                    <div class="label-slot-number">Slot ${i}</div>
+                    <input type="text" class="label-slot-input" placeholder="Enter label" onclick="activateSlot(this)" onblur="saveRecentLabel(this)" oninput="updateLabelPreview()">
+                `;
+                
+                // Add staggered animation
+                slot.style.animationDelay = `${i * 0.1}s`;
+                slot.classList.add('fade-in');
+                
+                container.appendChild(slot);
+            }
+            renderRecentLabels();
+        }
+
+        // Handle slot activation
+        function activateSlot(input) {
+            // Remove active class from all slots
+            document.querySelectorAll('.label-slot').forEach(slot => {
+                slot.classList.remove('active');
+            });
+            
+            // Add active class to clicked slot
+            input.parentElement.classList.add('active');
+            input.focus();
+        }
+
+        // ===== LADDER LOGIC =====
+        function handleLadderChange() {
+            updateLadderPreview();
+        }
+
+        function updateLadderPreview() {
+            const selection = document.getElementById('ladderType').value;
+            const ladderContainer = document.getElementById('ladderLabelsContainer');
+            ladderContainer.innerHTML = ''; // Clear previous ladder
+
+            let ladderMarkers = [];
+
+            if (selection === '100bp') {
+                ladderMarkers = ['1,500', '1,000', '900', '800', '700', '600', '500', '400', '300', '200', '100'];
+            } else if (selection === '1kbp') {
+                ladderMarkers = ['25,000', '10,000', '8,000', '6,000', '5,000', '4,000', '3,000', '2,500', '2,000', '1,500', '1,000', '750', '500', '250'];
+            }
+
+            // Generate markers from top to bottom
+            ladderMarkers.forEach((markerText, index) => {
+                const markerDiv = document.createElement('div');
+                markerDiv.className = 'ladder-label-marker';
+                markerDiv.textContent = markerText;
+
+                // Set initial vertical position as a percentage
+                const initialTopPercent = (index / (ladderMarkers.length - 1)) * 100;
+                markerDiv.style.top = `${initialTopPercent}%`;
+
+                // Add drag handler
+                markerDiv.addEventListener('mousedown', (e) => startDrag(e, markerDiv, ladderContainer));
+
+                ladderContainer.appendChild(markerDiv);
+            });
+        }
+
+        function startDrag(event, marker, container) {
+            event.preventDefault();
+            marker.classList.add('dragging');
+
+            const initialMouseY = event.clientY;
+            const initialTop = marker.offsetTop;
+            const allMarkers = Array.from(container.querySelectorAll('.ladder-label-marker'));
+
+            const doDrag = (moveEvent) => {
+                const deltaY = moveEvent.clientY - initialMouseY;
+                let newTop = initialTop + deltaY;
+
+                // Constrain the drag within the container's bounds
+                const halfMarkerHeight = marker.offsetHeight / 2;
+                const minTop = halfMarkerHeight;
+                const maxTop = container.offsetHeight - halfMarkerHeight;
+                newTop = Math.max(minTop, Math.min(newTop, maxTop));
+                marker.style.top = `${newTop}px`;
+            };
+
+            const stopDrag = () => {
+                marker.classList.remove('dragging');
+                document.removeEventListener('mousemove', doDrag);
+                document.removeEventListener('mouseup', stopDrag);
+            };
+
+            document.addEventListener('mousemove', doDrag);
+            document.addEventListener('mouseup', stopDrag);
+        }
+
+        // ===== LABEL PREVIEW LOGIC =====
+        function adjustPreviewLayout() {
+            const imagePreview = document.getElementById('imagePreview');
+            const previewContainer = document.getElementById('previewLabelsContainer');
+            const ladderContainer = document.getElementById('ladderLabelsContainer');
+            const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+
+            // Only run if the image preview is visible and has finished loading
+            if (imagePreviewContainer.style.display !== 'none' && imagePreview.complete && imagePreview.naturalHeight !== 0) {
+                
+                const containerWidth = imagePreview.offsetWidth;
+                const containerHeight = imagePreview.offsetHeight;
+                const naturalWidth = imagePreview.naturalWidth;
+                const naturalHeight = imagePreview.naturalHeight;
+
+                const containerRatio = containerWidth / containerHeight;
+                const imageRatio = naturalWidth / naturalHeight;
+
+                let renderedImageWidth, renderedImageHeight;
+                let imageOffsetLeft = 0, imageOffsetTop = 0;
+
+                // Because of 'object-fit: contain', we must calculate the actual rendered dimensions and offsets.
+                if (imageRatio > containerRatio) {
+                    // Image is wider than the container's aspect ratio (letterboxed).
+                    renderedImageWidth = containerWidth;
+                    renderedImageHeight = containerWidth / imageRatio;
+                    imageOffsetLeft = 0;
+                    imageOffsetTop = (containerHeight - renderedImageHeight) / 2;
+                } else {
+                    // Image is taller than or same as the container's aspect ratio (pillarboxed).
+                    renderedImageHeight = containerHeight;
+                    renderedImageWidth = containerHeight * imageRatio;
+                    imageOffsetTop = 0;
+                    imageOffsetLeft = (containerWidth - renderedImageWidth) / 2;
+                }
+
+                // --- Adjust Top Labels ---
+                const horizontalPadding = 0.10; // 10% padding on each side
+                const finalWidth = renderedImageWidth * (1 - (horizontalPadding * 2));
+                const finalOffset = imageOffsetLeft + (renderedImageWidth * horizontalPadding);
+                previewContainer.style.width = `${finalWidth}px`;
+                previewContainer.style.marginLeft = `${finalOffset}px`;
+
+                // --- Adjust Vertical Ladder ---
+                ladderContainer.style.height = `${renderedImageHeight}px`;
+                ladderContainer.style.top = `${imageOffsetTop + 105}px`; // Move down by 105px
+                ladderContainer.style.left = '0px'; // Always pin to the far left of the preview area.
+
+                // If there is a gray area to the left of the image (pillarboxing)...
+                if (imageOffsetLeft > 1) {
+                    // Make the ladder container fill that gray area.
+                    // The labels inside are right-aligned, so they will appear next to the image.
+                    ladderContainer.style.width = `${imageOffsetLeft}px`;
+                } else {
+                    // If there is no gray area, use the default width and place it on the image.
+                    ladderContainer.style.width = '50px';
+                }
+            }
+        }
+
+        function updateLabelPreview() {
+            const previewContainer = document.getElementById('previewLabelsContainer');
+            const inputs = document.querySelectorAll('.label-slot-input');
+            previewContainer.innerHTML = ''; // Clear previous labels
+
+            const numLabels = inputs.length;
+            if (numLabels === 0) return;
+
+            inputs.forEach((input, index) => {
+                const labelText = input.value.trim();
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'preview-label';
+                labelDiv.textContent = labelText || '\u00A0';
+
+                // Calculate the horizontal position for each label's starting point.
+                let leftPercentage = 0;
+                if (numLabels > 1) {
+                    // This ensures the starting points are always equally spaced.
+                    leftPercentage = (index / (numLabels - 1)) * 100;
+                }
+                
+                labelDiv.style.left = `${leftPercentage}%`;
+
+                previewContainer.appendChild(labelDiv);
+            });
+        }
+
+        // ===== RECENT LABELS LOGIC =====
+        function saveRecentLabel(input) {
+            const labelText = input.value.trim();
+            if (!labelText) return;
+
+            // Remove if it already exists to move it to the front
+            const existingIndex = recentLabels.indexOf(labelText);
+            if (existingIndex > -1) {
+                recentLabels.splice(existingIndex, 1);
+            }
+
+            // Add to the beginning of the array
+            recentLabels.unshift(labelText);
+
+            // Trim the array to the max size
+            if (recentLabels.length > MAX_RECENT_LABELS) {
+                recentLabels.length = MAX_RECENT_LABELS;
+            }
+
+            // Save to localStorage and re-render
+            localStorage.setItem('gelRecentLabels', JSON.stringify(recentLabels));
+            renderRecentLabels();
+        }
+
+        function renderRecentLabels() {
+            const container = document.getElementById('recentLabelsContainer');
+            container.innerHTML = '';
+
+            if (recentLabels.length === 0) {
+                container.innerHTML = '<p style="color: rgba(10, 10, 10, 0.5);">Your recent labels will appear here.</p>';
+                return;
+            }
+
+            recentLabels.forEach(label => {
+                const tag = document.createElement('div');
+                tag.className = 'recent-label-tag';
+                tag.textContent = label;
+                tag.onclick = () => applyRecentLabel(label);
+
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-label-btn';
+                removeBtn.innerHTML = '&times;';
+                removeBtn.title = 'Remove label';
+                removeBtn.onclick = (event) => removeRecentLabel(event, label);
+
+                tag.appendChild(removeBtn);
+                container.appendChild(tag);
+            });
+        }
+
+        function removeRecentLabel(event, labelToRemove) {
+            // Stop the click from bubbling up to the parent tag's onclick
+            event.stopPropagation();
+
+            const index = recentLabels.indexOf(labelToRemove);
+            if (index > -1) {
+                recentLabels.splice(index, 1);
+                localStorage.setItem('gelRecentLabels', JSON.stringify(recentLabels));
+                renderRecentLabels(); // Re-render the UI
+            }
+        }
+
+        function applyRecentLabel(label) {
+            const activeSlotInput = document.querySelector('.label-slot.active .label-slot-input');
+            if (activeSlotInput) {
+                activeSlotInput.value = label;
+                saveRecentLabel(activeSlotInput); // Save and update recent labels list
+
+                const allSlots = Array.from(document.querySelectorAll('.label-slot'));
+                const currentSlot = activeSlotInput.closest('.label-slot');
+                const currentIndex = allSlots.indexOf(currentSlot);
+
+                // Find the next slot and activate it
+                const nextIndex = currentIndex + 1;
+                if (nextIndex < allSlots.length) {
+                    const nextSlot = allSlots[nextIndex];
+                    const nextInput = nextSlot.querySelector('.label-slot-input');
+                    if (nextInput) {
+                        activateSlot(nextInput); // This function handles focus and active class
+                    }
+                } else {
+                    // If it's the last slot, just keep it focused
+                    activeSlotInput.focus();
+                }
+            } else {
+                alert('Please click inside a label slot before selecting a recent label.');
+            }
+        }
+
+        // ===== IMAGE UPLOADER & CROPPER LOGIC =====
+        function setupImageUploader() {
+            const dropZone = document.getElementById('dropZone');
+            const chooseFileBtn = document.getElementById('chooseFileBtn');
+            const imageUploadInput = document.getElementById('imageUploadInput');
+            const removeImageBtn = document.getElementById('removeImageBtn');
+            const cropBtn = document.getElementById('cropBtn');
+            const cancelCropBtn = document.getElementById('cancelCropBtn');
+
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+
+            // Highlight drop zone when item is dragged over
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over'), false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over'), false);
+            });
+
+            // Handle dropped files
+            dropZone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files.length > 0) {
+                    handleImageFile(files[0]);
+                }
+            }, false);
+
+            // Handle button click
+            chooseFileBtn.addEventListener('click', () => imageUploadInput.click());
+            dropZone.addEventListener('click', (e) => {
+                if (e.target.id === 'dropZone') imageUploadInput.click();
+            });
+
+            // Handle file selection from input
+            imageUploadInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleImageFile(e.target.files[0]);
+                }
+            });
+
+            // Handle cropper actions
+            cropBtn.addEventListener('click', applyCrop);
+            cancelCropBtn.addEventListener('click', cancelCrop);
+
+            // Handle remove image
+            removeImageBtn.addEventListener('click', resetImageUploader);
+        }
+
+        function handleImageFile(file) {
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                const imageToCrop = document.getElementById('imageToCrop');
+                const modal = document.getElementById('cropModal');
+
+                reader.onload = (e) => {
+                    imageToCrop.src = e.target.result;
+                    modal.style.display = 'flex';
+
+                    if (cropper) {
+                        cropper.destroy();
+                    }
+
+                    cropper = new Cropper(imageToCrop, {
+                        aspectRatio: NaN, // Use NaN for free ratio to ensure it works correctly
+                        viewMode: 1,
+                        background: false,
+                        autoCropArea: 0.8,
+                    });
+                };
+                reader.readAsDataURL(file);
+            } else {
+                alert('Please select a valid image file (e.g., JPG, PNG, GIF).');
+            }
+        }
+
+        function applyCrop() {
+            if (!cropper) return;
+
+            const croppedCanvas = cropper.getCroppedCanvas();
+            if (!croppedCanvas) {
+                alert('Could not apply crop.');
+                return;
+            }
+
+            const imagePreview = document.getElementById('imagePreview');
+            imagePreview.src = croppedCanvas.toDataURL('image/png');
+            
+            imagePreview.onload = () => {
+                // Use requestAnimationFrame to ensure layout is calculated after the image is painted
+                requestAnimationFrame(() => {
+                    adjustPreviewLayout();
+                    updateLabelPreview();
+                    updateLadderPreview(); // Add this call to generate ladder on crop
+                });
+            };
+
+            document.getElementById('imagePreviewContainer').style.display = 'block';
+            document.getElementById('dropZone').style.display = 'none';
+            document.getElementById('exportSection').style.display = 'block'; // Re-show the export button
+            cancelCrop(); // Hide modal and clean up
+        }
+
+        function cancelCrop() {
+            const modal = document.getElementById('cropModal');
+            modal.style.display = 'none';
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            document.getElementById('imageUploadInput').value = '';
+        }
+
+        function resetImageUploader() {
+            document.getElementById('imagePreview').src = '#';
+            document.getElementById('imagePreviewContainer').style.display = 'none';
+            document.getElementById('dropZone').style.display = 'block';
+            document.getElementById('imageUploadInput').value = ''; // Reset file input
+            document.getElementById('exportSection').style.display = 'none'; // Hide export button
+
+            // Reset preview container styles
+            const previewContainer = document.getElementById('previewLabelsContainer');
+            previewContainer.style.width = 'auto';
+        }
+
+        // ===== GENERAL EVENT LISTENERS =====
+        // Remove active class when clicking outside
+        document.addEventListener('click', function(event) {
+            // Also check if the click is on a recent label tag to prevent deactivation
+            if (!event.target.closest('.label-slot') && !event.target.closest('.recent-label-tag')) {
+                document.querySelectorAll('.label-slot').forEach(slot => {
+                    slot.classList.remove('active');
+                });
+            }
+        });
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Header background opacity on scroll
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            const scrolled = window.pageYOffset;
+            const opacity = Math.min(scrolled / 100, 1);
+            header.style.background = `rgba(255, 255, 255, ${0.95 + opacity * 0.05})`;
+        });
+
+        // Adjust preview layout on window resize
+        window.addEventListener('resize', adjustPreviewLayout);
+
+        // Add event listener for the ladder dropdown
+        document.getElementById('ladderType').addEventListener('change', handleLadderChange);
+
+        // Add event listener for the export button
+        document.getElementById('exportBtn').addEventListener('click', exportImage);
+
+        // Add entrance animation delay for buttons and setup listeners
+        window.addEventListener('load', () => {
+            setupImageUploader();
+            setTimeout(() => {
+                document.querySelectorAll('.selection-button').forEach((button, index) => {
+                    button.style.animationDelay = `${index * 0.2}s`;
+                    button.classList.add('fade-in');
+                });
+            }, 300);
+        });
+
+        // ===== EXPORT LOGIC =====
+        async function exportImage() {
+            const imagePreview = document.getElementById('imagePreview');
+            if (!imagePreview.src || imagePreview.src.endsWith('#')) {
+                alert('Please upload and crop an image first.');
+                return;
+            }
+
+            // --- DYNAMIC FONT & LAYOUT CALCULATION ---
+            // Use a more aggressive linear scale with a lower minimum clamp to handle small images.
+            const imgHeight = imagePreview.naturalHeight;
+            const rawFontSize = imgHeight / 50; // More aggressive linear scaling.
+            const baseFontSize = Math.max(6, Math.min(rawFontSize, 70)); // Clamp between 6px and 70px.
+
+            const ladderFontSize = baseFontSize * 0.8;
+            const topLabelFontSize = baseFontSize;
+            const annotationFontSize = baseFontSize * 0.9;
+            const annotationLineHeight = annotationFontSize * 1.4;
+
+            // Define layout constants relative to the font size.
+            const PADDING = baseFontSize * 2;
+            const LADDER_AREA_WIDTH = baseFontSize * 6;
+            const TOP_LABEL_AREA_HEIGHT = baseFontSize * 8;
+
+            // Get annotation text and date toggle state
+            const annotationText = document.getElementById('annotationText').value.trim();
+            const includeDate = document.getElementById('dateToggle').checked;
+
+            // Create a temporary canvas to measure annotation height
+            const tempCtx = document.createElement('canvas').getContext('2d');
+            tempCtx.font = `${annotationFontSize}px sans-serif`;
+            const lines = annotationText ? wrapText(tempCtx, annotationText, imagePreview.naturalWidth) : [];
+            const annotationHeight = annotationText ? (lines.length * annotationLineHeight) + PADDING : 0;
+
+            // Define final LOGICAL canvas dimensions
+            const canvasWidth = LADDER_AREA_WIDTH + imagePreview.naturalWidth + PADDING;
+            const canvasHeight = TOP_LABEL_AREA_HEIGHT + imagePreview.naturalHeight + annotationHeight;
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // --- HIGH-DPI FIX for Blurry Text ---
+            // Force at least a 2x scale factor for sharpness, and use the device's ratio if it's higher.
+            const dpr = Math.max(2, window.devicePixelRatio || 1);
+            // Set the PHYSICAL canvas size (higher resolution)
+            canvas.width = canvasWidth * dpr;
+            canvas.height = canvasHeight * dpr;
+            // Scale the context to draw everything at the higher resolution
+            ctx.scale(dpr, dpr);
+
+            // --- NEW: Disable image smoothing for sharper rendering ---
+            ctx.imageSmoothingEnabled = false;
+
+
+            // 1. Draw background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight); // Use logical dimensions for drawing
+
+            // 2. Draw the cropped image
+            const imageX = LADDER_AREA_WIDTH;
+            const imageY = TOP_LABEL_AREA_HEIGHT;
+            ctx.drawImage(imagePreview, imageX, imageY);
+
+            // 3. Draw vertical ladder labels
+            const ladderContainer = document.getElementById('ladderLabelsContainer');
+            const ladderContainerHeight = ladderContainer.offsetHeight; // Get the actual height from the preview
+            const ladderMarkers = document.querySelectorAll('.ladder-label-marker');
+            ctx.font = `${ladderFontSize}px sans-serif`;
+            ctx.fillStyle = 'black';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle'; // Vertically center the text on its Y coordinate
+
+            ladderMarkers.forEach(marker => {
+                // --- BUG FIX: Handle both % and px units for 'top' style ---
+                let markerTopPx;
+                const topStyle = marker.style.top;
+
+                if (topStyle.includes('%')) {
+                    // Initial state: 'top' is in percentage
+                    const topPercent = parseFloat(topStyle) / 100;
+                    markerTopPx = ladderContainerHeight * topPercent;
+                } else {
+                    // Dragged state: 'top' is in pixels
+                    markerTopPx = parseFloat(topStyle);
+                }
+
+                const relativeY = markerTopPx / ladderContainerHeight;
+                const y = imageY + (imagePreview.naturalHeight * relativeY);
+
+                const x = imageX - (baseFontSize * 0.75); // Position relative to font size
+                
+                ctx.fillText(marker.textContent, x, y);
+            });
+
+            // 4. Draw top labels
+            const topLabels = document.querySelectorAll('.preview-label');
+            
+            // Replicate the "scrunch" effect from the preview by applying the same padding.
+            const horizontalPadding = 0.1;
+            const topLabelDrawWidth = imagePreview.naturalWidth * (1 - (horizontalPadding * 2));
+            const topLabelStartX = imageX + (imagePreview.naturalWidth * horizontalPadding);
+
+            ctx.font = `${topLabelFontSize}px sans-serif`;
+            ctx.textAlign = 'left';
+            topLabels.forEach(label => {
+                const leftPercent = parseFloat(label.style.left) / 100;
+                
+                // Calculate position within the new, narrower drawing area.
+                const x = topLabelStartX + (topLabelDrawWidth * leftPercent);
+                const y = imageY - (baseFontSize * 0.75); // Position relative to font size
+
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(-45 * Math.PI / 180);
+                ctx.fillText(label.textContent, 0, 0);
+                ctx.restore();
+            });
+
+            // 5. Draw annotation text (if it exists)
+            if (annotationText) {
+                const annotationY = TOP_LABEL_AREA_HEIGHT + imagePreview.naturalHeight + PADDING;
+                ctx.font = `${annotationFontSize}px sans-serif`;
+                ctx.fillStyle = 'black';
+                ctx.textAlign = 'left';
+                lines.forEach((line, i) => {
+                    ctx.fillText(line, PADDING / 2, annotationY + (i * annotationLineHeight));
+                });
+            }
+
+            // 6. Draw Date (if toggled)
+            if (includeDate) {
+                const dateString = new Date().toLocaleDateString();
+                // Use the same multiplier as the ladder font for consistency.
+                ctx.font = `${baseFontSize * 0.8}px sans-serif`; 
+                ctx.fillStyle = 'black';
+                ctx.textAlign = 'right';
+                // Adjust vertical position to accommodate the larger font.
+                ctx.fillText(dateString, canvasWidth - (PADDING / 2), PADDING / 1.5);
+            }
+
+            // 7. Trigger download
+            const link = document.createElement('a');
+            link.download = 'gel-analysis.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function wrapText(context, text, maxWidth) {
+            const words = text.split(' ');
+            const lines = [];
+            let currentLine = words[0];
+
+            for (let i = 1; i < words.length; i++) {
+                const word = words[i];
+                const width = context.measureText(currentLine + " " + word).width;
+                if (width < maxWidth) {
+                    currentLine += " " + word;
+                } else {
+                    lines.push(currentLine);
+                    currentLine = word;
+                }
+            }
+            lines.push(currentLine);
+            return lines;
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+</body>
+</html>
