@@ -169,6 +169,74 @@
             background: linear-gradient(135deg, #3a7a8a, var(--muted-blue));
         }
 
+        .other-button {
+            background: linear-gradient(135deg, #6a4c93, #9a031e);
+        }
+
+        /* Custom Wells Input */
+        .custom-wells-input {
+            margin-top: 2rem;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .custom-wells-input.show {
+            opacity: 1;
+        }
+
+        .custom-wells-container {
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 400px;
+            margin: 0 auto;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(74, 144, 164, 0.1);
+        }
+
+        .custom-wells-container label {
+            display: block;
+            font-size: 1.1rem;
+            color: var(--primary-black);
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+
+        .custom-wells-container input {
+            width: 100px;
+            padding: 0.75rem;
+            font-size: 1.1rem;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-right: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .custom-wells-container input:focus {
+            outline: none;
+            border-color: var(--muted-blue);
+        }
+
+        .apply-custom-wells-btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--muted-blue);
+            color: var(--pure-white);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 1rem;
+        }
+
+        .apply-custom-wells-btn:hover {
+            background: #3a7a8a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(74, 144, 164, 0.3);
+        }
+
         /* Results Section */
         .results-section {
             display: none; /* Hidden by default */
@@ -308,6 +376,107 @@
 
         input:checked + .date-slider:before {
             transform: translateX(22px);
+        }
+
+        /* Of Interest Container */
+        .of-interest-container {
+            padding: 1rem;
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            max-width: 400px;
+            margin: 1.5rem auto 3rem auto;
+            opacity: 0; /* For fade-in animation */
+        }
+
+        .of-interest-container h3 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--primary-black);
+            text-align: left;
+        }
+
+        .of-interest-input-wrapper {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        #ofInterestValue {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+            background-color: var(--pure-white);
+            transition: border-color 0.3s ease;
+        }
+
+        #ofInterestValue:focus {
+            outline: none;
+            border-color: var(--muted-blue);
+        }
+
+        .add-interest-btn {
+            padding: 0.5rem 1rem;
+            background: var(--muted-blue);
+            color: var(--pure-white);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .add-interest-btn:hover {
+            background: #3a7a8a;
+        }
+
+        .of-interest-toggle-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .of-interest-toggle-label {
+            font-size: 0.9rem;
+            color: var(--primary-black);
+        }
+
+        /* Of Interest Marker (Right side) */
+        .of-interest-marker-container {
+            position: absolute; /* Position inside the preview container */
+            width: 50px;
+            height: 100%; /* Span the full height of the image container */
+            top: 0; /* Start from the top */
+            right: 0; /* Position on the right side */
+            pointer-events: auto; /* Allow mouse interactions */
+        }
+
+        .of-interest-marker {
+            position: absolute;
+            left: 0.5rem; /* Align to the left edge of the right container */
+            transform: translateY(-50%); /* Vertically center the marker on its 'top' position */
+            font-size: 0.6rem;
+            color: var(--primary-black);
+            font-weight: 500;
+            cursor: grab;
+            user-select: none; /* Prevent text selection during drag */
+            padding: 1px 3px;
+            background-color: rgba(255, 220, 220, 0.8); /* Light red background to distinguish from ladder */
+            border-radius: 3px;
+            transition: background-color 0.2s, box-shadow 0.2s, left 0.2s ease-out;
+            border: 1px solid #ff6b6b;
+        }
+
+        .of-interest-marker.dragging {
+            cursor: grabbing;
+            z-index: 10; /* Bring to front while dragging */
+            background-color: rgba(255, 220, 220, 1);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
         /* Layout for 'big' (8 slots) */
@@ -858,11 +1027,22 @@
                 
                 <div class="button-container" id="selection">
                     <button class="selection-button big-button" onclick="handleSelection('big')">
-                        Big
+                        Six
                     </button>
                     <button class="selection-button small-button" onclick="handleSelection('small')">
-                        Small
+                        Ten
                     </button>
+                    <button class="selection-button other-button" onclick="handleSelection('other')">
+                        Other
+                    </button>
+                </div>
+
+                <div id="customWellsInput" class="custom-wells-input" style="display: none;">
+                    <div class="custom-wells-container">
+                        <label for="wellCount">Number of wells (1-20):</label>
+                        <input type="number" id="wellCount" min="1" max="20" value="8" />
+                        <button class="apply-custom-wells-btn" onclick="applyCustomWells()">Apply</button>
+                    </div>
                 </div>
 
             </div>
@@ -893,12 +1073,28 @@
                             <option value="none">None</option>
                             <option value="100bp" selected>100 BP Ladder</option>
                             <option value="1kbp">1K BP Ladder</option>
+                            <option value="protein">Protein Ladder</option>
                         </select>
                     </div>
                     <div class="date-toggle-wrapper">
                         <span class="date-toggle-label">Include Date on Export</span>
                         <label class="date-switch">
                             <input type="checkbox" id="dateToggle">
+                            <span class="date-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="of-interest-container" class="of-interest-container">
+                    <h3>Biomolecule Marker</h3>
+                    <div class="of-interest-input-wrapper">
+                        <input type="text" id="ofInterestValue" placeholder="Enter biomolecule name (e.g., GFP, β-actin)" />
+                        <button class="add-interest-btn" onclick="addOfInterestMarker()">Add Marker</button>
+                    </div>
+                    <div class="of-interest-toggle-wrapper">
+                        <span class="of-interest-toggle-label">Show Marker on Export</span>
+                        <label class="date-switch">
+                            <input type="checkbox" id="ofInterestToggle" checked>
                             <span class="date-slider"></span>
                         </label>
                     </div>
@@ -912,6 +1108,9 @@
                         </div>
                         <div id="ladderLabelsContainer" class="ladder-labels-container">
                             <!-- Vertical ladder labels will be generated here -->
+                        </div>
+                        <div id="ofInterestMarkerContainer" class="of-interest-marker-container">
+                            <!-- Biomolecule marker will be generated here -->
                         </div>
                         <img id="imagePreview" src="#" alt="Image Preview">
                         <button id="removeImageBtn" class="remove-image-btn" title="Remove Image">&times;</button>
@@ -987,6 +1186,7 @@
             const ladderContainer = document.getElementById('ladder-selection-container');
             const annotationSection = document.getElementById('annotationSection');
             const exportSection = document.getElementById('exportSection');
+            const customWellsInput = document.getElementById('customWellsInput');
             
             // Remove previous selections
             buttons.forEach(btn => btn.classList.remove('selected'));
@@ -994,16 +1194,97 @@
             // Add selection animation to clicked button
             event.target.classList.add('selected');
             
+            // Hide custom wells input by default
+            customWellsInput.style.display = 'none';
+            customWellsInput.classList.remove('show');
+            
             // Update content based on selection
             if (size === 'big') {
-                labelSectionTitle.textContent = 'Big Configuration - 6 Slots';
-                labelSectionDescription.textContent = 'Configure your 6 label slots for the big option';
+                labelSectionTitle.textContent = 'Six Wells Configuration';
+                labelSectionDescription.textContent = 'Configure your 6 label slots';
                 generateLabelSlots(6, 'big');
-            } else {
-                labelSectionTitle.textContent = 'Small Configuration - 10 Slots';
-                labelSectionDescription.textContent = 'Configure your 10 label slots for the small option';
+                showResultsSection();
+            } else if (size === 'small') {
+                labelSectionTitle.textContent = 'Ten Wells Configuration';
+                labelSectionDescription.textContent = 'Configure your 10 label slots';
                 generateLabelSlots(10, 'small');
+                showResultsSection();
+            } else if (size === 'other') {
+                labelSectionTitle.textContent = 'Custom Wells Configuration';
+                labelSectionDescription.textContent = 'Specify the number of wells you need';
+                customWellsInput.style.display = 'block';
+                setTimeout(() => {
+                    customWellsInput.classList.add('show');
+                }, 100);
+                return; // Don't show results section yet
             }
+            
+            function showResultsSection() {
+                // Show results section
+                resultsSection.style.display = 'block';
+                document.getElementById('recentLabelsSection').classList.add('show');
+                document.getElementById('imageUploaderSection').classList.add('show');
+                annotationSection.classList.add('show');
+                exportSection.classList.add('show');
+                
+                const ofInterestContainer = document.getElementById('of-interest-container');
+                
+                ladderContainer.style.animationDelay = '0.5s';
+                ladderContainer.classList.add('fade-in');
+                ofInterestContainer.style.animationDelay = '0.55s';
+                ofInterestContainer.classList.add('fade-in');
+                annotationSection.style.animationDelay = '0.6s';
+                annotationSection.classList.add('fade-in');
+                exportSection.style.animationDelay = '0.7s';
+                exportSection.classList.add('fade-in');
+
+                resultsSection.offsetHeight; // Force reflow
+                setTimeout(() => {
+                    resultsSection.classList.add('show');
+                    // Scroll to the results section after it becomes visible
+                    resultsSection.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }, 100);
+            }
+            
+            // Remove selection animation after animation completes
+            const targetElement = event.target;
+            setTimeout(() => {
+                targetElement.classList.remove('selected');
+            }, 1000);
+        }
+
+        // Apply custom well count
+        function applyCustomWells() {
+            const wellCount = parseInt(document.getElementById('wellCount').value);
+            const customWellsInput = document.getElementById('customWellsInput');
+            const resultsSection = document.getElementById('results');
+            const labelSectionTitle = document.getElementById('label-section-title');
+            const labelSectionDescription = document.getElementById('label-section-description');
+            const ladderContainer = document.getElementById('ladder-selection-container');
+            const annotationSection = document.getElementById('annotationSection');
+            const exportSection = document.getElementById('exportSection');
+            
+            if (wellCount < 1 || wellCount > 20) {
+                alert('Please enter a number between 1 and 20');
+                return;
+            }
+            
+            // Hide custom input
+            customWellsInput.classList.remove('show');
+            setTimeout(() => {
+                customWellsInput.style.display = 'none';
+            }, 300);
+            
+            // Update labels and generate slots
+            labelSectionTitle.textContent = `Custom Configuration - ${wellCount} Wells`;
+            labelSectionDescription.textContent = `Configure your ${wellCount} label slots`;
+            
+            // Determine layout type based on well count
+            const layoutType = wellCount <= 8 ? 'big' : 'small';
+            generateLabelSlots(wellCount, layoutType);
             
             // Show results section
             resultsSection.style.display = 'block';
@@ -1012,8 +1293,12 @@
             annotationSection.classList.add('show');
             exportSection.classList.add('show');
             
+            const ofInterestContainer = document.getElementById('of-interest-container');
+            
             ladderContainer.style.animationDelay = '0.5s';
             ladderContainer.classList.add('fade-in');
+            ofInterestContainer.style.animationDelay = '0.55s';
+            ofInterestContainer.classList.add('fade-in');
             annotationSection.style.animationDelay = '0.6s';
             annotationSection.classList.add('fade-in');
             exportSection.style.animationDelay = '0.7s';
@@ -1028,11 +1313,6 @@
                     block: 'start'
                 });
             }, 100);
-            
-            // Remove selection animation after animation completes
-            setTimeout(() => {
-                event.target.classList.remove('selected');
-            }, 1000);
         }
 
         // Generate label slots dynamically
@@ -1088,6 +1368,8 @@
                 ladderMarkers = ['1,500', '1,000', '900', '800', '700', '600', '500', '400', '300', '200', '100'];
             } else if (selection === '1kbp') {
                 ladderMarkers = ['25,000', '10,000', '8,000', '6,000', '5,000', '4,000', '3,000', '2,500', '2,000', '1,500', '1,000', '750', '500', '250'];
+            } else if (selection === 'protein') {
+                ladderMarkers = ['245', '180', '135', '100', '75','63' , '48', '35', '25', '20', '17', '11'];
             }
 
             // Generate markers from top to bottom
@@ -1123,6 +1405,61 @@
                 const halfMarkerHeight = marker.offsetHeight / 2;
                 const minTop = halfMarkerHeight;
                 const maxTop = container.offsetHeight - halfMarkerHeight;
+                newTop = Math.max(minTop, Math.min(newTop, maxTop));
+                marker.style.top = `${newTop}px`;
+            };
+
+            const stopDrag = () => {
+                marker.classList.remove('dragging');
+                document.removeEventListener('mousemove', doDrag);
+                document.removeEventListener('mouseup', stopDrag);
+            };
+
+            document.addEventListener('mousemove', doDrag);
+            document.addEventListener('mouseup', stopDrag);
+        }
+
+        // ===== OF INTEREST LOGIC =====
+        function addOfInterestMarker() {
+            const value = document.getElementById('ofInterestValue').value.trim();
+            if (!value) {
+                alert('Please enter a biomolecule name for the marker.');
+                return;
+            }
+
+            const container = document.getElementById('ofInterestMarkerContainer');
+            container.innerHTML = ''; // Clear any existing marker
+
+            const markerDiv = document.createElement('div');
+            markerDiv.className = 'of-interest-marker';
+            markerDiv.textContent = value;
+
+            // Set initial position at 50% (middle)
+            markerDiv.style.top = '50%';
+
+            // Add drag handler using the same logic as ladder markers
+            markerDiv.addEventListener('mousedown', (e) => startOfInterestDrag(e, markerDiv, container));
+
+            container.appendChild(markerDiv);
+        }
+
+        function startOfInterestDrag(event, marker, container) {
+            event.preventDefault();
+            marker.classList.add('dragging');
+
+            const initialMouseY = event.clientY;
+            const initialTop = marker.offsetTop;
+
+            const doDrag = (moveEvent) => {
+                const deltaY = moveEvent.clientY - initialMouseY;
+                let newTop = initialTop + deltaY;
+
+                // Allow dragging across the full vertical span of the image
+                // Use minimal constraints to allow full image height movement
+                const halfMarkerHeight = marker.offsetHeight / 2;
+                const minTop = 0; // Allow to go to the very top of the image
+                const maxTop = container.offsetHeight - marker.offsetHeight; // Allow to go to the very bottom
+                
                 newTop = Math.max(minTop, Math.min(newTop, maxTop));
                 marker.style.top = `${newTop}px`;
             };
@@ -1490,6 +1827,21 @@
         // Add entrance animation delay for buttons and setup listeners
         window.addEventListener('load', () => {
             setupImageUploader();
+            
+            // Add Enter key support for custom wells input
+            document.getElementById('wellCount').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    applyCustomWells();
+                }
+            });
+            
+            // Add Enter key support for of interest input
+            document.getElementById('ofInterestValue').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addOfInterestMarker();
+                }
+            });
+            
             setTimeout(() => {
                 document.querySelectorAll('.selection-button').forEach((button, index) => {
                     button.style.animationDelay = `${index * 0.2}s`;
@@ -1506,21 +1858,96 @@
                 return;
             }
 
-            // --- DYNAMIC FONT & LAYOUT CALCULATION ---
-            // Use a more aggressive linear scale with a lower minimum clamp to handle small images.
+            // --- IMPROVED DYNAMIC FONT & LAYOUT CALCULATION ---
+            // Get canvas dimensions for proper scaling context
+            const imgWidth = imagePreview.naturalWidth;
             const imgHeight = imagePreview.naturalHeight;
-            const rawFontSize = imgHeight / 50; // More aggressive linear scaling.
-            const baseFontSize = Math.max(6, Math.min(rawFontSize, 70)); // Clamp between 6px and 70px.
+            const canvasArea = imgWidth * imgHeight;
+            const canvasAspectRatio = imgWidth / imgHeight;
+            
+            // Calculate base font size using a more sophisticated approach
+            // Base on both dimensions, not just height, and use square root for better scaling
+            const areaBasedSize = Math.sqrt(canvasArea) / 40; // Base size from total area
+            const dimensionBasedSize = Math.min(imgWidth / 40, imgHeight / 25); // Based on individual dimensions
+            const hybridSize = (areaBasedSize + dimensionBasedSize) / 2; // Combine both approaches
+            
+            // Apply aspect ratio correction (wider images need slightly smaller fonts)
+            const aspectRatioCorrection = canvasAspectRatio > 2 ? 0.85 : canvasAspectRatio < 0.5 ? 1.15 : 1;
+            const correctedSize = hybridSize * aspectRatioCorrection;
+            
+            // Use standardized font sizes for scientific presentations
+            // Based on research: 8-12pt fonts are optimal for scientific figures
+            // These ensure readability across different display contexts
+            const baseFontSize = 32;        // 8pt equivalent at 300 DPI
+            const ladderFontSize = 36;      // 9pt equivalent - BOLD and BIGGER ladder markers  
+            const topLabelFontSize = 48;    // 12pt equivalent - LARGER and BOLD for well labels
+            const annotationFontSize = 32;  // 8pt equivalent - for annotations
+            const annotationLineHeight = annotationFontSize * 1.5;
 
-            const ladderFontSize = baseFontSize * 0.8;
-            const topLabelFontSize = baseFontSize;
-            const annotationFontSize = baseFontSize * 0.9;
-            const annotationLineHeight = annotationFontSize * 1.4;
+            // Calculate dynamic label area height based on actual label lengths
+            const previewLabels = document.querySelectorAll('.preview-label');
+            let maxLabelHeight = topLabelFontSize * 2; // Minimum height
+            
+            if (previewLabels.length > 0) {
+                const tempLabelCtx = document.createElement('canvas').getContext('2d');
+                tempLabelCtx.font = `bold ${topLabelFontSize}px sans-serif`;
+                
+                previewLabels.forEach(label => {
+                    if (label.textContent.trim()) {
+                        // Calculate diagonal extent of each label
+                        const textWidth = tempLabelCtx.measureText(label.textContent).width;
+                        const diagonalHeight = Math.sin(Math.PI / 4) * textWidth; // 45° rotation
+                        const totalHeight = diagonalHeight + topLabelFontSize; // Add font height
+                        maxLabelHeight = Math.max(maxLabelHeight, totalHeight);
+                    }
+                });
+                
+                // Add some padding
+                maxLabelHeight += topLabelFontSize * 0.5;
+            }
 
             // Define layout constants relative to the font size.
             const PADDING = baseFontSize * 2;
             const LADDER_AREA_WIDTH = baseFontSize * 6;
-            const TOP_LABEL_AREA_HEIGHT = baseFontSize * 8;
+            const TOP_LABEL_AREA_HEIGHT = maxLabelHeight; // Use calculated dynamic height
+            
+            // Helper function to get optimal font size for text fitting
+            function getOptimalFontSize(ctx, text, maxWidth, maxHeight, baseFontSize, isPresentation = true) {
+                if (isPresentation) {
+                    // For presentation quality, use standardized sizes based on scientific publication standards
+                    // Research shows 8-12pt fonts are optimal for scientific figures
+                    // These sizes ensure readability for presentations and publications
+                    const presentationSizes = [48, 42, 36, 32, 28, 24, 20, 16, 14, 12]; // Ordered largest to smallest
+                    
+                    for (let fontSize of presentationSizes) {
+                        ctx.font = `${fontSize}px sans-serif`;
+                        const metrics = ctx.measureText(text);
+                        
+                        if (metrics.width <= maxWidth && fontSize <= maxHeight) {
+                            return fontSize;
+                        }
+                    }
+                    // Return minimum readable size for presentations
+                    return 12;
+                }
+                
+                // Fallback for dynamic sizing (original behavior)
+                let fontSize = baseFontSize;
+                ctx.font = `${fontSize}px sans-serif`;
+                let metrics = ctx.measureText(text);
+                
+                // Scale down if text is too wide
+                while (metrics.width > maxWidth && fontSize > 6) {
+                    fontSize *= 0.9;
+                    ctx.font = `${fontSize}px sans-serif`;
+                    metrics = ctx.measureText(text);
+                }
+                
+                // Ensure font doesn't get too small relative to base size
+                fontSize = Math.max(fontSize, baseFontSize * 0.5);
+                
+                return fontSize;
+            }
 
             // Get annotation text and date toggle state
             const annotationText = document.getElementById('annotationText').value.trim();
@@ -1532,8 +1959,20 @@
             const lines = annotationText ? wrapText(tempCtx, annotationText, imagePreview.naturalWidth) : [];
             const annotationHeight = annotationText ? (lines.length * annotationLineHeight) + PADDING : 0;
 
+            // Calculate biomolecule marker space needed on the right
+            const ofInterestToggle = document.getElementById('ofInterestToggle').checked;
+            const ofInterestMarker = document.querySelector('.of-interest-marker');
+            let biomoleculeMarkerWidth = 0;
+            
+            if (ofInterestToggle && ofInterestMarker) {
+                // Estimate width needed for biomolecule marker text
+                const tempCtx = document.createElement('canvas').getContext('2d');
+                tempCtx.font = `bold ${topLabelFontSize}px sans-serif`; // Use larger font size
+                biomoleculeMarkerWidth = tempCtx.measureText(ofInterestMarker.textContent).width + (baseFontSize * 2); // More spacing
+            }
+
             // Define final LOGICAL canvas dimensions
-            const canvasWidth = LADDER_AREA_WIDTH + imagePreview.naturalWidth + PADDING;
+            const canvasWidth = LADDER_AREA_WIDTH + imagePreview.naturalWidth + biomoleculeMarkerWidth + PADDING;
             const canvasHeight = TOP_LABEL_AREA_HEIGHT + imagePreview.naturalHeight + annotationHeight;
 
             const canvas = document.createElement('canvas');
@@ -1565,7 +2004,9 @@
             const ladderContainer = document.getElementById('ladderLabelsContainer');
             const ladderContainerHeight = ladderContainer.offsetHeight; // Get the actual height from the preview
             const ladderMarkers = document.querySelectorAll('.ladder-label-marker');
-            ctx.font = `${ladderFontSize}px sans-serif`;
+            const ladderType = document.getElementById('ladderType').value; // Get current ladder type
+            
+            ctx.font = `bold ${ladderFontSize}px sans-serif`;
             ctx.fillStyle = 'black';
             ctx.textAlign = 'right';
             ctx.textBaseline = 'middle'; // Vertically center the text on its Y coordinate
@@ -1592,6 +2033,57 @@
                 ctx.fillText(marker.textContent, x, y);
             });
 
+            // Draw ladder units at top left corner
+            ctx.font = `bold ${ladderFontSize}px sans-serif`;
+            ctx.fillStyle = 'black';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            
+            let units = '';
+            if (ladderType === '100bp' || ladderType === '1kbp') {
+                units = 'bp';
+            } else if (ladderType === 'protein') {
+                units = 'kDa';
+            }
+            
+            if (units) {
+                ctx.fillText(units, PADDING / 2, PADDING / 2);
+            }
+
+            // 3.5. Draw biomolecule marker on the right side (if enabled)
+            if (ofInterestToggle && ofInterestMarker) {
+                const ofInterestContainer = document.getElementById('ofInterestMarkerContainer');
+                const imagePreviewElement = document.getElementById('imagePreview');
+                
+                ctx.font = `bold ${topLabelFontSize}px sans-serif`; // Use larger font for biomolecule marker
+                ctx.fillStyle = '#ff6b6b'; // Use the same color as the marker border
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+
+                // Get the exact positioning from the preview
+                let markerTopPx;
+                const topStyle = ofInterestMarker.style.top;
+
+                if (topStyle.includes('%')) {
+                    const topPercent = parseFloat(topStyle) / 100;
+                    // Use the displayed image height, not the container height
+                    markerTopPx = imagePreviewElement.offsetHeight * topPercent;
+                } else {
+                    markerTopPx = parseFloat(topStyle);
+                }
+
+                // Calculate the relative position using the DISPLAYED image height
+                const relativeY = markerTopPx / imagePreviewElement.offsetHeight;
+                
+                // Apply this relative position to the NATURAL image height in export
+                const y = imageY + (imagePreview.naturalHeight * relativeY);
+
+                // Position on the right side of the image with proper spacing
+                const x = imageX + imagePreview.naturalWidth + (baseFontSize * 1.5);
+                
+                ctx.fillText(ofInterestMarker.textContent, x, y);
+            }
+
             // 4. Draw top labels
             const topLabels = document.querySelectorAll('.preview-label');
             
@@ -1600,14 +2092,16 @@
             const topLabelDrawWidth = imagePreview.naturalWidth * (1 - (horizontalPadding * 2));
             const topLabelStartX = imageX + (imagePreview.naturalWidth * horizontalPadding);
 
-            ctx.font = `${topLabelFontSize}px sans-serif`;
+            ctx.font = `bold ${topLabelFontSize}px sans-serif`;
+            ctx.fillStyle = 'black'; // Reset fill style to black for top labels
             ctx.textAlign = 'left';
+            ctx.textBaseline = 'bottom'; // Ensure labels don't extend above their position
             topLabels.forEach(label => {
                 const leftPercent = parseFloat(label.style.left) / 100;
                 
                 // Calculate position within the new, narrower drawing area.
                 const x = topLabelStartX + (topLabelDrawWidth * leftPercent);
-                const y = imageY - (baseFontSize * 0.75); // Position relative to font size
+                const y = imageY - (topLabelFontSize * 0.5); // Better clearance with bottom baseline
 
                 ctx.save();
                 ctx.translate(x, y);
@@ -1630,8 +2124,8 @@
             // 6. Draw Date (if toggled)
             if (includeDate) {
                 const dateString = new Date().toLocaleDateString();
-                // Use the same multiplier as the ladder font for consistency.
-                ctx.font = `${baseFontSize * 0.8}px sans-serif`; 
+                // Use larger font for better readability
+                ctx.font = `bold ${baseFontSize}px sans-serif`; 
                 ctx.fillStyle = 'black';
                 ctx.textAlign = 'right';
                 // Adjust vertical position to accommodate the larger font.
