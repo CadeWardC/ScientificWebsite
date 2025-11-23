@@ -282,6 +282,24 @@
             opacity: 0; /* For fade-in animation */
         }
 
+        /* New wrapper for side-by-side layout */
+        .configuration-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+            max-width: 900px;
+            margin: 1.5rem auto 3rem auto;
+        }
+
+        .configuration-row .ladder-selection-container,
+        .configuration-row .of-interest-container {
+            margin: 0; /* Reset margins when inside the row */
+            flex: 1;
+            min-width: 300px;
+            max-width: 450px;
+        }
+
         .ladder-selection-container h3 {
             font-size: 1.1rem;
             margin-bottom: 1rem;
@@ -1066,42 +1084,65 @@
                     </div>
                 </div>
 
-                <div id="ladder-selection-container" class="ladder-selection-container">
-                    <h3>Ladder Type</h3>
-                    <div class="select-wrapper">
-                        <select id="ladderType" name="ladderType">
-                            <option value="none">None</option>
-                            <option value="100bp" selected>100 BP Ladder</option>
-                            <option value="1kbp">1K BP Ladder</option>
-                            <option value="protein">Protein Ladder</option>
-                        </select>
+                <div class="configuration-row">
+                    <div id="ladder-selection-container" class="ladder-selection-container">
+                        <h3>Ladder Type</h3>
+                        <div class="select-wrapper">
+                            <select id="ladderType" name="ladderType">
+                                <option value="none">None</option>
+                                <option value="100bp" selected>100 BP Ladder</option>
+                                <option value="1kbp">1K BP Ladder</option>
+                                <option value="protein">Protein Ladder</option>
+                            </select>
+                        </div>
+                        <div class="date-toggle-wrapper">
+                            <span class="date-toggle-label">Include Date on Export</span>
+                            <label class="date-switch">
+                                <input type="checkbox" id="dateToggle">
+                                <span class="date-slider"></span>
+                            </label>
+                        </div>
                     </div>
-                    <div class="date-toggle-wrapper">
-                        <span class="date-toggle-label">Include Date on Export</span>
-                        <label class="date-switch">
-                            <input type="checkbox" id="dateToggle">
-                            <span class="date-slider"></span>
-                        </label>
-                    </div>
-                </div>
 
-                <div id="of-interest-container" class="of-interest-container">
-                    <h3>Biomolecule Marker</h3>
-                    <div class="of-interest-input-wrapper">
-                        <input type="text" id="ofInterestValue" placeholder="Enter biomolecule name (e.g., GFP, β-actin)" />
-                        <button class="add-interest-btn" onclick="addOfInterestMarker()">Add Marker</button>
-                    </div>
-                    <div class="of-interest-toggle-wrapper">
-                        <span class="of-interest-toggle-label">Show Marker on Export</span>
-                        <label class="date-switch">
-                            <input type="checkbox" id="ofInterestToggle" checked>
-                            <span class="date-slider"></span>
-                        </label>
+                    <div id="of-interest-container" class="of-interest-container">
+                        <h3>Biomolecule Marker</h3>
+                        <div class="of-interest-input-wrapper">
+                            <input type="text" id="ofInterestValue" placeholder="Enter biomolecule name (e.g., GFP, β-actin)" />
+                            <button class="add-interest-btn" onclick="addOfInterestMarker()">Add Marker</button>
+                        </div>
+                        <div class="of-interest-toggle-wrapper">
+                            <span class="of-interest-toggle-label">Show Marker on Export</span>
+                            <label class="date-switch">
+                                <input type="checkbox" id="ofInterestToggle" checked>
+                                <span class="date-slider"></span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
                 <div id="imageUploaderSection" class="image-uploader-section">
                     <h3>Upload Gel Image</h3>
+                    
+                    <div id="imageControls" class="image-controls" style="display: none; margin-bottom: 1rem;">
+                        <div class="date-toggle-wrapper" style="justify-content: center; gap: 1rem; border-top: none; padding-top: 0;">
+                            <span class="date-toggle-label">Split Image</span>
+                            <label class="date-switch">
+                                <input type="checkbox" id="splitImageToggle" onchange="toggleSplitImage()">
+                                <span class="date-slider"></span>
+                            </label>
+                        </div>
+                        <div id="splitSliders" style="display: none; margin-top: 1rem; max-width: 400px; margin-left: auto; margin-right: auto;">
+                            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                                <label for="splitPosition" style="font-size: 0.9rem; min-width: 100px;">Split Position:</label>
+                                <input type="range" id="splitPosition" min="10" max="90" value="50" style="flex: 1;" oninput="updateSplitImage()">
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <label for="splitGap" style="font-size: 0.9rem; min-width: 100px;">Gap Width:</label>
+                                <input type="range" id="splitGap" min="10" max="200" value="50" style="flex: 1;" oninput="updateSplitImage()">
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="imagePreviewContainer" class="image-preview-container" style="display: none;">
                         <div id="previewLabelsContainer" class="preview-labels-container">
                             <!-- Rotated labels will be dynamically generated here -->
@@ -1175,6 +1216,7 @@
         let recentLabels = JSON.parse(localStorage.getItem('gelRecentLabels')) || [];
         const MAX_RECENT_LABELS = 12;
         let cropper = null;
+        let originalCroppedImageSrc = null;
 
         // ===== UI HANDLERS =====
         // Handle button selection
@@ -1743,7 +1785,14 @@
             }
 
             const imagePreview = document.getElementById('imagePreview');
-            imagePreview.src = croppedCanvas.toDataURL('image/png');
+            const imageDataUrl = croppedCanvas.toDataURL('image/png');
+            imagePreview.src = imageDataUrl;
+            originalCroppedImageSrc = imageDataUrl; // Save original for splitting
+            
+            // Reset split toggle
+            const splitToggle = document.getElementById('splitImageToggle');
+            splitToggle.checked = false;
+            document.getElementById('imageControls').style.display = 'block';
             
             imagePreview.onload = () => {
                 // Use requestAnimationFrame to ensure layout is calculated after the image is painted
@@ -1776,10 +1825,72 @@
             document.getElementById('dropZone').style.display = 'block';
             document.getElementById('imageUploadInput').value = ''; // Reset file input
             document.getElementById('exportSection').style.display = 'none'; // Hide export button
+            
+            // Reset split controls
+            document.getElementById('imageControls').style.display = 'none';
+            document.getElementById('splitImageToggle').checked = false;
+            originalCroppedImageSrc = null;
 
             // Reset preview container styles
             const previewContainer = document.getElementById('previewLabelsContainer');
             previewContainer.style.width = 'auto';
+        }
+
+        function toggleSplitImage() {
+            const isSplit = document.getElementById('splitImageToggle').checked;
+            const splitSliders = document.getElementById('splitSliders');
+            
+            if (isSplit) {
+                splitSliders.style.display = 'block';
+                updateSplitImage();
+            } else {
+                splitSliders.style.display = 'none';
+                // Restore original
+                if (originalCroppedImageSrc) {
+                    document.getElementById('imagePreview').src = originalCroppedImageSrc;
+                }
+            }
+        }
+
+        function updateSplitImage() {
+            if (!originalCroppedImageSrc) return;
+            
+            const splitPos = parseInt(document.getElementById('splitPosition').value) / 100;
+            const gapWidth = parseInt(document.getElementById('splitGap').value);
+            const imagePreview = document.getElementById('imagePreview');
+            
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Calculate dimensions
+                const splitX = Math.floor(img.width * splitPos);
+                const leftWidth = splitX;
+                const rightWidth = img.width - splitX;
+                
+                canvas.width = img.width + gapWidth;
+                canvas.height = img.height;
+                
+                // Fill white background
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw left part
+                ctx.drawImage(img, 
+                    0, 0, leftWidth, img.height, // source
+                    0, 0, leftWidth, img.height // dest
+                );
+                
+                // Draw right part
+                ctx.drawImage(img, 
+                    splitX, 0, rightWidth, img.height, // source
+                    leftWidth + gapWidth, 0, rightWidth, img.height // dest
+                );
+                
+                imagePreview.src = canvas.toDataURL('image/png');
+            };
+            img.src = originalCroppedImageSrc;
         }
 
         // ===== GENERAL EVENT LISTENERS =====
@@ -1938,6 +2049,7 @@
                 
                 // Scale down if text is too wide
                 while (metrics.width > maxWidth && fontSize > 6) {
+                   
                     fontSize *= 0.9;
                     ctx.font = `${fontSize}px sans-serif`;
                     metrics = ctx.measureText(text);
@@ -2156,6 +2268,47 @@
             }
             lines.push(currentLine);
             return lines;
+        }
+
+        // Toggle split image view
+        function toggleSplitImage() {
+            const isChecked = document.getElementById('splitImageToggle').checked;
+            const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+            const originalImage = document.getElementById('imagePreview');
+            const splitContainer = document.createElement('div');
+            splitContainer.style.display = 'flex';
+            splitContainer.style.gap = '1rem';
+            splitContainer.style.justifyContent = 'center';
+            splitContainer.style.marginTop = '1rem';
+
+            if (isChecked) {
+                // Split view: show original and cropped side by side
+                const croppedImage = originalImage.cloneNode();
+                croppedImage.id = 'croppedImagePreview';
+                croppedImage.style.width = '100%';
+                croppedImage.style.maxWidth = '400px';
+                croppedImage.style.objectFit = 'contain';
+                croppedImage.style.borderRadius = '8px';
+                croppedImage.style.border = '1px solid var(--border-color)';
+
+                // Set the source of the cropped image
+                const cropperInstance = cropper;
+                if (cropperInstance) {
+                    const croppedCanvas = cropperInstance.getCroppedCanvas();
+                    if (croppedCanvas) {
+                        croppedImage.src = croppedCanvas.toDataURL('image/png');
+                    }
+                }
+
+                splitContainer.appendChild(originalImage);
+                splitContainer.appendChild(croppedImage);
+                imagePreviewContainer.innerHTML = ''; // Clear previous content
+                imagePreviewContainer.appendChild(splitContainer);
+            } else {
+                // Single view: show only the original image
+                imagePreviewContainer.innerHTML = '';
+                imagePreviewContainer.appendChild(originalImage);
+            }
         }
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
