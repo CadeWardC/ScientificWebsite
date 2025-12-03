@@ -812,6 +812,94 @@
             max-height: 100%;
         }
 
+        /* Splitter Modal Styles */
+        .splitter-container {
+            position: relative;
+            flex-grow: 1;
+            overflow: auto;
+            margin-bottom: 1.5rem;
+            user-select: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+            padding: 10px;
+        }
+
+        #imageToSplit {
+            max-width: 100%;
+            max-height: 60vh;
+            display: block;
+        }
+
+        #splitterLinesOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .splitter-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: rgba(255, 0, 0, 0.7);
+            cursor: col-resize;
+            pointer-events: auto;
+            z-index: 10;
+            transform: translateX(-50%);
+        }
+        
+        .splitter-line:hover, .splitter-line.dragging {
+            background-color: rgba(255, 0, 0, 1);
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        .splitter-segment {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            background-color: rgba(0, 255, 0, 0.1);
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: transparent;
+            pointer-events: auto;
+        }
+
+        .splitter-segment:hover {
+            background-color: rgba(0, 255, 0, 0.3);
+            color: white;
+            text-shadow: 0 0 3px black;
+        }
+
+        .splitter-segment.removed {
+            background-color: rgba(50, 50, 50, 0.7);
+            background-image: repeating-linear-gradient(
+                45deg,
+                rgba(0, 0, 0, 0.1),
+                rgba(0, 0, 0, 0.1) 10px,
+                rgba(50, 50, 50, 0.1) 10px,
+                rgba(50, 50, 50, 0.1) 20px
+            );
+        }
+        
+        .splitter-segment.removed::after {
+            content: "REMOVED";
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: bold;
+            text-shadow: 0 0 3px black;
+            transform: rotate(-45deg);
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+        }
+
         .modal-actions {
             display: flex;
             justify-content: center;
@@ -1131,16 +1219,6 @@
                                 <span class="date-slider"></span>
                             </label>
                         </div>
-                        <div id="splitSliders" style="display: none; margin-top: 1rem; max-width: 400px; margin-left: auto; margin-right: auto;">
-                            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
-                                <label for="splitPosition" style="font-size: 0.9rem; min-width: 100px;">Split Position:</label>
-                                <input type="range" id="splitPosition" min="10" max="90" value="50" style="flex: 1;" oninput="updateSplitImage()">
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 1rem;">
-                                <label for="splitGap" style="font-size: 0.9rem; min-width: 100px;">Gap Width:</label>
-                                <input type="range" id="splitGap" min="10" max="200" value="50" style="flex: 1;" oninput="updateSplitImage()">
-                            </div>
-                        </div>
                     </div>
 
                     <div id="imagePreviewContainer" class="image-preview-container" style="display: none;">
@@ -1190,6 +1268,24 @@
         </div>
     </div>
 
+    <!-- Splitter Modal -->
+    <div id="splitterModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Separate Wells</h2>
+            <p>Adjust the vertical lines to separate your wells.</p>
+            <div class="splitter-container" id="splitterContainer">
+                <div style="position: relative; display: inline-block;">
+                    <img id="imageToSplit" alt="Image to split">
+                    <div id="splitterLinesOverlay"></div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="applySplitBtn" class="choose-file-btn">Apply Split</button>
+                <button id="cancelSplitBtn" class="choose-file-btn secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <footer id="contact">
         <div class="container">
             <div class="footer-content">
@@ -1217,6 +1313,7 @@
         const MAX_RECENT_LABELS = 12;
         let cropper = null;
         let originalCroppedImageSrc = null;
+        let currentWellCount = 0; // Track the number of wells
 
         // ===== UI HANDLERS =====
         // Handle button selection
@@ -1242,11 +1339,13 @@
             
             // Update content based on selection
             if (size === 'big') {
+                currentWellCount = 6;
                 labelSectionTitle.textContent = 'Six Wells Configuration';
                 labelSectionDescription.textContent = 'Configure your 6 label slots';
                 generateLabelSlots(6, 'big');
                 showResultsSection();
             } else if (size === 'small') {
+                currentWellCount = 10;
                 labelSectionTitle.textContent = 'Ten Wells Configuration';
                 labelSectionDescription.textContent = 'Configure your 10 label slots';
                 generateLabelSlots(10, 'small');
@@ -1314,6 +1413,8 @@
                 return;
             }
             
+            currentWellCount = wellCount;
+
             // Hide custom input
             customWellsInput.classList.remove('show');
             setTimeout(() => {
@@ -1553,7 +1654,9 @@
                 }
 
                 // --- Adjust Top Labels ---
-                const horizontalPadding = 0.10; // 10% padding on each side
+                // If split mode is active (activeWellPositions is set), use 0 padding to align with exact segments
+                const horizontalPadding = activeWellPositions ? 0 : 0.10; 
+                
                 const finalWidth = renderedImageWidth * (1 - (horizontalPadding * 2));
                 const finalOffset = imageOffsetLeft + (renderedImageWidth * horizontalPadding);
                 previewContainer.style.width = `${finalWidth}px`;
@@ -1589,15 +1692,44 @@
                 const labelDiv = document.createElement('div');
                 labelDiv.className = 'preview-label';
                 labelDiv.textContent = labelText || '\u00A0';
+                
+                const slotContainer = input.closest('.label-slot');
 
                 // Calculate the horizontal position for each label's starting point.
                 let leftPercentage = 0;
-                if (numLabels > 1) {
-                    // This ensures the starting points are always equally spaced.
-                    leftPercentage = (index / (numLabels - 1)) * 100;
+                
+                if (activeWellPositions) {
+                    // Use custom positions from split logic
+                    const pos = activeWellPositions.find(p => p.index === index);
+                    if (pos) {
+                        leftPercentage = pos.centerPercent * 100;
+                        labelDiv.style.display = 'block';
+                        if (slotContainer) slotContainer.style.display = 'flex';
+                    } else {
+                        // Hide label if its corresponding well was removed
+                        labelDiv.style.display = 'none';
+                        if (slotContainer) slotContainer.style.display = 'none';
+                    }
+                } else {
+                    // Default equal spacing
+                    if (slotContainer) slotContainer.style.display = 'flex';
+
+                    if (numLabels > 1) {
+                        leftPercentage = (index / (numLabels - 1)) * 100;
+                    }
                 }
                 
                 labelDiv.style.left = `${leftPercentage}%`;
+                
+                // Add click handler to focus the input
+                labelDiv.addEventListener('click', () => {
+                    input.focus();
+                    // Highlight the input temporarily
+                    input.parentElement.classList.add('active');
+                    setTimeout(() => {
+                        input.parentElement.classList.remove('active');
+                    }, 1000);
+                });
 
                 previewContainer.appendChild(labelDiv);
             });
@@ -1838,59 +1970,44 @@
 
         function toggleSplitImage() {
             const isSplit = document.getElementById('splitImageToggle').checked;
-            const splitSliders = document.getElementById('splitSliders');
-            
-            if (isSplit) {
-                splitSliders.style.display = 'block';
-                updateSplitImage();
-            } else {
-                splitSliders.style.display = 'none';
-                // Restore original
-                if (originalCroppedImageSrc) {
-                    document.getElementById('imagePreview').src = originalCroppedImageSrc;
-                }
-            }
-        }
-
-        function updateSplitImage() {
-            if (!originalCroppedImageSrc) return;
-            
-            const splitPos = parseInt(document.getElementById('splitPosition').value) / 100;
-            const gapWidth = parseInt(document.getElementById('splitGap').value);
             const imagePreview = document.getElementById('imagePreview');
             
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                
-                // Calculate dimensions
-                const splitX = Math.floor(img.width * splitPos);
-                const leftWidth = splitX;
-                const rightWidth = img.width - splitX;
-                
-                canvas.width = img.width + gapWidth;
-                canvas.height = img.height;
-                
-                // Fill white background
-                ctx.fillStyle = 'white';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                // Draw left part
-                ctx.drawImage(img, 
-                    0, 0, leftWidth, img.height, // source
-                    0, 0, leftWidth, img.height // dest
-                );
-                
-                // Draw right part
-                ctx.drawImage(img, 
-                    splitX, 0, rightWidth, img.height, // source
-                    leftWidth + gapWidth, 0, rightWidth, img.height // dest
-                );
-                
-                imagePreview.src = canvas.toDataURL('image/png');
-            };
-            img.src = originalCroppedImageSrc;
+            if (!originalCroppedImageSrc) return;
+            
+            if (isSplit) {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    // Gap size relative to image width (e.g., 5%)
+                    const gap = Math.round(img.width * 0.05); 
+                    
+                    canvas.width = img.width + gap;
+                    canvas.height = img.height;
+                    
+                    // Fill white background
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Draw left half
+                    ctx.drawImage(img, 
+                        0, 0, img.width / 2, img.height, // source
+                        0, 0, img.width / 2, img.height // dest
+                    );
+                    
+                    // Draw right half
+                    ctx.drawImage(img, 
+                        img.width / 2, 0, img.width / 2, img.height, // source
+                        (img.width / 2) + gap, 0, img.width / 2, img.height // dest
+                    );
+                    
+                    imagePreview.src = canvas.toDataURL('image/png');
+                };
+                img.src = originalCroppedImageSrc;
+            } else {
+                // Restore original
+                imagePreview.src = originalCroppedImageSrc;
+            }
         }
 
         // ===== GENERAL EVENT LISTENERS =====
@@ -2049,7 +2166,6 @@
                 
                 // Scale down if text is too wide
                 while (metrics.width > maxWidth && fontSize > 6) {
-                   
                     fontSize *= 0.9;
                     ctx.font = `${fontSize}px sans-serif`;
                     metrics = ctx.measureText(text);
@@ -2197,10 +2313,13 @@
             }
 
             // 4. Draw top labels
-            const topLabels = document.querySelectorAll('.preview-label');
+            // Only select visible labels (handles removed segments)
+            const topLabels = Array.from(document.querySelectorAll('.preview-label')).filter(label => label.style.display !== 'none');
             
             // Replicate the "scrunch" effect from the preview by applying the same padding.
-            const horizontalPadding = 0.1;
+            // If split mode is active, remove padding
+            const horizontalPadding = activeWellPositions ? 0 : 0.1;
+            
             const topLabelDrawWidth = imagePreview.naturalWidth * (1 - (horizontalPadding * 2));
             const topLabelStartX = imageX + (imagePreview.naturalWidth * horizontalPadding);
 
@@ -2212,6 +2331,8 @@
                 const leftPercent = parseFloat(label.style.left) / 100;
                 
                 // Calculate position within the new, narrower drawing area.
+                // Note: If split is active, leftPercent is already relative to the full width (including gaps)
+                // but the preview container applies padding. We need to map the percentage to the padded area.
                 const x = topLabelStartX + (topLabelDrawWidth * leftPercent);
                 const y = imageY - (topLabelFontSize * 0.5); // Better clearance with bottom baseline
 
@@ -2270,45 +2391,239 @@
             return lines;
         }
 
+        // Splitter Logic Variables
+        let splitterLines = [];
+        let splitterSegments = [];
+        let activeSplitterLine = null;
+        let activeWellPositions = null; // Stores { index, centerPercent } for active wells
+        const SPLIT_GAP = 20; // Width of the white space gap in pixels
+
         // Toggle split image view
         function toggleSplitImage() {
             const isChecked = document.getElementById('splitImageToggle').checked;
-            const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-            const originalImage = document.getElementById('imagePreview');
-            const splitContainer = document.createElement('div');
-            splitContainer.style.display = 'flex';
-            splitContainer.style.gap = '1rem';
-            splitContainer.style.justifyContent = 'center';
-            splitContainer.style.marginTop = '1rem';
-
+            
             if (isChecked) {
-                // Split view: show original and cropped side by side
-                const croppedImage = originalImage.cloneNode();
-                croppedImage.id = 'croppedImagePreview';
-                croppedImage.style.width = '100%';
-                croppedImage.style.maxWidth = '400px';
-                croppedImage.style.objectFit = 'contain';
-                croppedImage.style.borderRadius = '8px';
-                croppedImage.style.border = '1px solid var(--border-color)';
-
-                // Set the source of the cropped image
-                const cropperInstance = cropper;
-                if (cropperInstance) {
-                    const croppedCanvas = cropperInstance.getCroppedCanvas();
-                    if (croppedCanvas) {
-                        croppedImage.src = croppedCanvas.toDataURL('image/png');
-                    }
+                if (!originalCroppedImageSrc) {
+                    alert("Please crop an image first.");
+                    document.getElementById('splitImageToggle').checked = false;
+                    return;
                 }
 
-                splitContainer.appendChild(originalImage);
-                splitContainer.appendChild(croppedImage);
-                imagePreviewContainer.innerHTML = ''; // Clear previous content
-                imagePreviewContainer.appendChild(splitContainer);
+                if (currentWellCount <= 1) {
+                    alert("Please select a well configuration (e.g., 6 or 10 wells) first.");
+                    document.getElementById('splitImageToggle').checked = false;
+                    return;
+                }
+                
+                // Open Splitter Modal
+                document.getElementById('splitterModal').style.display = 'flex';
+                initSplitter();
             } else {
-                // Single view: show only the original image
-                imagePreviewContainer.innerHTML = '';
-                imagePreviewContainer.appendChild(originalImage);
+                // Revert to original cropped image
+                if (originalCroppedImageSrc) {
+                    document.getElementById('imagePreview').src = originalCroppedImageSrc;
+                    activeWellPositions = null; // Reset positions
+                    updateLabelPreview(); // Reset labels
+                }
             }
+        }
+
+        function initSplitter() {
+            const imageToSplit = document.getElementById('imageToSplit');
+            const overlay = document.getElementById('splitterLinesOverlay');
+            
+            imageToSplit.src = originalCroppedImageSrc;
+            overlay.innerHTML = ''; // Clear existing lines
+            splitterLines = [];
+            splitterSegments = [];
+
+            // Wait for image to load to get dimensions
+            imageToSplit.onload = () => {
+                const rect = imageToSplit.getBoundingClientRect();
+                // We need (N-1) lines to separate N wells
+                const numLines = currentWellCount > 1 ? currentWellCount - 1 : 0;
+                
+                // Create segments first (N segments)
+                for (let i = 0; i < currentWellCount; i++) {
+                    const segment = document.createElement('div');
+                    segment.className = 'splitter-segment';
+                    segment.dataset.index = i;
+                    segment.title = "Click to remove this section";
+                    segment.addEventListener('click', function() {
+                        this.classList.toggle('removed');
+                    });
+                    overlay.appendChild(segment);
+                    splitterSegments.push(segment);
+                }
+
+                if (numLines > 0) {
+                    const step = rect.width / currentWellCount;
+
+                    for (let i = 1; i <= numLines; i++) {
+                        const line = document.createElement('div');
+                        line.className = 'splitter-line';
+                        // Initial position
+                        const leftPos = step * i;
+                        line.style.left = `${leftPos}px`;
+                        
+                        line.addEventListener('mousedown', startDragLine);
+                        
+                        overlay.appendChild(line);
+                        splitterLines.push(line);
+                    }
+                }
+                
+                updateSegmentPositions();
+            };
+        }
+
+        function updateSegmentPositions() {
+            const overlay = document.getElementById('splitterLinesOverlay');
+            const rect = overlay.getBoundingClientRect();
+            const width = rect.width;
+            
+            // Get all boundary positions: 0, line1, line2, ..., width
+            const boundaries = [0];
+            splitterLines.forEach(line => {
+                boundaries.push(parseFloat(line.style.left));
+            });
+            boundaries.push(width);
+            
+            // Update each segment
+            splitterSegments.forEach((segment, i) => {
+                if (i < boundaries.length - 1) {
+                    const left = boundaries[i];
+                    const right = boundaries[i+1];
+                    segment.style.left = `${left}px`;
+                    segment.style.width = `${right - left}px`;
+                }
+            });
+        }
+
+        function startDragLine(e) {
+            e.preventDefault();
+            activeSplitterLine = e.target;
+            activeSplitterLine.classList.add('dragging');
+            document.addEventListener('mousemove', dragLine);
+            document.addEventListener('mouseup', stopDragLine);
+        }
+
+        function dragLine(e) {
+            if (!activeSplitterLine) return;
+            
+            const overlay = document.getElementById('splitterLinesOverlay');
+            const rect = overlay.getBoundingClientRect();
+            let x = e.clientX - rect.left;
+            
+            // Constrain within image
+            x = Math.max(0, Math.min(x, rect.width));
+            
+            activeSplitterLine.style.left = `${x}px`;
+            updateSegmentPositions();
+        }
+
+        function stopDragLine() {
+            if (activeSplitterLine) {
+                activeSplitterLine.classList.remove('dragging');
+                activeSplitterLine = null;
+            }
+            document.removeEventListener('mousemove', dragLine);
+            document.removeEventListener('mouseup', stopDragLine);
+        }
+
+        document.getElementById('applySplitBtn').addEventListener('click', applySplit);
+        document.getElementById('cancelSplitBtn').addEventListener('click', cancelSplit);
+
+        function applySplit() {
+            const imageToSplit = document.getElementById('imageToSplit');
+            const overlay = document.getElementById('splitterLinesOverlay');
+            const rect = overlay.getBoundingClientRect();
+            
+            // Get line positions as percentages
+            const splitPositions = splitterLines.map(line => {
+                const left = parseFloat(line.style.left);
+                return left / rect.width;
+            }).sort((a, b) => a - b);
+
+            // Create canvas to draw split image
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const originalWidth = imageToSplit.naturalWidth;
+            const originalHeight = imageToSplit.naturalHeight;
+            
+            // Determine which segments are active
+            const activeSegments = [];
+            let currentBoundary = 0;
+            
+            // Map split positions to original image coordinates
+            const boundaries = [0];
+            splitPositions.forEach(pos => {
+                boundaries.push(Math.floor(pos * originalWidth));
+            });
+            boundaries.push(originalWidth);
+            
+            // Check each segment for "removed" status
+            splitterSegments.forEach((seg, i) => {
+                if (!seg.classList.contains('removed')) {
+                    activeSegments.push({
+                        sourceX: boundaries[i],
+                        width: boundaries[i+1] - boundaries[i],
+                        originalIndex: i
+                    });
+                }
+            });
+
+            // Calculate new width: sum of active widths + gaps
+            const numActive = activeSegments.length;
+            const totalGapWidth = numActive > 1 ? (numActive - 1) * SPLIT_GAP : 0;
+            const totalImageWidth = activeSegments.reduce((sum, seg) => sum + seg.width, 0);
+            
+            canvas.width = totalImageWidth + totalGapWidth;
+            canvas.height = originalHeight;
+            
+            // Fill with white background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            let currentX = 0;
+            activeWellPositions = []; // Reset global positions
+            
+            // Draw active segments
+            activeSegments.forEach((seg, index) => {
+                if (seg.width > 0) {
+                    ctx.drawImage(imageToSplit, seg.sourceX, 0, seg.width, originalHeight, currentX, 0, seg.width, originalHeight);
+                    
+                    // Store center position for labels
+                    const centerX = currentX + (seg.width / 2);
+                    activeWellPositions.push({
+                        index: seg.originalIndex,
+                        centerPercent: centerX / canvas.width
+                    });
+                }
+                
+                // Add gap if not the last one
+                if (index < activeSegments.length - 1) {
+                    currentX += seg.width + SPLIT_GAP;
+                } else {
+                    currentX += seg.width;
+                }
+            });
+            
+            // Update preview
+            document.getElementById('imagePreview').src = canvas.toDataURL('image/png');
+            
+            // Update labels to match new positions
+            updateLabelPreview();
+            
+            // Close modal
+            document.getElementById('splitterModal').style.display = 'none';
+        }
+
+        function cancelSplit() {
+            document.getElementById('splitterModal').style.display = 'none';
+            document.getElementById('splitImageToggle').checked = false;
+            activeWellPositions = null;
         }
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
