@@ -1676,6 +1676,11 @@
                     // If there is no gray area, use the default width and place it on the image.
                     ladderContainer.style.width = '50px';
                 }
+
+                // --- Adjust Biomolecule Marker Container (same as ladder) ---
+                const ofInterestContainer = document.getElementById('ofInterestMarkerContainer');
+                ofInterestContainer.style.height = `${renderedImageHeight}px`;
+                ofInterestContainer.style.top = `${imageOffsetTop + 105}px`; // Same offset as ladder
             }
         }
 
@@ -2288,22 +2293,24 @@
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'middle';
 
+                // Use the same approach as ladder markers
+                const ofInterestContainerHeight = ofInterestContainer.offsetHeight;
+                
                 // Get the exact positioning from the preview
                 let markerTopPx;
                 const topStyle = ofInterestMarker.style.top;
 
                 if (topStyle.includes('%')) {
+                    // Initial state: 'top' is in percentage
                     const topPercent = parseFloat(topStyle) / 100;
-                    // Use the displayed image height, not the container height
-                    markerTopPx = imagePreviewElement.offsetHeight * topPercent;
+                    markerTopPx = ofInterestContainerHeight * topPercent;
                 } else {
+                    // Dragged state: 'top' is in pixels
                     markerTopPx = parseFloat(topStyle);
                 }
 
-                // Calculate the relative position using the DISPLAYED image height
-                const relativeY = markerTopPx / imagePreviewElement.offsetHeight;
-                
-                // Apply this relative position to the NATURAL image height in export
+                // Calculate relative position (same as ladder logic)
+                const relativeY = markerTopPx / ofInterestContainerHeight;
                 const y = imageY + (imagePreview.naturalHeight * relativeY);
 
                 // Position on the right side of the image with proper spacing
