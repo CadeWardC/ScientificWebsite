@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculations - Scientific Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-black: #0a0a0a;
+            --soft-black: #1a1a1a;
+            --pure-white: #ffffff;
+            --off-white: #f8f9fa;
+            --muted-blue: #4a90a4;
+            --light-blue: rgba(74, 144, 164, 0.1);
+            --border-color: rgba(74, 144, 164, 0.2);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--primary-black);
+            background: var(--pure-white);
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-black);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--primary-black);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--muted-blue);
+        }
+
+        /* Dropdown CSS */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: var(--pure-white);
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 8px;
+            padding: 0.5rem 0;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .dropdown-content a {
+            color: var(--primary-black);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            text-align: left;
+        }
+
+        .dropdown-content a:hover {
+            background-color: var(--off-white);
+            color: var(--muted-blue);
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropbtn {
+            cursor: pointer;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding-top: 100px; /* Space for fixed header */
+            min-height: 80vh;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--primary-black);
+        }
+
+        .section-header p {
+            font-size: 1.1rem;
+            color: rgba(10, 10, 10, 0.6);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--soft-black);
+            color: var(--pure-white);
+            padding: 3rem 0;
+            text-align: center;
+            margin-top: 4rem;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            color: var(--muted-blue);
+        }
+
+        .footer-section a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: var(--muted-blue);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 2rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .container {
+                padding: 0 1rem;
+            }
+        }
+
+        /* Tabs */
+        .tabs-container {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            padding: 1rem 2rem;
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--primary-black);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button:hover {
+            border-color: var(--muted-blue);
+            color: var(--muted-blue);
+            transform: translateY(-2px);
+        }
+
+        .tab-button.active {
+            background: var(--muted-blue);
+            color: var(--pure-white);
+            border-color: var(--muted-blue);
+            box-shadow: 0 4px 15px rgba(74, 144, 164, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Calculator Forms */
+        .calc-form {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: var(--soft-black);
+        }
+
+        .form-group input, .form-group select {
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--muted-blue);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .input-group input {
+            flex: 2;
+        }
+
+        .input-group select {
+            flex: 1;
+            min-width: 80px;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+        }
+
+        .calc-btn {
+            padding: 1rem;
+            background: var(--muted-blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 1rem;
+        }
+
+        .calc-btn:hover {
+            background: #3a7a8c;
+        }
+
+        .result-box {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: var(--off-white);
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+
+        .result-box.show {
+            display: block;
+        }
+
+        .result-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--muted-blue);
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <a href="index.html" class="logo">Scientific Tools</a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropbtn">Tools ▾</a>
+                    <div class="dropdown-content">
+                        <a href="gelelectrophoresis.html">Gel Analysis</a>
+                        <a href="sequencer.html">Sequencer</a>
+                        <a href="calculations.html">Calculations</a>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main-content container">
+        <div class="section-header">
+            <h1>Scientific Calculations</h1>
+            <p>Perform common laboratory calculations with ease and precision.</p>
+        </div>
+
+        <div id="calculator-container">
+            <div class="tabs-container">
+                <button class="tab-button active" onclick="openTab('dilution', this)">Dilution Calculation</button>
+                <button class="tab-button" onclick="openTab('molarity', this)">Molarity Calculation</button>
+                <button class="tab-button" onclick="openTab('transfection', this)">Transfection Calculation</button>
+            </div>
+
+            <div id="dilution" class="tab-content active">
+                <h2>Dilution Calculator</h2>
+                <p style="margin-bottom: 1.5rem; color: #666;">Calculate the volume needed to dilute a stock solution to a desired concentration (C1V1 = C2V2).</p>
+                <div class="calc-form">
+                    <div class="form-group">
+                        <label>Final Concentration (C2)</label>
+                        <div class="input-group">
+                            <input type="number" id="dil-c2" placeholder="e.g., 10">
+                            <select id="dil-c2-unit">
+                                <option value="1">M</option>
+                                <option value="1e-3">mM</option>
+                                <option value="1e-6">µM</option>
+                                <option value="1e-9">nM</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Final Volume (V2)</label>
+                        <div class="input-group">
+                            <input type="number" id="dil-v2" placeholder="e.g., 50">
+                            <select id="dil-v2-unit">
+                                <option value="1">L</option>
+                                <option value="1e-3" selected>mL</option>
+                                <option value="1e-6">µL</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Initial Concentration (C1)</label>
+                        <div class="input-group">
+                            <input type="number" id="dil-c1" placeholder="e.g., 100">
+                            <select id="dil-c1-unit">
+                                <option value="1">M</option>
+                                <option value="1e-3">mM</option>
+                                <option value="1e-6">µM</option>
+                                <option value="1e-9">nM</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Initial Volume (V1)</label>
+                        <div class="input-group">
+                            <input type="number" id="dil-v1" placeholder="Calculated by default">
+                            <select id="dil-v1-unit">
+                                <option value="1">L</option>
+                                <option value="1e-3" selected>mL</option>
+                                <option value="1e-6">µL</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="calc-btn" onclick="calculateDilution()">Calculate</button>
+                </div>
+                <div id="dil-result" class="result-box">
+                    <h3>Result</h3>
+                    <div class="result-value" id="dil-output"></div>
+                </div>
+            </div>
+
+            <div id="molarity" class="tab-content">
+                <h2>Molarity Calculator</h2>
+                <p style="margin-bottom: 1.5rem; color: #666;">Calculate the mass required to prepare a solution of specific molarity.</p>
+                <div class="calc-form">
+                    <div class="form-group">
+                        <label>Molecular Weight (g/mol)</label>
+                        <input type="number" id="mol-mw" placeholder="e.g., 58.44">
+                    </div>
+                    <div class="form-group">
+                        <label>Desired Concentration</label>
+                        <div class="input-group">
+                            <input type="number" id="mol-conc" placeholder="e.g., 0.5">
+                            <select id="mol-conc-unit">
+                                <option value="1">M</option>
+                                <option value="1e-3">mM</option>
+                                <option value="1e-6">µM</option>
+                                <option value="1e-9">nM</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Desired Volume</label>
+                        <div class="input-group">
+                            <input type="number" id="mol-vol" placeholder="e.g., 1">
+                            <select id="mol-vol-unit">
+                                <option value="1">L</option>
+                                <option value="1e-3">mL</option>
+                                <option value="1e-6">µL</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="calc-btn" onclick="calculateMolarity()">Calculate Mass</button>
+                </div>
+                <div id="mol-result" class="result-box">
+                    <h3>Required Mass</h3>
+                    <div class="result-value" id="mol-output"></div>
+                </div>
+            </div>
+
+            <div id="transfection" class="tab-content">
+                <h2>Transfection Calculator</h2>
+                <p style="margin-bottom: 1.5rem; color: #666;">Calculate the amount of DNA needed for transfection.</p>
+                
+                <!-- Section 1 -->
+                <div class="calc-section" style="margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid #eee;">
+                    <h3>DNA Volume Calculation</h3>
+                    <div class="calc-form">
+                        <div class="form-group">
+                            <label>Volume of Culture (mL)</label>
+                            <input type="number" id="trans-vol-culture" placeholder="e.g., 10">
+                        </div>
+                        <div class="form-group">
+                            <label>DNA Concentration (ng/µL)</label>
+                            <input type="number" id="trans-dna-conc" placeholder="e.g., 100">
+                        </div>
+                        <button class="calc-btn" onclick="calculateTransfectionSection1()">Calculate DNA Volume</button>
+                    </div>
+                    <div id="trans-result-1" class="result-box">
+                        <h3>Required DNA Volume</h3>
+                        <div class="result-value" id="trans-output-1"></div>
+                    </div>
+                </div>
+
+                <!-- Section 2 -->
+                <div class="calc-section">
+                    <h3>PEI Calculation</h3>
+                    <div class="calc-form">
+                        <div class="form-group">
+                            <label>PEI Concentration (mg/mL)</label>
+                            <input type="number" id="trans-pei-conc" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label>PEI Multiplier</label>
+                            <input type="number" id="trans-pei-mult" value="4">
+                        </div>
+                        <button class="calc-btn" onclick="calculateTransfectionSection2()">Calculate PEI Volume</button>
+                    </div>
+                    <div id="trans-result-2" class="result-box">
+                        <h3>Required PEI Volume</h3>
+                        <div class="result-value" id="trans-output-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function openTab(tabId, btn) {
+                // Hide all tabs
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                
+                // Deactivate all buttons
+                document.querySelectorAll('.tab-button').forEach(button => {
+                    button.classList.remove('active');
+                });
+                
+                // Show selected tab
+                document.getElementById(tabId).classList.add('active');
+                
+                // Activate button
+                btn.classList.add('active');
+            }
+
+            function calculateDilution() {
+                const c1Val = document.getElementById('dil-c1').value;
+                const v1Val = document.getElementById('dil-v1').value;
+                const c2Val = document.getElementById('dil-c2').value;
+                const v2Val = document.getElementById('dil-v2').value;
+
+                const c1Unit = parseFloat(document.getElementById('dil-c1-unit').value);
+                const v1Unit = parseFloat(document.getElementById('dil-v1-unit').value);
+                const c2Unit = parseFloat(document.getElementById('dil-c2-unit').value);
+                const v2Unit = parseFloat(document.getElementById('dil-v2-unit').value);
+
+                // Convert inputs to base units (Molar and Liter)
+                const c1 = parseFloat(c1Val) * c1Unit;
+                const v1 = parseFloat(v1Val) * v1Unit;
+                const c2 = parseFloat(c2Val) * c2Unit;
+                const v2 = parseFloat(v2Val) * v2Unit;
+                
+                const resultBox = document.getElementById('dil-result');
+                const output = document.getElementById('dil-output');
+
+                // Check which fields are provided
+                const hasC1 = !isNaN(c1) && c1Val !== '';
+                const hasV1 = !isNaN(v1) && v1Val !== '';
+                const hasC2 = !isNaN(c2) && c2Val !== '';
+                const hasV2 = !isNaN(v2) && v2Val !== '';
+
+                // Count filled fields
+                const filledCount = [hasC1, hasV1, hasC2, hasV2].filter(Boolean).length;
+
+                if (filledCount < 3) {
+                    alert('Please fill in at least 3 fields.');
+                    return;
+                }
+
+                // Helper to get unit label
+                const getUnitLabel = (id) => {
+                    const sel = document.getElementById(id);
+                    return sel.options[sel.selectedIndex].text;
+                };
+
+                // Priority Logic: Calculate empty field, or default to V1 if all full
+                if (!hasC1) {
+                    // Calculate C1 = (C2 * V2) / V1
+                    const calculatedC1_M = (c2 * v2) / v1;
+                    // Convert back to selected unit
+                    const calculatedC1 = calculatedC1_M / c1Unit;
+                    
+                    document.getElementById('dil-c1').value = calculatedC1.toPrecision(4);
+                    output.innerHTML = `<strong>Calculated Initial Concentration (C1): ${calculatedC1.toPrecision(4)} ${getUnitLabel('dil-c1-unit')}</strong>`;
+                } else if (!hasC2) {
+                    // Calculate C2 = (C1 * V1) / V2
+                    const calculatedC2_M = (c1 * v1) / v2;
+                    const calculatedC2 = calculatedC2_M / c2Unit;
+                    
+                    document.getElementById('dil-c2').value = calculatedC2.toPrecision(4);
+                    output.innerHTML = `<strong>Calculated Final Concentration (C2): ${calculatedC2.toPrecision(4)} ${getUnitLabel('dil-c2-unit')}</strong>`;
+                } else if (!hasV2) {
+                    // Calculate V2 = (C1 * V1) / C2
+                    const calculatedV2_L = (c1 * v1) / c2;
+                    const calculatedV2 = calculatedV2_L / v2Unit;
+                    
+                    // Diluent volume in V2 units
+                    // Note: V1 might be in different unit, so we use base units for subtraction then convert
+                    const diluentVolume_L = calculatedV2_L - v1;
+                    const diluentVolume = diluentVolume_L / v2Unit;
+
+                    document.getElementById('dil-v2').value = calculatedV2.toPrecision(4);
+                    output.innerHTML = `
+                        <strong>Calculated Final Volume (V2): ${calculatedV2.toPrecision(4)} ${getUnitLabel('dil-v2-unit')}</strong><br>
+                        Add ${parseFloat(v1Val)} ${getUnitLabel('dil-v1-unit')} of stock solution<br>
+                        to ${diluentVolume.toPrecision(4)} ${getUnitLabel('dil-v2-unit')} of diluent
+                    `;
+                } else {
+                    // Default case: Calculate V1 (if V1 is empty OR all fields are full)
+                    // V1 = (C2 * V2) / C1
+                    const calculatedV1_L = (c2 * v2) / c1;
+                    const calculatedV1 = calculatedV1_L / v1Unit;
+                    
+                    // Diluent volume in V2 units (usually user cares about final volume unit)
+                    const diluentVolume_L = v2 - calculatedV1_L;
+                    const diluentVolume = diluentVolume_L / v2Unit;
+                    
+                    document.getElementById('dil-v1').value = calculatedV1.toPrecision(4);
+
+                    output.innerHTML = `
+                        <strong>Calculated Initial Volume (V1): ${calculatedV1.toPrecision(4)} ${getUnitLabel('dil-v1-unit')}</strong><br>
+                        Add ${calculatedV1.toPrecision(4)} ${getUnitLabel('dil-v1-unit')} of stock solution<br>
+                        to ${diluentVolume.toPrecision(4)} ${getUnitLabel('dil-v2-unit')} of diluent<br>
+                        Total Volume: ${parseFloat(v2Val)} ${getUnitLabel('dil-v2-unit')}
+                    `;
+                }
+                resultBox.classList.add('show');
+            }
+
+            function calculateMolarity() {
+                const mw = parseFloat(document.getElementById('mol-mw').value);
+                const concVal = parseFloat(document.getElementById('mol-conc').value);
+                const volVal = parseFloat(document.getElementById('mol-vol').value);
+                
+                const concUnit = parseFloat(document.getElementById('mol-conc-unit').value);
+                const volUnit = parseFloat(document.getElementById('mol-vol-unit').value);
+
+                const resultBox = document.getElementById('mol-result');
+                const output = document.getElementById('mol-output');
+
+                if (isNaN(mw) || isNaN(concVal) || isNaN(volVal)) {
+                    alert('Please enter valid numbers');
+                    return;
+                }
+
+                // Convert to base units (Molar and Liter)
+                const conc = concVal * concUnit;
+                const vol = volVal * volUnit;
+
+                // Mass = Molarity * Volume * MW
+                // Mass (g) = (mol/L) * (L) * (g/mol)
+                const mass = conc * vol * mw;
+
+                // Format output based on size
+                let massStr;
+                if (mass < 1e-3) {
+                    massStr = `${(mass * 1e6).toPrecision(4)} µg`;
+                } else if (mass < 1) {
+                    massStr = `${(mass * 1e3).toPrecision(4)} mg`;
+                } else {
+                    massStr = `${mass.toPrecision(4)} g`;
+                }
+
+                output.innerHTML = massStr;
+                resultBox.classList.add('show');
+            }
+
+            function calculateTransfectionSection1() {
+                const volCulture = parseFloat(document.getElementById('trans-vol-culture').value);
+                const dnaConc = parseFloat(document.getElementById('trans-dna-conc').value);
+                const resultBox = document.getElementById('trans-result-1');
+                const output = document.getElementById('trans-output-1');
+
+                if (isNaN(volCulture) || isNaN(dnaConc) || dnaConc === 0) {
+                    alert('Please enter valid numbers. Concentration cannot be zero.');
+                    return;
+                }
+
+                // User instruction: "The Volume of the culture should be equal to the ng that is divided by the DNA concentration."
+                // Interpreted as: Mass (ng) = Volume (mL) value.
+                // Result (µL) = Mass (ng) / Concentration (ng/µL)
+                // Therefore: Result = Volume / Concentration
+                // Update: "The number in the DNA concentration should be divided by 1000 before using it for calculations."
+                
+                const effectiveDnaConc = dnaConc / 1000;
+                const result = volCulture / effectiveDnaConc;
+
+                output.innerHTML = `${result.toPrecision(4)} µL`;
+                resultBox.classList.add('show');
+            }
+
+            function calculateTransfectionSection2() {
+                const volCulture = parseFloat(document.getElementById('trans-vol-culture').value);
+                const peiConc = parseFloat(document.getElementById('trans-pei-conc').value);
+                const peiMult = parseFloat(document.getElementById('trans-pei-mult').value);
+                
+                const resultBox = document.getElementById('trans-result-2');
+                const output = document.getElementById('trans-output-2');
+
+                if (isNaN(volCulture)) {
+                    alert('Please enter a Volume of Culture in the first section.');
+                    return;
+                }
+                if (isNaN(peiConc) || isNaN(peiMult) || peiConc === 0) {
+                    alert('Please enter valid numbers for PEI calculation. Concentration cannot be zero.');
+                    return;
+                }
+
+                // Logic: (Culture Volume * PEI Multiplier) / PEI Concentration
+                // Update: Divide by 1000 for final output
+                const rawResult = (volCulture * peiMult) / peiConc;
+                const result = rawResult / 1000;
+
+                output.innerHTML = `${result.toFixed(1)} mL`;
+                resultBox.classList.add('show');
+            }
+        </script>
+    </main>
+
+    <footer id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>CadeWardInc</h3>
+                    <a href="#">About Us</a>
+                    <a href="#">Contact</a>
+                </div>
+                <div class="footer-section">
+                    <h3>Tools</h3>
+                    <a href="gelelectrophoresis.html">Gel Analysis</a>
+                    <a href="sequencer.html">Sequencer</a>
+                    <a href="calculations.html">Calculations</a>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 CadeWardInc. All rights reserved. | Advanced scientific analysis tools.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

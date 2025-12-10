@@ -78,6 +78,86 @@
             color: var(--muted-blue);
         }
 
+        /* Dropdown CSS */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: var(--pure-white);
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 8px;
+            padding: 0.5rem 0;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .dropdown-content a {
+            color: var(--primary-black);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            text-align: left;
+        }
+
+        .dropdown-content a:hover {
+            background-color: var(--off-white);
+            color: var(--muted-blue);
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropbtn {
+            cursor: pointer;
+        }
+
+        /* Footer CSS */
+        footer {
+            background: var(--soft-black);
+            color: var(--pure-white);
+            padding: 3rem 0;
+            text-align: center;
+            margin-top: 4rem;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            color: var(--muted-blue);
+        }
+
+        .footer-section a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: var(--muted-blue);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 2rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
         /* Hero Section */
         .hero {
             min-height: 100vh;
@@ -820,10 +900,15 @@
             margin-bottom: 1.5rem;
             user-select: none;
             display: flex;
-            justify-content: center;
-            align-items: center;
+            /* justify-content: center;  <-- Removed to fix scroll clipping */
+            /* align-items: center;      <-- Removed to fix scroll clipping */
             background-color: #f0f0f0;
             padding: 10px;
+        }
+        
+        /* Center the content if it fits, allow scroll if it doesn't */
+        .splitter-container > div {
+            margin: auto;
         }
 
         #imageToSplit {
@@ -898,6 +983,60 @@
             transform: rotate(-45deg);
             font-size: 1.2rem;
             letter-spacing: 2px;
+        }
+
+        /* Grouping Styles */
+        #groupOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .well-selector {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+            pointer-events: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: 900;
+            font-size: 3rem;
+            text-shadow: 
+                -2px -2px 0 #000,  
+                 2px -2px 0 #000,
+                -2px  2px 0 #000,
+                 2px  2px 0 #000,
+                 0 0 10px rgba(0,0,0,0.5);
+            transition: all 0.2s;
+            z-index: 100;
+            overflow: visible;
+        }
+
+        .well-selector:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            font-size: 3.5rem;
+        }
+
+        .well-selector.selected {
+            background-color: rgba(0, 123, 255, 0.4);
+            border: 2px solid #007bff;
+            color: #fff;
+        }
+
+        .group-bracket-preview {
+            position: absolute;
+            top: 10%;
+            border: 2px solid black;
+            border-bottom: none;
+            pointer-events: none;
         }
 
         .modal-actions {
@@ -1116,11 +1255,17 @@
 <body>
     <header>
         <nav class="container">
-            <a href="#" class="logo">Scientific Tools</a>
+            <a href="index.html" class="logo">Scientific Tools</a>
             <ul class="nav-links">
-                <li><a href="#home">Home</a></li>
-                <li><a href="#selection">Selection</a></li>
-                <li><a href="#contact">Contact</a></li>
+                <li><a href="index.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropbtn">Tools ▾</a>
+                    <div class="dropdown-content">
+                        <a href="gelelectrophoresis.html">Gel Analysis</a>
+                        <a href="sequencer.html">Sequencer</a>
+                        <a href="calculations.html">Calculations</a>
+                    </div>
+                </li>
             </ul>
         </nav>
     </header>
@@ -1219,6 +1364,14 @@
                                 <span class="date-slider"></span>
                             </label>
                         </div>
+                        <div class="date-toggle-wrapper" style="justify-content: center; gap: 1rem; border-top: none; padding-top: 0;">
+                            <span class="date-toggle-label">Group Wells</span>
+                            <label class="date-switch">
+                                <input type="checkbox" id="groupWellsToggle" onchange="toggleGroupWells()">
+                                <span class="date-slider"></span>
+                            </label>
+                            <button id="editGroupsBtn" onclick="openGroupModal()" style="display: none; background: none; border: none; color: var(--muted-blue); cursor: pointer; font-weight: bold; font-size: 0.9rem;">Edit</button>
+                        </div>
                     </div>
 
                     <div id="imagePreviewContainer" class="image-preview-container" style="display: none;">
@@ -1286,6 +1439,25 @@
         </div>
     </div>
 
+    <!-- Grouping Modal -->
+    <div id="groupModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Group Wells</h2>
+            <p>Select wells to group together.</p>
+            <div class="splitter-container" id="groupContainer">
+                <div style="position: relative; display: inline-block;">
+                    <img id="imageToGroup" alt="Image to group">
+                    <div id="groupOverlay"></div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="addGroupBtn" class="choose-file-btn">Add Group</button>
+                <button id="clearGroupsBtn" class="choose-file-btn secondary">Clear All</button>
+                <button id="doneGroupBtn" class="choose-file-btn">Done</button>
+            </div>
+        </div>
+    </div>
+
     <footer id="contact">
         <div class="container">
             <div class="footer-content">
@@ -1296,13 +1468,14 @@
                 </div>
                 <div class="footer-section">
                     <h3>Tools</h3>
-                    <a href="#">Size Selection</a>
-                    <a href="#">Analysis Tools</a>
+                    <a href="gelelectrophoresis.html">Gel Analysis</a>
+                    <a href="sequencer.html">Sequencer</a>
+                    <a href="calculations.html">Calculations</a>
                 </div>
             </div>
             
             <div class="footer-bottom">
-                <p>&copy; 2025 CadeWardInc. All rights reserved. | Advanced selection tools.</p>
+                <p>&copy; 2025 CadeWardInc. All rights reserved. | Advanced scientific analysis tools.</p>
             </div>
         </div>
     </footer>
@@ -1507,26 +1680,71 @@
 
             let ladderMarkers = [];
 
+            // Define markers with their relative positions (percentages)
             if (selection === '100bp') {
-                ladderMarkers = ['1,500', '1,000', '900', '800', '700', '600', '500', '400', '300', '200', '100'];
+                ladderMarkers = [
+                    { text: '1,500', pos: 10.0 },
+                    { text: '1,000', pos: 22.0 },
+                    { text: '900', pos: 25.5 },
+                    { text: '800', pos: 29.0 },
+                    { text: '700', pos: 32.5 },
+                    { text: '600', pos: 37.0 },
+                    { text: '500', pos: 42.5 },
+                    { text: '400', pos: 49.0 },
+                    { text: '300', pos: 57.5 },
+                    { text: '200', pos: 69.5 },
+                    { text: '100', pos: 90.0 }
+                ];
             } else if (selection === '1kbp') {
-                ladderMarkers = ['25,000', '10,000', '8,000', '6,000', '5,000', '4,000', '3,000', '2,500', '2,000', '1,500', '1,000', '750', '500', '250'];
+                ladderMarkers = [
+                    { text: '10,000', pos: 10.0 }, // 10kb
+                    { text: '8,000', pos: 15.0 },
+                    { text: '6,000', pos: 21.0 },
+                    { text: '5,000', pos: 25.0 },
+                    { text: '4,000', pos: 30.0 },
+                    { text: '3,000', pos: 36.0 },
+                    { text: '2,500', pos: 40.0 },
+                    { text: '2,000', pos: 45.0 },
+                    { text: '1,500', pos: 51.0 },
+                    { text: '1,000', pos: 60.0 },
+                    { text: '750', pos: 66.0 },
+                    { text: '500', pos: 75.0 },
+                    { text: '250', pos: 90.0 }
+                ];
             } else if (selection === 'protein') {
-                ladderMarkers = ['245', '180', '135', '100', '75','63' , '48', '35', '25', '20', '17', '11'];
+                ladderMarkers = [
+                    { text: '245', pos: 5.0 },
+                    { text: '180', pos: 14.0 },
+                    { text: '135', pos: 22.0 },
+                    { text: '100', pos: 31.0 },
+                    { text: '75', pos: 39.0 },
+                    { text: '63', pos: 44.0 },
+                    { text: '48', pos: 52.0 },
+                    { text: '35', pos: 61.0 },
+                    { text: '25', pos: 71.0 },
+                    { text: '20', pos: 77.0 },
+                    { text: '17', pos: 82.0 },
+                    { text: '11', pos: 95.0 }
+                ];
             }
 
-            // Generate markers from top to bottom
-            ladderMarkers.forEach((markerText, index) => {
+            // Generate markers
+            ladderMarkers.forEach((item) => {
                 const markerDiv = document.createElement('div');
                 markerDiv.className = 'ladder-label-marker';
-                markerDiv.textContent = markerText;
+                markerDiv.textContent = item.text;
 
-                // Set initial vertical position as a percentage
-                const initialTopPercent = (index / (ladderMarkers.length - 1)) * 100;
-                markerDiv.style.top = `${initialTopPercent}%`;
+                // Set initial vertical position
+                markerDiv.style.top = `${item.pos}%`;
 
                 // Add drag handler
                 markerDiv.addEventListener('mousedown', (e) => startDrag(e, markerDiv, ladderContainer));
+
+                // Add right-click handler to remove
+                markerDiv.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    markerDiv.remove();
+                });
 
                 ladderContainer.appendChild(markerDiv);
             });
@@ -1921,24 +2139,36 @@
                 return;
             }
 
-            const imagePreview = document.getElementById('imagePreview');
             const imageDataUrl = croppedCanvas.toDataURL('image/png');
-            imagePreview.src = imageDataUrl;
             originalCroppedImageSrc = imageDataUrl; // Save original for splitting
             
-            // Reset split toggle
-            const splitToggle = document.getElementById('splitImageToggle');
-            splitToggle.checked = false;
+            // Reset states
+            savedSplitState = null;
+            wellGroups = [];
+            activeWellPositions = null;
+            
+            // Reset toggles
+            document.getElementById('splitImageToggle').checked = false;
+            document.getElementById('groupWellsToggle').checked = false;
+            document.getElementById('editGroupsBtn').style.display = 'none';
+            
             document.getElementById('imageControls').style.display = 'block';
             
+            // Render the preview (this will set imagePreview.src and trigger onload)
+            renderPreview();
+            
+            const imagePreview = document.getElementById('imagePreview');
             imagePreview.onload = () => {
                 // Use requestAnimationFrame to ensure layout is calculated after the image is painted
                 requestAnimationFrame(() => {
                     adjustPreviewLayout();
                     updateLabelPreview();
-                    updateLadderPreview(); // Add this call to generate ladder on crop
+                    // updateLadderPreview(); <-- Removed from here to prevent reset on every render
                 });
             };
+
+            // Generate ladder once on initial crop
+            updateLadderPreview();
 
             document.getElementById('imagePreviewContainer').style.display = 'block';
             document.getElementById('dropZone').style.display = 'none';
@@ -2402,7 +2632,13 @@
         let splitterLines = [];
         let splitterSegments = [];
         let activeSplitterLine = null;
-        let activeWellPositions = null; // Stores { index, centerPercent } for active wells
+        let activeWellPositions = null; // Stores { index, centerPercent, startX, width } for active wells
+        let savedSplitState = null; // Stores data to re-render split
+        
+        // Grouping Logic Variables
+        let wellGroups = []; // Stores arrays of well indices [ [0,1], [3,4,5] ]
+        let selectedWellsForGroup = [];
+
         const SPLIT_GAP = 20; // Width of the white space gap in pixels
 
         // Toggle split image view
@@ -2427,12 +2663,126 @@
                 initSplitter();
             } else {
                 // Revert to original cropped image
-                if (originalCroppedImageSrc) {
-                    document.getElementById('imagePreview').src = originalCroppedImageSrc;
-                    activeWellPositions = null; // Reset positions
-                    updateLabelPreview(); // Reset labels
-                }
+                savedSplitState = null;
+                activeWellPositions = null;
+                renderPreview(); // Re-render (handles removing split)
             }
+        }
+
+        function toggleGroupWells() {
+            const isChecked = document.getElementById('groupWellsToggle').checked;
+            const editBtn = document.getElementById('editGroupsBtn');
+            
+            if (isChecked) {
+                if (!originalCroppedImageSrc) {
+                    alert("Please crop an image first.");
+                    document.getElementById('groupWellsToggle').checked = false;
+                    return;
+                }
+                
+                openGroupModal();
+                editBtn.style.display = 'inline-block';
+            } else {
+                // Clear groups
+                wellGroups = [];
+                renderPreview();
+                editBtn.style.display = 'none';
+            }
+        }
+
+        function openGroupModal() {
+            document.getElementById('groupModal').style.display = 'flex';
+            initGrouper();
+        }
+
+        function initGrouper() {
+            const imageToGroup = document.getElementById('imageToGroup');
+            const overlay = document.getElementById('groupOverlay');
+            
+            // Use the current preview image (which might be split)
+            imageToGroup.src = document.getElementById('imagePreview').src;
+            overlay.innerHTML = '';
+            selectedWellsForGroup = [];
+            
+            // Wait for load
+            imageToGroup.onload = () => {
+                const rect = imageToGroup.getBoundingClientRect();
+                const scaleX = rect.width / imageToGroup.naturalWidth;
+                
+                if (activeWellPositions) {
+                    activeWellPositions.forEach(pos => {
+                        const el = document.createElement('div');
+                        el.className = 'well-selector';
+                        el.textContent = pos.index + 1; // 1-based index
+                        el.dataset.index = pos.index;
+                        
+                        // Position
+                        el.style.left = `${pos.startX * scaleX}px`;
+                        el.style.width = `${pos.width * scaleX}px`;
+                        
+                        el.addEventListener('click', () => toggleWellSelection(el, pos.index));
+                        
+                        overlay.appendChild(el);
+                    });
+                }
+            };
+            
+            // Force load if cached
+            if (imageToGroup.complete) {
+                imageToGroup.onload();
+            }
+        }
+
+        function toggleWellSelection(el, index) {
+            if (selectedWellsForGroup.includes(index)) {
+                selectedWellsForGroup = selectedWellsForGroup.filter(i => i !== index);
+                el.classList.remove('selected');
+            } else {
+                selectedWellsForGroup.push(index);
+                el.classList.add('selected');
+            }
+        }
+
+        document.getElementById('addGroupBtn').addEventListener('click', addGroup);
+        document.getElementById('clearGroupsBtn').addEventListener('click', clearGroups);
+        document.getElementById('doneGroupBtn').addEventListener('click', doneGroup);
+
+        function addGroup() {
+            if (selectedWellsForGroup.length > 0) {
+                // Prompt for group name
+                const name = prompt("Enter a name for this group (optional):", "");
+                
+                // Sort indices
+                selectedWellsForGroup.sort((a, b) => a - b);
+                
+                // Add to groups with name
+                wellGroups.push({
+                    indices: [...selectedWellsForGroup],
+                    name: name || ""
+                });
+                
+                // Reset selection
+                selectedWellsForGroup = [];
+                
+                // Re-render to show bracket in modal
+                renderPreview();
+                setTimeout(() => {
+                    initGrouper();
+                }, 100);
+            }
+        }
+
+        function clearGroups() {
+            wellGroups = [];
+            selectedWellsForGroup = [];
+            renderPreview();
+            setTimeout(() => {
+                initGrouper();
+            }, 100);
+        }
+
+        function doneGroup() {
+            document.getElementById('groupModal').style.display = 'none';
         }
 
         function initSplitter() {
@@ -2542,7 +2892,6 @@
         document.getElementById('cancelSplitBtn').addEventListener('click', cancelSplit);
 
         function applySplit() {
-            const imageToSplit = document.getElementById('imageToSplit');
             const overlay = document.getElementById('splitterLinesOverlay');
             const rect = overlay.getBoundingClientRect();
             
@@ -2552,86 +2901,200 @@
                 return left / rect.width;
             }).sort((a, b) => a - b);
 
-            // Create canvas to draw split image
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            const originalWidth = imageToSplit.naturalWidth;
-            const originalHeight = imageToSplit.naturalHeight;
-            
-            // Determine which segments are active
-            const activeSegments = [];
-            let currentBoundary = 0;
-            
-            // Map split positions to original image coordinates
-            const boundaries = [0];
-            splitPositions.forEach(pos => {
-                boundaries.push(Math.floor(pos * originalWidth));
-            });
-            boundaries.push(originalWidth);
-            
-            // Check each segment for "removed" status
+            // Identify removed segments
+            const removedIndices = [];
             splitterSegments.forEach((seg, i) => {
-                if (!seg.classList.contains('removed')) {
-                    activeSegments.push({
-                        sourceX: boundaries[i],
-                        width: boundaries[i+1] - boundaries[i],
-                        originalIndex: i
-                    });
+                if (seg.classList.contains('removed')) {
+                    removedIndices.push(i);
                 }
             });
 
-            // Calculate new width: sum of active widths + gaps
-            const numActive = activeSegments.length;
-            const totalGapWidth = numActive > 1 ? (numActive - 1) * SPLIT_GAP : 0;
-            const totalImageWidth = activeSegments.reduce((sum, seg) => sum + seg.width, 0);
+            // Save state
+            savedSplitState = {
+                splitPositions: splitPositions,
+                removedIndices: removedIndices
+            };
             
-            canvas.width = totalImageWidth + totalGapWidth;
-            canvas.height = originalHeight;
-            
-            // Fill with white background
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            let currentX = 0;
-            activeWellPositions = []; // Reset global positions
-            
-            // Draw active segments
-            activeSegments.forEach((seg, index) => {
-                if (seg.width > 0) {
-                    ctx.drawImage(imageToSplit, seg.sourceX, 0, seg.width, originalHeight, currentX, 0, seg.width, originalHeight);
-                    
-                    // Store center position for labels
-                    const centerX = currentX + (seg.width / 2);
-                    activeWellPositions.push({
-                        index: seg.originalIndex,
-                        centerPercent: centerX / canvas.width
-                    });
-                }
-                
-                // Add gap if not the last one
-                if (index < activeSegments.length - 1) {
-                    currentX += seg.width + SPLIT_GAP;
-                } else {
-                    currentX += seg.width;
-                }
-            });
-            
-            // Update preview
-            document.getElementById('imagePreview').src = canvas.toDataURL('image/png');
-            
-            // Update labels to match new positions
-            updateLabelPreview();
+            // Render
+            renderPreview();
             
             // Close modal
             document.getElementById('splitterModal').style.display = 'none';
         }
 
-        function cancelSplit() {
-            document.getElementById('splitterModal').style.display = 'none';
-            document.getElementById('splitImageToggle').checked = false;
-            activeWellPositions = null;
+        function renderPreview() {
+            if (!originalCroppedImageSrc) return;
+
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                const originalWidth = img.naturalWidth;
+                const originalHeight = img.naturalHeight;
+                
+                let activeSegments = [];
+                
+                if (savedSplitState) {
+                    // --- SPLIT LOGIC ---
+                    const splitPositions = savedSplitState.splitPositions;
+                    const removedIndices = savedSplitState.removedIndices;
+                    
+                    // Map split positions to original image coordinates
+                    const boundaries = [0];
+                    splitPositions.forEach(pos => {
+                        boundaries.push(Math.floor(pos * originalWidth));
+                    });
+                    boundaries.push(originalWidth);
+                    
+                    // Create segments
+                    for (let i = 0; i < boundaries.length - 1; i++) {
+                        if (!removedIndices.includes(i)) {
+                            activeSegments.push({
+                                sourceX: boundaries[i],
+                                width: boundaries[i+1] - boundaries[i],
+                                originalIndex: i
+                            });
+                        }
+                    }
+                    
+                    // Calculate new width
+                    const numActive = activeSegments.length;
+                    const totalGapWidth = numActive > 1 ? (numActive - 1) * SPLIT_GAP : 0;
+                    const totalImageWidth = activeSegments.reduce((sum, seg) => sum + seg.width, 0);
+                    
+                    // Determine extra height for brackets if groups exist
+                    const hasGroups = wellGroups.length > 0;
+                    const groupSpace = hasGroups ? Math.max(60, originalHeight * 0.15) : 0;
+
+                    canvas.width = totalImageWidth + totalGapWidth;
+                    canvas.height = originalHeight + groupSpace;
+                    
+                    // Fill white
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    let currentX = 0;
+                    activeWellPositions = [];
+                    
+                    // Draw segments
+                    activeSegments.forEach((seg, index) => {
+                        if (seg.width > 0) {
+                            ctx.drawImage(img, seg.sourceX, 0, seg.width, originalHeight, currentX, 0, seg.width, originalHeight);
+                            
+                            activeWellPositions.push({
+                                index: seg.originalIndex,
+                                startX: currentX,
+                                width: seg.width,
+                                centerPercent: (currentX + (seg.width / 2)) / canvas.width
+                            });
+                        }
+                        
+                        if (index < activeSegments.length - 1) {
+                            currentX += seg.width + SPLIT_GAP;
+                        } else {
+                            currentX += seg.width;
+                        }
+                    });
+                    
+                } else {
+                    // --- NO SPLIT ---
+                    // Determine extra height for brackets if groups exist
+                    const hasGroups = wellGroups.length > 0;
+                    const groupSpace = hasGroups ? Math.max(60, originalHeight * 0.15) : 0;
+
+                    canvas.width = originalWidth;
+                    canvas.height = originalHeight + groupSpace;
+                    
+                    // Fill white background (important if we extended height)
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    ctx.drawImage(img, 0, 0);
+                    
+                    // Calculate default positions
+                    activeWellPositions = [];
+                    const step = originalWidth / currentWellCount;
+                    for (let i = 0; i < currentWellCount; i++) {
+                        activeWellPositions.push({
+                            index: i,
+                            startX: i * step,
+                            width: step,
+                            centerPercent: ((i * step) + (step / 2)) / originalWidth
+                        });
+                    }
+                }
+                
+                // --- GROUPING LOGIC ---
+                if (wellGroups.length > 0) {
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = Math.max(2, originalHeight * 0.005); // Scale line width based on image height
+                    ctx.lineCap = 'round';
+                    ctx.fillStyle = 'black';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    
+                    // Font size for group names
+                    const groupFontSize = Math.max(16, originalHeight * 0.03);
+                    ctx.font = `bold ${groupFontSize}px sans-serif`;
+                    
+                    const bracketHeight = originalHeight * 0.02; // 2% of image height
+                    
+                    // Position below the image
+                    // Image ends at originalHeight
+                    const padding = bracketHeight * 0.5;
+                    const bracketTopY = originalHeight + padding; 
+                    const bracketBottomY = bracketTopY + bracketHeight;
+                    const textY = bracketBottomY + padding;
+                    
+                    wellGroups.forEach(groupObj => {
+                        // Handle both old (array) and new (object) structure
+                        const indices = Array.isArray(groupObj) ? groupObj : groupObj.indices;
+                        const name = groupObj.name || "";
+
+                        // Find start and end X
+                        // Group is array of indices [0, 1, 2]
+                        // We need to find the activeWellPositions for these indices
+                        const groupPositions = activeWellPositions.filter(p => indices.includes(p.index));
+                        
+                        if (groupPositions.length > 0) {
+                            // Sort by X to be sure
+                            groupPositions.sort((a, b) => a.startX - b.startX);
+                            
+                            const first = groupPositions[0];
+                            const last = groupPositions[groupPositions.length - 1];
+                            
+                            const startX = first.startX + (first.width * 0.1); // Indent slightly
+                            const endX = last.startX + last.width - (last.width * 0.1);
+                            const centerX = (startX + endX) / 2;
+                            
+                            // Draw Bracket (Facing UP)
+                            // Shape: |____|
+                            ctx.beginPath();
+                            // Left leg (points UP towards image)
+                            ctx.moveTo(startX, bracketTopY);
+                            ctx.lineTo(startX, bracketBottomY);
+                            // Bottom bar
+                            ctx.lineTo(endX, bracketBottomY);
+                            // Right leg (points UP towards image)
+                            ctx.lineTo(endX, bracketTopY);
+                            
+                            ctx.stroke();
+
+                            // Draw Name
+                            if (name) {
+                                ctx.fillText(name, centerX, textY);
+                            }
+                        }
+                    });
+                }
+
+                document.getElementById('imagePreview').src = canvas.toDataURL('image/png');
+                updateLabelPreview();
+            };
+            img.src = originalCroppedImageSrc;
         }
+
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
 </body>
