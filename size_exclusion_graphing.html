@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Size Exclusion Graphing - Scientific Tools</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-black: #0a0a0a;
+            --soft-black: #1a1a1a;
+            --pure-white: #ffffff;
+            --off-white: #f8f9fa;
+            --muted-blue: #4a90a4;
+            --light-blue: rgba(74, 144, 164, 0.1);
+            --border-color: rgba(74, 144, 164, 0.2);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--primary-black);
+            background: var(--pure-white);
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-black);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--primary-black);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--muted-blue);
+        }
+
+        /* Dropdown CSS */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: var(--pure-white);
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 8px;
+            padding: 0.5rem 0;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .dropdown-content a {
+            color: var(--primary-black);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            text-align: left;
+        }
+
+        .dropdown-content a:hover {
+            background-color: var(--off-white);
+            color: var(--muted-blue);
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropbtn {
+            cursor: pointer;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding-top: 100px; /* Space for fixed header */
+            min-height: 80vh;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--primary-black);
+        }
+
+        .section-header p {
+            font-size: 1.1rem;
+            color: rgba(10, 10, 10, 0.6);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Graphing Section */
+        .graph-container {
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .controls-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-group label {
+            font-weight: 500;
+            color: var(--soft-black);
+        }
+
+        .control-group input, .control-group textarea {
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .control-group input:focus, .control-group textarea:focus {
+            outline: none;
+            border-color: var(--muted-blue);
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            background: var(--muted-blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #3a7a8c;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--soft-black);
+            color: var(--pure-white);
+            padding: 3rem 0;
+            text-align: center;
+            margin-top: 4rem;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            color: var(--muted-blue);
+        }
+
+        .footer-section a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: var(--muted-blue);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 2rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .container {
+                padding: 0 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <a href="index.html" class="logo">Scientific Tools</a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropbtn">Tools ▾</a>
+                    <div class="dropdown-content">
+                        <a href="gelelectrophoresis.html">Gel Analysis</a>
+                        <a href="sequencer.html">Sequencer</a>
+                        <a href="calculations.html">Calculations</a>
+                        <a href="size_exclusion_graphing.html">Size Exclusion Graphing</a>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main-content container">
+        <div class="section-header">
+            <h1>Size Exclusion Graphing</h1>
+            <p>Generate and analyze chromatograms from size exclusion chromatography data.</p>
+        </div>
+
+        <div class="graph-container">
+            <div class="controls-container">
+                <div class="control-group">
+                    <label for="csvFileInput">Upload CSV Data (Time/Volume vs Absorbance)</label>
+                    <input type="file" id="csvFileInput" accept=".csv">
+                    <p style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">
+                        Format: Two columns (X, Y). No headers or headers in first row.
+                    </p>
+                </div>
+                <div class="control-group">
+                    <label>Graph Settings</label>
+                    <input type="text" id="graphTitle" placeholder="Graph Title" value="SEC Chromatogram">
+                    <input type="text" id="xAxisLabel" placeholder="X-Axis Label" value="Volume (mL)">
+                    <input type="text" id="yAxisLabel" placeholder="Y-Axis Label" value="Absorbance (mAU)">
+                    <div style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" id="showFractions" style="width: auto;">
+                        <label for="showFractions" style="font-weight: normal; cursor: pointer;">Fraction</label>
+                        
+                        <input type="checkbox" id="showGridlines" style="width: auto; margin-left: 1rem;">
+                        <label for="showGridlines" style="font-weight: normal; cursor: pointer;">Gridlines</label>
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
+                <button class="btn" onclick="plotGraph()">Plot Graph</button>
+                <button class="btn btn-secondary" onclick="resetZoom()">Reset Zoom</button>
+                <button class="btn btn-secondary" onclick="exportGraph()">Export Graph</button>
+                <button class="btn btn-secondary" onclick="clearData()">Clear Data</button>
+            </div>
+            
+            <div style="position: relative; height: 500px; width: 100%;">
+                <canvas id="secChart"></canvas>
+            </div>
+        </div>
+    </main>
+
+    <footer id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>CadeWardInc</h3>
+                    <a href="#">About Us</a>
+                    <a href="#">Contact</a>
+                </div>
+                <div class="footer-section">
+                    <h3>Tools</h3>
+                    <a href="gelelectrophoresis.html">Gel Analysis</a>
+                    <a href="sequencer.html">Sequencer</a>
+                    <a href="calculations.html">Calculations</a>
+                    <a href="size_exclusion_graphing.html">Size Exclusion Graphing</a>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 CadeWardInc. All rights reserved. | Advanced scientific analysis tools.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        let myChart = null;
+
+        function parseData(text) {
+            const lines = text.trim().split('\n');
+            // const labels = []; // Removed for optimization
+            const dataPoints = [];
+            const fractions = []; // Stores { x: value, label: string }
+
+            if (lines.length === 0) return { dataPoints, fractions };
+
+            // Determine delimiter (comma or tab) based on first few lines
+            let delimiter = ',';
+            if (lines[0].includes('\t') || (lines.length > 1 && lines[1].includes('\t'))) {
+                delimiter = '\t';
+            }
+
+            // Default indices for UV Data
+            let xIndex = 0;
+            let yIndex = 1;
+            
+            // Fixed indices for Fraction Data (User specified Column 11 and 12)
+            // Assuming 1-based column numbering from user -> Index 10 and 11
+            const fracVolIndex = 10; 
+            const fracNameIndex = 11;
+
+            let startRow = 0;
+            let headerRowIndex = -1;
+
+            // Check 2nd line (index 1) for headers
+            if (lines.length > 1) {
+                const h2 = lines[1].split(delimiter).map(h => h.trim().toLowerCase());
+                if (h2.some(h => h === 'ml' || h.includes('volume') || h.includes('absorbance'))) {
+                    headerRowIndex = 1;
+                }
+            }
+            
+            // Check 1st line (index 0) if not found on 2nd
+            if (headerRowIndex === -1 && lines.length > 0) {
+                const h1 = lines[0].split(delimiter).map(h => h.trim().toLowerCase());
+                if (h1.some(h => h === 'ml' || h.includes('volume') || h.includes('absorbance'))) {
+                    headerRowIndex = 0;
+                }
+            }
+
+            if (headerRowIndex !== -1) {
+                const headers = lines[headerRowIndex].split(delimiter).map(h => h.trim().toLowerCase());
+                
+                const mlIndex = headers.findIndex(h => h === 'ml' || h.includes('volume') || h.includes('time'));
+                const absIndex = headers.findIndex(h => h.includes('absorbance') || h.includes('mau') || h === 'abs');
+
+                if (mlIndex !== -1) xIndex = mlIndex;
+                if (absIndex !== -1) yIndex = absIndex;
+                
+                startRow = headerRowIndex + 1;
+            }
+
+            let lastFraction = null;
+
+            for (let i = startRow; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+
+                // Use strict split to preserve empty columns for correct indexing
+                const parts = line.split(delimiter).map(p => p.trim());
+                
+                // Get UV Data (X and Y)
+                if (parts.length > Math.max(xIndex, yIndex)) {
+                    const x = parseFloat(parts[xIndex]);
+                    const y = parseFloat(parts[yIndex]);
+                    
+                    if (!isNaN(x) && !isNaN(y)) {
+                        // labels.push(x);
+                        dataPoints.push({x, y});
+                    }
+                }
+
+                // Get Fraction Data (Col 11 and 12)
+                if (parts.length > Math.max(fracVolIndex, fracNameIndex)) {
+                    const fVol = parseFloat(parts[fracVolIndex]);
+                    let fName = parts[fracNameIndex];
+
+                    if (fName) {
+                        fName = fName.replace(/"/g, ''); // Remove quotes
+                    }
+
+                    // Check if we have a valid fraction name
+                    if (fName && fName !== lastFraction) {
+                        // Use the Fraction Volume (Col 11) as the X coordinate
+                        if (!isNaN(fVol)) {
+                            fractions.push({ x: fVol, label: fName });
+                            lastFraction = fName;
+                        }
+                    }
+                }
+            }
+
+            return { dataPoints, fractions };
+        }
+
+        // Custom plugin to draw fraction lines and labels
+        const fractionLinesPlugin = {
+            id: 'fractionLines',
+            afterDraw: (chart, args, options) => {
+                if (!options.fractions || options.fractions.length === 0) return;
+                
+                const { ctx, chartArea: { top, bottom, left, right }, scales: { x } } = chart;
+                
+                ctx.save();
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = '#d3d3d3'; // Light gray
+                ctx.setLineDash([]); // Solid line
+                ctx.fillStyle = 'black'; // Darker text
+                ctx.font = 'bold 14px sans-serif';
+                ctx.textAlign = 'center';
+                
+                options.fractions.forEach((fraction, index) => {
+                    const xPos = x.getPixelForValue(fraction.x);
+                    
+                    // Only draw if within chart area
+                    if (xPos >= left && xPos <= right) {
+                        // Draw Vertical Line
+                        ctx.beginPath();
+                        ctx.moveTo(xPos, top);
+                        ctx.lineTo(xPos, bottom);
+                        ctx.stroke();
+                        
+                        // Calculate center position for label (between this line and next)
+                        let nextXPos;
+                        if (index < options.fractions.length - 1) {
+                            nextXPos = x.getPixelForValue(options.fractions[index + 1].x);
+                        } else {
+                            nextXPos = right; // Use end of chart for last fraction
+                        }
+                        
+                        // Ensure nextXPos is within bounds for calculation
+                        if (nextXPos > right) nextXPos = right;
+                        
+                        const centerPos = (xPos + nextXPos) / 2;
+                        
+                        // Draw label at the top, centered in the area
+                        if (centerPos >= left && centerPos <= right) {
+                            ctx.fillText(fraction.label, centerPos, top + 15);
+                        }
+                    }
+                });
+                
+                ctx.restore();
+            }
+        };
+
+        // Plugin to set background color to white
+        const whiteBackgroundPlugin = {
+            id: 'customCanvasBackgroundColor',
+            beforeDraw: (chart, args, options) => {
+                const {ctx} = chart;
+                ctx.save();
+                ctx.globalCompositeOperation = 'destination-over';
+                ctx.fillStyle = options.color || '#ffffff';
+                ctx.fillRect(0, 0, chart.width, chart.height);
+                ctx.restore();
+            }
+        };
+
+        // Plugin to draw labels for selected points
+        const markerLabelsPlugin = {
+            id: 'markerLabels',
+            afterDatasetsDraw: (chart, args, options) => {
+                const { ctx } = chart;
+                const meta = chart.getDatasetMeta(1); // Markers dataset
+                
+                if (!meta.hidden && chart.data.datasets[1].data.length > 0) {
+                    ctx.save();
+                    ctx.font = 'bold 14px sans-serif';
+                    ctx.fillStyle = 'black';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+                    
+                    meta.data.forEach((element, index) => {
+                        const dataPoint = chart.data.datasets[1].data[index];
+                        if (dataPoint && element.x && element.y) {
+                            const label = dataPoint.label || `(${dataPoint.x.toFixed(2)}, ${dataPoint.y.toFixed(2)})`;
+                            ctx.fillText(label, element.x, element.y - 10);
+                        }
+                    });
+                    ctx.restore();
+                }
+            }
+        };
+
+        // Register the plugin
+        Chart.register(fractionLinesPlugin, whiteBackgroundPlugin, markerLabelsPlugin);
+
+        async function plotGraph() {
+            const fileInput = document.getElementById('csvFileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("Please select a CSV file.");
+                return;
+            }
+
+            try {
+                const text = await file.text();
+                const { dataPoints, fractions } = parseData(text);
+
+                if (dataPoints.length === 0) {
+                    alert("No valid data found in the file. Please check the format.");
+                    return;
+                }
+
+                const ctx = document.getElementById('secChart').getContext('2d');
+                const title = document.getElementById('graphTitle').value;
+                const xLabel = document.getElementById('xAxisLabel').value;
+                const yLabel = document.getElementById('yAxisLabel').value;
+                const showFractions = document.getElementById('showFractions').checked;
+                const showGridlines = document.getElementById('showGridlines').checked;
+
+                if (myChart) {
+                    myChart.destroy();
+                }
+
+                myChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: [{
+                            label: 'Absorbance',
+                            data: dataPoints,
+                            borderColor: '#4a90a4',
+                            backgroundColor: 'rgba(74, 144, 164, 0.1)',
+                            borderWidth: 3,
+                            pointRadius: 1, // Small points for performance
+                            pointHoverRadius: 4,
+                            fill: false,
+                            normalized: true, // Optimize for large datasets
+                            parsing: false, // Use {x,y} data directly
+                            tension: 0.4 // Smooth curve
+                        }, {
+                            label: 'Markers',
+                            data: [],
+                            pointRadius: 6,
+                            pointBackgroundColor: 'red',
+                            pointBorderColor: 'white',
+                            pointBorderWidth: 2,
+                            showLine: false,
+                            parsing: false
+                        }]
+                    },
+                    options: {
+                        devicePixelRatio: 3, // High resolution for export
+                        onClick: (e) => {
+                            const points = myChart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
+                            
+                            if (points.length) {
+                                const firstPoint = points[0];
+                                const datasetIndex = firstPoint.datasetIndex;
+                                const index = firstPoint.index;
+                                
+                                if (datasetIndex === 0) {
+                                    const value = myChart.data.datasets[0].data[index];
+                                    const label = prompt("Enter label for this marker:", `(${value.x.toFixed(2)}, ${value.y.toFixed(2)})`);
+                                    
+                                    if (label !== null) {
+                                        // Add to markers dataset
+                                        myChart.data.datasets[1].data.push({x: value.x, y: value.y, label: label});
+                                        myChart.update();
+                                    }
+                                } else if (datasetIndex === 1) {
+                                    // Remove marker if clicked again
+                                    if (confirm("Remove this marker?")) {
+                                        myChart.data.datasets[1].data.splice(index, 1);
+                                        myChart.update();
+                                    }
+                                }
+                            }
+                        },
+                        animation: false, // Disable animation for performance
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            decimation: {
+                                enabled: true,
+                                algorithm: 'lttb',
+                                samples: 500,
+                            },
+                            customCanvasBackgroundColor: {
+                                color: 'white',
+                            },
+                            title: {
+                                display: true,
+                                text: title,
+                                color: 'black',
+                                font: { size: 20, weight: 'bold' }
+                            },
+                            legend: {
+                                display: false
+                            },
+                            fractionLines: {
+                                fractions: showFractions ? fractions : []
+                            },
+                            zoom: {
+                                zoom: {
+                                    wheel: {
+                                        enabled: false,
+                                    },
+                                    pinch: {
+                                        enabled: true
+                                    },
+                                    drag: {
+                                        enabled: true,
+                                        backgroundColor: 'rgba(74, 144, 164, 0.3)',
+                                        borderColor: 'rgba(74, 144, 164, 1)',
+                                        borderWidth: 1
+                                    },
+                                    mode: 'x',
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'linear',
+                                title: {
+                                    display: true,
+                                    text: xLabel,
+                                    color: 'black',
+                                    font: { weight: 'bold', size: 14 }
+                                },
+                                ticks: {
+                                    color: 'black',
+                                    font: { weight: 'bold' }
+                                },
+                                border: {
+                                    color: 'black',
+                                    width: 2
+                                },
+                                grid: {
+                                    display: showGridlines,
+                                    color: 'rgba(0,0,0,0.05)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: yLabel,
+                                    color: 'black',
+                                    font: { weight: 'bold', size: 14 }
+                                },
+                                ticks: {
+                                    color: 'black',
+                                    font: { weight: 'bold' }
+                                },
+                                border: {
+                                    color: 'black',
+                                    width: 2
+                                },
+                                grid: {
+                                    display: showGridlines,
+                                    color: 'rgba(0,0,0,0.05)'
+                                },
+                                beginAtZero: true
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error(error);
+                alert("Error reading file: " + error.message);
+            }
+        }
+
+        function resetZoom() {
+            if (myChart) {
+                myChart.resetZoom();
+            }
+        }
+
+        function exportGraph() {
+            if (!myChart) {
+                alert("No graph to export.");
+                return;
+            }
+            const link = document.createElement('a');
+            link.download = 'sec-chromatogram.png';
+            link.href = myChart.toBase64Image();
+            link.click();
+        }
+
+        function clearData() {
+            document.getElementById('csvFileInput').value = '';
+            if (myChart) {
+                myChart.destroy();
+                myChart = null;
+            }
+        }
+    </script>
+</body>
+</html>
