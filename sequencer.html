@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -91,7 +92,7 @@
             position: absolute;
             background-color: var(--pure-white);
             min-width: 160px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
             z-index: 1;
             border-radius: 8px;
             padding: 0.5rem 0;
@@ -483,13 +484,15 @@
         }
 
         .sequence-search-group {
-            grid-column: 1 / -1; /* Make this group span the full width */
+            grid-column: 1 / -1;
+            /* Make this group span the full width */
         }
 
         .checkbox-wrapper {
             display: flex;
             align-items: center;
-            gap: 1rem; /* Increased gap for better spacing */
+            gap: 1rem;
+            /* Increased gap for better spacing */
             margin-top: 0.5rem;
         }
 
@@ -499,7 +502,8 @@
         }
 
         .checkbox-wrapper input {
-            width: auto; /* Override default input width */
+            width: auto;
+            /* Override default input width */
         }
 
         .filter-actions {
@@ -633,7 +637,7 @@
             .nav-links {
                 display: none;
             }
-            
+
             .container {
                 padding: 0 1rem;
             }
@@ -654,6 +658,7 @@
                 opacity: 0;
                 transform: translateY(30px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -665,12 +670,21 @@
         }
 
         @keyframes pulse {
-            0% { box-shadow: 0 4px 15px rgba(74, 144, 164, 0.3); }
-            50% { box-shadow: 0 8px 25px rgba(74, 144, 164, 0.5); }
-            100% { box-shadow: 0 4px 15px rgba(74, 144, 164, 0.3); }
+            0% {
+                box-shadow: 0 4px 15px rgba(74, 144, 164, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 8px 25px rgba(74, 144, 164, 0.5);
+            }
+
+            100% {
+                box-shadow: 0 4px 15px rgba(74, 144, 164, 0.3);
+            }
         }
     </style>
 </head>
+
 <body>
     <header>
         <nav class="container">
@@ -684,6 +698,7 @@
                         <a href="sequencer.html">Sequencer</a>
                         <a href="calculations.html">Calculations</a>
                         <a href="size_exclusion_graphing.html">Size Exclusion Graphing</a>
+                        <a href="timing.html">Timing</a>
                     </div>
                 </li>
             </ul>
@@ -694,7 +709,8 @@
         <div class="container">
             <div class="hero-content fade-in">
                 <h1>FASTQ Analyzer</h1>
-                <p>Advanced sequencing data analysis with quality assessment, filtering capabilities, and comprehensive statistics. Upload your FASTQ files for instant analysis and visualization.</p>
+                <p>Advanced sequencing data analysis with quality assessment, filtering capabilities, and comprehensive
+                    statistics. Upload your FASTQ files for instant analysis and visualization.</p>
                 <button class="cta-button" onclick="startAnalysis()">Start Analysis</button>
             </div>
         </div>
@@ -714,8 +730,9 @@
                     <span>Supports .fastq, .fq, .txt, .fastq.gz, .fq.gz files</span>
                     <button id="chooseFileBtn" class="choose-file-btn">Choose Files</button>
                 </div>
-                <input type="file" id="fileInput" accept=".fastq,.fq,.txt,.fastq.gz,.fq.gz" multiple style="display: none;">
-                
+                <input type="file" id="fileInput" accept=".fastq,.fq,.txt,.fastq.gz,.fq.gz" multiple
+                    style="display: none;">
+
                 <div id="progressContainer" class="progress-container">
                     <div class="progress-bar">
                         <div id="progressFill" class="progress-fill"></div>
@@ -811,9 +828,10 @@
                     <a href="sequencer.html">Sequencer</a>
                     <a href="calculations.html">Calculations</a>
                     <a href="size_exclusion_graphing.html">Size Exclusion Graphing</a>
+                    <a href="timing.html">Timing</a>
                 </div>
             </div>
-            
+
             <div class="footer-bottom">
                 <p>&copy; 2025 CadeWardInc. All rights reserved. | Advanced scientific analysis tools.</p>
             </div>
@@ -827,7 +845,7 @@
         let filteredData = [];
         let qualityStats = {};
         let collectedStats = [];
-        
+
         // ===== UTILITY FUNCTIONS =====
         function startAnalysis() {
             const analysisSection = document.getElementById('analysis');
@@ -845,7 +863,7 @@
             const container = document.getElementById('progressContainer');
             const fill = document.getElementById('progressFill');
             const textEl = document.getElementById('progressText');
-            
+
             if (show) {
                 container.style.display = 'block';
                 textEl.textContent = text;
@@ -1046,7 +1064,7 @@
         function displayResults() {
             displayFileStats();
             displaySequencePreview();
-            
+
             // Show all sections
             document.getElementById('fileInfo').classList.add('show');
             document.getElementById('filtersSection').classList.add('show');
@@ -1122,7 +1140,7 @@
                             const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                             const firstChar = searchTerm[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                             const lastChar = searchTerm[searchTerm.length - 1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                            
+
                             regexPattern = `(?<!${firstChar})${escapedTerm}(?!${lastChar})`;
 
                         } else {
@@ -1142,16 +1160,16 @@
                                 }
                             }
                         }
-                        
+
                         if (regexPattern) {
                             if (is5prime) regexPattern = '^' + regexPattern;
                             if (is3prime) regexPattern = regexPattern + '$';
-                            
+
                             const regex = new RegExp(regexPattern, regexFlags);
-                            
+
                             // Apply regex to the searchable part only
                             const highlightedSearchable = searchableSequence.replace(regex, (match) => `<mark class="highlight">${match}</mark>`);
-                            
+
                             // Reconstruct the full sequence string
                             if (searchOffset > 0) {
                                 displaySequence = seq.sequence.substring(0, searchOffset) + highlightedSearchable;
@@ -1184,16 +1202,16 @@
             const maxLengthEnabled = document.getElementById('enableMaxLength').checked;
             const minLength = parseInt(document.getElementById('minLength').value) || 0;
             const maxLength = parseInt(document.getElementById('maxLength').value) || Infinity;
-            
+
             const primerEnabled = document.getElementById('enablePrimer').checked;
             const primerSequence = document.getElementById('primerSequence').value;
             const searchTerm = document.getElementById('sequenceSearch').value;
             const isExactMatch = document.getElementById('exactMatch').checked;
             const is5prime = document.getElementById('is5prime').checked;
             const is3prime = document.getElementById('is3prime').checked;
-            
+
             filteredData = fastqData.filter(seq => {
-                const lengthMatch = 
+                const lengthMatch =
                     (!minLengthEnabled || seq.length >= minLength) &&
                     (!maxLengthEnabled || seq.length <= maxLength);
 
@@ -1208,7 +1226,7 @@
                     }
                     searchableSequence = seq.sequence.substring(primerIndex + primerSequence.length);
                 }
-                
+
                 let searchMatch = true;
                 if (searchTerm) {
                     try {
@@ -1242,7 +1260,7 @@
                         if (regexPattern) {
                             if (is5prime) regexPattern = '^' + regexPattern;
                             if (is3prime) regexPattern = regexPattern + '$';
-                            
+
                             const regex = new RegExp(regexPattern, regexFlags);
                             searchMatch = regex.test(searchableSequence);
                         } else {
@@ -1253,17 +1271,17 @@
                         searchMatch = false;
                     }
                 }
-                
+
                 return lengthMatch && searchMatch;
             });
-            
+
             displaySequencePreview();
-            
+
             // Update filtered stats
             const filteredCount = filteredData.length;
             const filteredPercent = fastqData.length > 0 ? ((filteredCount / fastqData.length) * 100).toFixed(1) : '0.0';
-            
-            document.getElementById('sequencePreview').querySelector('h3').textContent = 
+
+            document.getElementById('sequencePreview').querySelector('h3').textContent =
                 `Sequence Preview (${filteredCount} of ${fastqData.length} reads, ${filteredPercent}% passed filters)`;
         }
 
@@ -1285,11 +1303,11 @@
             // Reset and disable primer filter by default
             document.getElementById('enablePrimer').checked = false;
             document.getElementById('primerSequence').disabled = true;
-            
+
             filteredData = [...fastqData];
             displaySequencePreview();
-            
-            document.getElementById('sequencePreview').querySelector('h3').textContent = 
+
+            document.getElementById('sequencePreview').querySelector('h3').textContent =
                 'Sequence Preview (First 10 reads)';
         }
 
@@ -1363,11 +1381,11 @@
                 alert('No sequences to export. Please check your filters.');
                 return;
             }
-            
-            const fastqContent = filteredData.map(seq => 
+
+            const fastqContent = filteredData.map(seq =>
                 `@${seq.header}\n${seq.sequence}\n+\n${seq.quality}`
             ).join('\n');
-            
+
             const filename = `filtered_sequences.${format}`;
             downloadFile(fastqContent, filename, 'text/plain');
         }
@@ -1573,4 +1591,5 @@
         };
     </script>
 </body>
+
 </html>

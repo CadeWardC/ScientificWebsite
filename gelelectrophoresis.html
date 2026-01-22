@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -89,7 +90,7 @@
             position: absolute;
             background-color: var(--pure-white);
             min-width: 160px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
             z-index: 1;
             border-radius: 8px;
             padding: 0.5rem 0;
@@ -319,7 +320,8 @@
 
         /* Results Section */
         .results-section {
-            display: none; /* Hidden by default */
+            display: none;
+            /* Hidden by default */
             padding: 4rem 0;
             background: var(--off-white);
             opacity: 0;
@@ -359,7 +361,8 @@
             border-radius: 8px;
             max-width: 400px;
             margin: 1.5rem auto 3rem auto;
-            opacity: 0; /* For fade-in animation */
+            opacity: 0;
+            /* For fade-in animation */
         }
 
         /* New wrapper for side-by-side layout */
@@ -374,7 +377,8 @@
 
         .configuration-row .ladder-selection-container,
         .configuration-row .of-interest-container {
-            margin: 0; /* Reset margins when inside the row */
+            margin: 0;
+            /* Reset margins when inside the row */
             flex: 1;
             min-width: 300px;
             max-width: 450px;
@@ -407,7 +411,8 @@
 
         #ladderType {
             width: 100%;
-            padding: 0.5rem 2.5rem 0.5rem 0.5rem; /* Added right padding for arrow */
+            padding: 0.5rem 2.5rem 0.5rem 0.5rem;
+            /* Added right padding for arrow */
             border: 1px solid #ccc;
             border-radius: 4px;
             font-size: 1rem;
@@ -445,7 +450,9 @@
             height: 28px;
         }
 
-        .date-switch input { display: none; }
+        .date-switch input {
+            display: none;
+        }
 
         .date-slider {
             position: absolute;
@@ -468,11 +475,11 @@
             transition: .4s;
         }
 
-        input:checked + .date-slider {
+        input:checked+.date-slider {
             background-color: var(--muted-blue);
         }
 
-        input:checked + .date-slider:before {
+        input:checked+.date-slider:before {
             transform: translateX(22px);
         }
 
@@ -484,7 +491,8 @@
             border-radius: 8px;
             max-width: 400px;
             margin: 1.5rem auto 3rem auto;
-            opacity: 0; /* For fade-in animation */
+            opacity: 0;
+            /* For fade-in animation */
         }
 
         .of-interest-container h3 {
@@ -546,25 +554,34 @@
 
         /* Of Interest Marker (Right side) */
         .of-interest-marker-container {
-            position: absolute; /* Position inside the preview container */
+            position: absolute;
+            /* Position inside the preview container */
             width: 50px;
-            height: 100%; /* Span the full height of the image container */
-            top: 0; /* Start from the top */
-            right: 0; /* Position on the right side */
-            pointer-events: auto; /* Allow mouse interactions */
+            height: 100%;
+            /* Span the full height of the image container */
+            top: 0;
+            /* Start from the top */
+            right: 0;
+            /* Position on the right side */
+            pointer-events: auto;
+            /* Allow mouse interactions */
         }
 
         .of-interest-marker {
             position: absolute;
-            left: 0.5rem; /* Align to the left edge of the right container */
-            transform: translateY(-50%); /* Vertically center the marker on its 'top' position */
+            left: 0.5rem;
+            /* Align to the left edge of the right container */
+            transform: translateY(-50%);
+            /* Vertically center the marker on its 'top' position */
             font-size: 0.6rem;
             color: var(--primary-black);
             font-weight: 500;
             cursor: grab;
-            user-select: none; /* Prevent text selection during drag */
+            user-select: none;
+            /* Prevent text selection during drag */
             padding: 1px 3px;
-            background-color: rgba(255, 220, 220, 0.8); /* Light red background to distinguish from ladder */
+            background-color: rgba(255, 220, 220, 0.8);
+            /* Light red background to distinguish from ladder */
             border-radius: 3px;
             transition: background-color 0.2s, box-shadow 0.2s, left 0.2s ease-out;
             border: 1px solid #ff6b6b;
@@ -572,9 +589,10 @@
 
         .of-interest-marker.dragging {
             cursor: grabbing;
-            z-index: 10; /* Bring to front while dragging */
+            z-index: 10;
+            /* Bring to front while dragging */
             background-color: rgba(255, 220, 220, 1);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
         /* Layout for 'big' (8 slots) */
@@ -594,7 +612,8 @@
             text-align: center;
             border: 1px solid var(--border-color);
             transition: all 0.3s ease;
-            opacity: 0; /* For fade-in animation */
+            opacity: 0;
+            /* For fade-in animation */
         }
 
         .label-slot.active {
@@ -629,7 +648,8 @@
         .recent-labels-section {
             margin-top: 3rem;
             text-align: center;
-            display: none; /* Hidden by default */
+            display: none;
+            /* Hidden by default */
         }
 
         .recent-labels-section.show {
@@ -650,10 +670,12 @@
         }
 
         .recent-label-tag {
-            position: relative; /* Required for positioning the 'x' button */
+            position: relative;
+            /* Required for positioning the 'x' button */
             background: var(--light-blue);
             color: var(--muted-blue);
-            padding: 0.5rem 2rem 0.5rem 1rem; /* Adjusted padding for the 'x' */
+            padding: 0.5rem 2rem 0.5rem 1rem;
+            /* Adjusted padding for the 'x' */
             border-radius: 20px;
             font-size: 0.9rem;
             font-weight: 500;
@@ -698,8 +720,10 @@
         .annotation-section {
             margin-top: 4rem;
             text-align: center;
-            display: none; /* Hidden by default */
-            opacity: 0; /* For fade-in animation */
+            display: none;
+            /* Hidden by default */
+            opacity: 0;
+            /* For fade-in animation */
         }
 
         .annotation-section.show {
@@ -714,7 +738,8 @@
 
         .annotation-textarea {
             width: 100%;
-            max-width: 800px; /* Match image preview width */
+            max-width: 800px;
+            /* Match image preview width */
             min-height: 120px;
             padding: 1rem;
             border: 1px solid var(--border-color);
@@ -736,7 +761,8 @@
         .export-section {
             text-align: center;
             margin: 2rem 0 4rem 0;
-            display: none; /* Hidden by default */
+            display: none;
+            /* Hidden by default */
             opacity: 0;
         }
 
@@ -748,7 +774,8 @@
         .image-uploader-section {
             margin-top: 4rem;
             text-align: center;
-            display: none; /* Hidden by default */
+            display: none;
+            /* Hidden by default */
         }
 
         .image-uploader-section.show {
@@ -806,8 +833,10 @@
 
         .image-preview-container {
             position: relative;
-            max-width: 800px; /* Re-apply max-width */
-            margin: 0 auto 2rem; /* Re-apply margin */
+            max-width: 800px;
+            /* Re-apply max-width */
+            margin: 0 auto 2rem;
+            /* Re-apply margin */
             border: 1px solid var(--border-color);
             border-radius: 12px;
             background: var(--pure-white);
@@ -815,10 +844,14 @@
         }
 
         #imagePreview {
-            width: 100%; /* Make image element fill the container width */
-            aspect-ratio: 16 / 9; /* Force a uniform 16:9 shape for the preview area */
-            object-fit: contain; /* Fit the cropped image inside without distortion */
-            background: #f0f2f5; /* Add a background to show the preview area bounds */
+            width: 100%;
+            /* Make image element fill the container width */
+            aspect-ratio: 16 / 9;
+            /* Force a uniform 16:9 shape for the preview area */
+            object-fit: contain;
+            /* Fit the cropped image inside without distortion */
+            background: #f0f2f5;
+            /* Add a background to show the preview area bounds */
             display: block;
             border-radius: 8px;
         }
@@ -876,6 +909,7 @@
         .modal-content h2 {
             margin-bottom: 0.5rem;
         }
+
         .modal-content p {
             margin-bottom: 1.5rem;
             color: rgba(10, 10, 10, 0.7);
@@ -905,9 +939,9 @@
             background-color: #f0f0f0;
             padding: 10px;
         }
-        
+
         /* Center the content if it fits, allow scroll if it doesn't */
-        .splitter-container > div {
+        .splitter-container>div {
             margin: auto;
         }
 
@@ -937,10 +971,11 @@
             z-index: 10;
             transform: translateX(-50%);
         }
-        
-        .splitter-line:hover, .splitter-line.dragging {
+
+        .splitter-line:hover,
+        .splitter-line.dragging {
             background-color: rgba(255, 0, 0, 1);
-            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
         }
 
         .splitter-segment {
@@ -966,15 +1001,13 @@
 
         .splitter-segment.removed {
             background-color: rgba(50, 50, 50, 0.7);
-            background-image: repeating-linear-gradient(
-                45deg,
-                rgba(0, 0, 0, 0.1),
-                rgba(0, 0, 0, 0.1) 10px,
-                rgba(50, 50, 50, 0.1) 10px,
-                rgba(50, 50, 50, 0.1) 20px
-            );
+            background-image: repeating-linear-gradient(45deg,
+                    rgba(0, 0, 0, 0.1),
+                    rgba(0, 0, 0, 0.1) 10px,
+                    rgba(50, 50, 50, 0.1) 10px,
+                    rgba(50, 50, 50, 0.1) 20px);
         }
-        
+
         .splitter-segment.removed::after {
             content: "REMOVED";
             color: rgba(255, 255, 255, 0.8);
@@ -1009,12 +1042,12 @@
             color: white;
             font-weight: 900;
             font-size: 3rem;
-            text-shadow: 
-                -2px -2px 0 #000,  
-                 2px -2px 0 #000,
-                -2px  2px 0 #000,
-                 2px  2px 0 #000,
-                 0 0 10px rgba(0,0,0,0.5);
+            text-shadow:
+                -2px -2px 0 #000,
+                2px -2px 0 #000,
+                -2px 2px 0 #000,
+                2px 2px 0 #000,
+                0 0 10px rgba(0, 0, 0, 0.5);
             transition: all 0.2s;
             z-index: 100;
             overflow: visible;
@@ -1044,29 +1077,36 @@
             justify-content: center;
             gap: 1rem;
         }
+
         .modal-actions .secondary {
             background: #6c757d;
         }
+
         .modal-actions .secondary:hover {
             background: #5a6268;
         }
 
         /* Ladder Labels (Vertical) */
         .ladder-labels-container {
-            position: absolute; /* Position inside the preview container */
+            position: absolute;
+            /* Position inside the preview container */
             width: 50px;
-            pointer-events: auto; /* Allow mouse interactions */
+            pointer-events: auto;
+            /* Allow mouse interactions */
         }
 
         .ladder-label-marker {
             position: absolute;
-            right: 0.5rem; /* Align to the right edge of the container */
-            transform: translateY(-50%); /* Vertically center the marker on its 'top' position */
+            right: 0.5rem;
+            /* Align to the right edge of the container */
+            transform: translateY(-50%);
+            /* Vertically center the marker on its 'top' position */
             font-size: 0.6rem;
             color: var(--primary-black);
             font-weight: 500;
             cursor: grab;
-            user-select: none; /* Prevent text selection during drag */
+            user-select: none;
+            /* Prevent text selection during drag */
             padding: 1px 3px;
             background-color: rgba(255, 255, 255, 0.7);
             border-radius: 3px;
@@ -1075,22 +1115,28 @@
 
         .ladder-label-marker.dragging {
             cursor: grabbing;
-            z-index: 10; /* Bring to front while dragging */
+            z-index: 10;
+            /* Bring to front while dragging */
             background-color: rgba(255, 255, 255, 1);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
         /* Preview Labels */
         .preview-labels-container {
-            position: relative; /* Establish a positioning context for the labels */
-            padding: 2rem 0 1rem 0; /* Adjust vertical padding as needed */
+            position: relative;
+            /* Establish a positioning context for the labels */
+            padding: 2rem 0 1rem 0;
+            /* Adjust vertical padding as needed */
             min-height: 100px;
-            margin: 0 auto; /* Center the container when width is set */
+            margin: 0 auto;
+            /* Center the container when width is set */
         }
 
         .preview-label {
-            position: absolute; /* Position each label independently */
-            bottom: 1rem; /* Align to the bottom padding area */
+            position: absolute;
+            /* Position each label independently */
+            bottom: 1rem;
+            /* Align to the bottom padding area */
             font-size: 0.8rem;
             color: var(--primary-black);
             white-space: nowrap;
@@ -1141,7 +1187,7 @@
             .nav-links {
                 display: none;
             }
-            
+
             .container {
                 padding: 0 1rem;
             }
@@ -1175,6 +1221,7 @@
                 opacity: 0;
                 transform: translateY(30px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -1189,9 +1236,11 @@
             0% {
                 box-shadow: 0 4px 15px rgba(74, 144, 164, 0.3);
             }
+
             50% {
                 box-shadow: 0 8px 25px rgba(74, 144, 164, 0.5);
             }
+
             100% {
                 box-shadow: 0 4px 15px rgba(74, 144, 164, 0.3);
             }
@@ -1220,7 +1269,9 @@
             height: 28px;
         }
 
-        .date-switch input { display: none; }
+        .date-switch input {
+            display: none;
+        }
 
         .date-slider {
             position: absolute;
@@ -1243,15 +1294,16 @@
             transition: .4s;
         }
 
-        input:checked + .date-slider {
+        input:checked+.date-slider {
             background-color: var(--muted-blue);
         }
 
-        input:checked + .date-slider:before {
+        input:checked+.date-slider:before {
             transform: translateX(22px);
         }
     </style>
 </head>
+
 <body>
     <header>
         <nav class="container">
@@ -1265,6 +1317,7 @@
                         <a href="sequencer.html">Sequencer</a>
                         <a href="calculations.html">Calculations</a>
                         <a href="size_exclusion_graphing.html">Size Exclusion Graphing</a>
+                        <a href="timing.html">Timing</a>
                     </div>
                 </li>
             </ul>
@@ -1275,8 +1328,9 @@
         <div class="container">
             <div class="hero-content fade-in">
                 <h1>Size Selection</h1>
-                <p>Choose your preferred option from the selections below. Each choice offers different capabilities tailored to your specific needs.</p>
-                
+                <p>Choose your preferred option from the selections below. Each choice offers different capabilities
+                    tailored to your specific needs.</p>
+
                 <div class="button-container" id="selection">
                     <button class="selection-button big-button" onclick="handleSelection('big')">
                         Six
@@ -1306,7 +1360,7 @@
             <div class="label-configuration">
                 <h2 id="label-section-title" class="fade-in">Configuration</h2>
                 <p id="label-section-description" class="fade-in">Configure your label slots below.</p>
-                
+
                 <div id="labelSlots" class="label-slots-container">
                     <!-- Label slots will be dynamically generated here -->
                 </div>
@@ -1341,7 +1395,8 @@
                     <div id="of-interest-container" class="of-interest-container">
                         <h3>Biomolecule Marker</h3>
                         <div class="of-interest-input-wrapper">
-                            <input type="text" id="ofInterestValue" placeholder="Enter biomolecule name (e.g., GFP, β-actin)" />
+                            <input type="text" id="ofInterestValue"
+                                placeholder="Enter biomolecule name (e.g., GFP, β-actin)" />
                             <button class="add-interest-btn" onclick="addOfInterestMarker()">Add Marker</button>
                         </div>
                         <div class="of-interest-toggle-wrapper">
@@ -1356,22 +1411,25 @@
 
                 <div id="imageUploaderSection" class="image-uploader-section">
                     <h3>Upload Gel Image</h3>
-                    
+
                     <div id="imageControls" class="image-controls" style="display: none; margin-bottom: 1rem;">
-                        <div class="date-toggle-wrapper" style="justify-content: center; gap: 1rem; border-top: none; padding-top: 0;">
+                        <div class="date-toggle-wrapper"
+                            style="justify-content: center; gap: 1rem; border-top: none; padding-top: 0;">
                             <span class="date-toggle-label">Split Image</span>
                             <label class="date-switch">
                                 <input type="checkbox" id="splitImageToggle" onchange="toggleSplitImage()">
                                 <span class="date-slider"></span>
                             </label>
                         </div>
-                        <div class="date-toggle-wrapper" style="justify-content: center; gap: 1rem; border-top: none; padding-top: 0;">
+                        <div class="date-toggle-wrapper"
+                            style="justify-content: center; gap: 1rem; border-top: none; padding-top: 0;">
                             <span class="date-toggle-label">Group Wells</span>
                             <label class="date-switch">
                                 <input type="checkbox" id="groupWellsToggle" onchange="toggleGroupWells()">
                                 <span class="date-slider"></span>
                             </label>
-                            <button id="editGroupsBtn" onclick="openGroupModal()" style="display: none; background: none; border: none; color: var(--muted-blue); cursor: pointer; font-weight: bold; font-size: 0.9rem;">Edit</button>
+                            <button id="editGroupsBtn" onclick="openGroupModal()"
+                                style="display: none; background: none; border: none; color: var(--muted-blue); cursor: pointer; font-weight: bold; font-size: 0.9rem;">Edit</button>
                         </div>
                     </div>
 
@@ -1399,7 +1457,8 @@
             </div>
             <div id="annotationSection" class="annotation-section">
                 <h3>Annotations</h3>
-                <textarea id="annotationText" class="annotation-textarea" placeholder="Enter notes about the image..."></textarea>
+                <textarea id="annotationText" class="annotation-textarea"
+                    placeholder="Enter notes about the image..."></textarea>
             </div>
             <div id="exportSection" class="export-section">
                 <button id="exportBtn" class="choose-file-btn">Export as Image</button>
@@ -1473,9 +1532,10 @@
                     <a href="sequencer.html">Sequencer</a>
                     <a href="calculations.html">Calculations</a>
                     <a href="size_exclusion_graphing.html">Size Exclusion Graphing</a>
+                    <a href="timing.html">Timing</a>
                 </div>
             </div>
-            
+
             <div class="footer-bottom">
                 <p>&copy; 2025 CadeWardInc. All rights reserved. | Advanced scientific analysis tools.</p>
             </div>
@@ -1501,17 +1561,17 @@
             const annotationSection = document.getElementById('annotationSection');
             const exportSection = document.getElementById('exportSection');
             const customWellsInput = document.getElementById('customWellsInput');
-            
+
             // Remove previous selections
             buttons.forEach(btn => btn.classList.remove('selected'));
-            
+
             // Add selection animation to clicked button
             event.target.classList.add('selected');
-            
+
             // Hide custom wells input by default
             customWellsInput.style.display = 'none';
             customWellsInput.classList.remove('show');
-            
+
             // Update content based on selection
             if (size === 'big') {
                 currentWellCount = 6;
@@ -1534,7 +1594,7 @@
                 }, 100);
                 return; // Don't show results section yet
             }
-            
+
             function showResultsSection() {
                 // Show results section
                 resultsSection.style.display = 'block';
@@ -1542,9 +1602,9 @@
                 document.getElementById('imageUploaderSection').classList.add('show');
                 annotationSection.classList.add('show');
                 exportSection.classList.add('show');
-                
+
                 const ofInterestContainer = document.getElementById('of-interest-container');
-                
+
                 ladderContainer.style.animationDelay = '0.5s';
                 ladderContainer.classList.add('fade-in');
                 ofInterestContainer.style.animationDelay = '0.55s';
@@ -1564,7 +1624,7 @@
                     });
                 }, 100);
             }
-            
+
             // Remove selection animation after animation completes
             const targetElement = event.target;
             setTimeout(() => {
@@ -1582,12 +1642,12 @@
             const ladderContainer = document.getElementById('ladder-selection-container');
             const annotationSection = document.getElementById('annotationSection');
             const exportSection = document.getElementById('exportSection');
-            
+
             if (wellCount < 1 || wellCount > 20) {
                 alert('Please enter a number between 1 and 20');
                 return;
             }
-            
+
             currentWellCount = wellCount;
 
             // Hide custom input
@@ -1595,24 +1655,24 @@
             setTimeout(() => {
                 customWellsInput.style.display = 'none';
             }, 300);
-            
+
             // Update labels and generate slots
             labelSectionTitle.textContent = `Custom Configuration - ${wellCount} Wells`;
             labelSectionDescription.textContent = `Configure your ${wellCount} label slots`;
-            
+
             // Determine layout type based on well count
             const layoutType = wellCount <= 8 ? 'big' : 'small';
             generateLabelSlots(wellCount, layoutType);
-            
+
             // Show results section
             resultsSection.style.display = 'block';
             document.getElementById('recentLabelsSection').classList.add('show');
             document.getElementById('imageUploaderSection').classList.add('show');
             annotationSection.classList.add('show');
             exportSection.classList.add('show');
-            
+
             const ofInterestContainer = document.getElementById('of-interest-container');
-            
+
             ladderContainer.style.animationDelay = '0.5s';
             ladderContainer.classList.add('fade-in');
             ofInterestContainer.style.animationDelay = '0.55s';
@@ -1637,10 +1697,10 @@
         function generateLabelSlots(count, type) {
             const container = document.getElementById('labelSlots');
             container.innerHTML = '';
-            
+
             // Set the appropriate layout class
             container.className = `label-slots-container ${type}-layout`;
-            
+
             for (let i = 1; i <= count; i++) {
                 const slot = document.createElement('div');
                 slot.className = 'label-slot';
@@ -1648,11 +1708,11 @@
                     <div class="label-slot-number">Slot ${i}</div>
                     <input type="text" class="label-slot-input" placeholder="Enter label" onclick="activateSlot(this)" onblur="saveRecentLabel(this)" oninput="updateLabelPreview()">
                 `;
-                
+
                 // Add staggered animation
                 slot.style.animationDelay = `${i * 0.1}s`;
                 slot.classList.add('fade-in');
-                
+
                 container.appendChild(slot);
             }
             renderRecentLabels();
@@ -1664,7 +1724,7 @@
             document.querySelectorAll('.label-slot').forEach(slot => {
                 slot.classList.remove('active');
             });
-            
+
             // Add active class to clicked slot
             input.parentElement.classList.add('active');
             input.focus();
@@ -1822,7 +1882,7 @@
                 const halfMarkerHeight = marker.offsetHeight / 2;
                 const minTop = 0; // Allow to go to the very top of the image
                 const maxTop = container.offsetHeight - marker.offsetHeight; // Allow to go to the very bottom
-                
+
                 newTop = Math.max(minTop, Math.min(newTop, maxTop));
                 marker.style.top = `${newTop}px`;
             };
@@ -1846,7 +1906,7 @@
 
             // Only run if the image preview is visible and has finished loading
             if (imagePreviewContainer.style.display !== 'none' && imagePreview.complete && imagePreview.naturalHeight !== 0) {
-                
+
                 const containerWidth = imagePreview.offsetWidth;
                 const containerHeight = imagePreview.offsetHeight;
                 const naturalWidth = imagePreview.naturalWidth;
@@ -1875,8 +1935,8 @@
 
                 // --- Adjust Top Labels ---
                 // If split mode is active (activeWellPositions is set), use 0 padding to align with exact segments
-                const horizontalPadding = activeWellPositions ? 0 : 0.10; 
-                
+                const horizontalPadding = activeWellPositions ? 0 : 0.10;
+
                 const finalWidth = renderedImageWidth * (1 - (horizontalPadding * 2));
                 const finalOffset = imageOffsetLeft + (renderedImageWidth * horizontalPadding);
                 previewContainer.style.width = `${finalWidth}px`;
@@ -1917,12 +1977,12 @@
                 const labelDiv = document.createElement('div');
                 labelDiv.className = 'preview-label';
                 labelDiv.textContent = labelText || '\u00A0';
-                
+
                 const slotContainer = input.closest('.label-slot');
 
                 // Calculate the horizontal position for each label's starting point.
                 let leftPercentage = 0;
-                
+
                 if (activeWellPositions) {
                     // Use custom positions from split logic
                     const pos = activeWellPositions.find(p => p.index === index);
@@ -1943,9 +2003,9 @@
                         leftPercentage = (index / (numLabels - 1)) * 100;
                     }
                 }
-                
+
                 labelDiv.style.left = `${leftPercentage}%`;
-                
+
                 // Add click handler to focus the input
                 labelDiv.addEventListener('click', () => {
                     input.focus();
@@ -2143,22 +2203,22 @@
 
             const imageDataUrl = croppedCanvas.toDataURL('image/png');
             originalCroppedImageSrc = imageDataUrl; // Save original for splitting
-            
+
             // Reset states
             savedSplitState = null;
             wellGroups = [];
             activeWellPositions = null;
-            
+
             // Reset toggles
             document.getElementById('splitImageToggle').checked = false;
             document.getElementById('groupWellsToggle').checked = false;
             document.getElementById('editGroupsBtn').style.display = 'none';
-            
+
             document.getElementById('imageControls').style.display = 'block';
-            
+
             // Render the preview (this will set imagePreview.src and trigger onload)
             renderPreview();
-            
+
             const imagePreview = document.getElementById('imagePreview');
             imagePreview.onload = () => {
                 // Use requestAnimationFrame to ensure layout is calculated after the image is painted
@@ -2194,7 +2254,7 @@
             document.getElementById('dropZone').style.display = 'block';
             document.getElementById('imageUploadInput').value = ''; // Reset file input
             document.getElementById('exportSection').style.display = 'none'; // Hide export button
-            
+
             // Reset split controls
             document.getElementById('imageControls').style.display = 'none';
             document.getElementById('splitImageToggle').checked = false;
@@ -2208,36 +2268,36 @@
         function toggleSplitImage() {
             const isSplit = document.getElementById('splitImageToggle').checked;
             const imagePreview = document.getElementById('imagePreview');
-            
+
             if (!originalCroppedImageSrc) return;
-            
+
             if (isSplit) {
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     // Gap size relative to image width (e.g., 5%)
-                    const gap = Math.round(img.width * 0.05); 
-                    
+                    const gap = Math.round(img.width * 0.05);
+
                     canvas.width = img.width + gap;
                     canvas.height = img.height;
-                    
+
                     // Fill white background
                     ctx.fillStyle = 'white';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    
+
                     // Draw left half
-                    ctx.drawImage(img, 
+                    ctx.drawImage(img,
                         0, 0, img.width / 2, img.height, // source
                         0, 0, img.width / 2, img.height // dest
                     );
-                    
+
                     // Draw right half
-                    ctx.drawImage(img, 
+                    ctx.drawImage(img,
                         img.width / 2, 0, img.width / 2, img.height, // source
                         (img.width / 2) + gap, 0, img.width / 2, img.height // dest
                     );
-                    
+
                     imagePreview.src = canvas.toDataURL('image/png');
                 };
                 img.src = originalCroppedImageSrc;
@@ -2249,7 +2309,7 @@
 
         // ===== GENERAL EVENT LISTENERS =====
         // Remove active class when clicking outside
-        document.addEventListener('click', function(event) {
+        document.addEventListener('click', function (event) {
             // Also check if the click is on a recent label tag to prevent deactivation
             if (!event.target.closest('.label-slot') && !event.target.closest('.recent-label-tag')) {
                 document.querySelectorAll('.label-slot').forEach(slot => {
@@ -2292,21 +2352,21 @@
         // Add entrance animation delay for buttons and setup listeners
         window.addEventListener('load', () => {
             setupImageUploader();
-            
+
             // Add Enter key support for custom wells input
-            document.getElementById('wellCount').addEventListener('keypress', function(e) {
+            document.getElementById('wellCount').addEventListener('keypress', function (e) {
                 if (e.key === 'Enter') {
                     applyCustomWells();
                 }
             });
-            
+
             // Add Enter key support for of interest input
-            document.getElementById('ofInterestValue').addEventListener('keypress', function(e) {
+            document.getElementById('ofInterestValue').addEventListener('keypress', function (e) {
                 if (e.key === 'Enter') {
                     addOfInterestMarker();
                 }
             });
-            
+
             setTimeout(() => {
                 document.querySelectorAll('.selection-button').forEach((button, index) => {
                     button.style.animationDelay = `${index * 0.2}s`;
@@ -2329,17 +2389,17 @@
             const imgHeight = imagePreview.naturalHeight;
             const canvasArea = imgWidth * imgHeight;
             const canvasAspectRatio = imgWidth / imgHeight;
-            
+
             // Calculate base font size using a more sophisticated approach
             // Base on both dimensions, not just height, and use square root for better scaling
             const areaBasedSize = Math.sqrt(canvasArea) / 40; // Base size from total area
             const dimensionBasedSize = Math.min(imgWidth / 40, imgHeight / 25); // Based on individual dimensions
             const hybridSize = (areaBasedSize + dimensionBasedSize) / 2; // Combine both approaches
-            
+
             // Apply aspect ratio correction (wider images need slightly smaller fonts)
             const aspectRatioCorrection = canvasAspectRatio > 2 ? 0.85 : canvasAspectRatio < 0.5 ? 1.15 : 1;
             const correctedSize = hybridSize * aspectRatioCorrection;
-            
+
             // Use standardized font sizes for scientific presentations
             // Based on research: 8-12pt fonts are optimal for scientific figures
             // These ensure readability across different display contexts
@@ -2352,11 +2412,11 @@
             // Calculate dynamic label area height based on actual label lengths
             const previewLabels = document.querySelectorAll('.preview-label');
             let maxLabelHeight = topLabelFontSize * 2; // Minimum height
-            
+
             if (previewLabels.length > 0) {
                 const tempLabelCtx = document.createElement('canvas').getContext('2d');
                 tempLabelCtx.font = `bold ${topLabelFontSize}px sans-serif`;
-                
+
                 previewLabels.forEach(label => {
                     if (label.textContent.trim()) {
                         // Calculate diagonal extent of each label
@@ -2366,7 +2426,7 @@
                         maxLabelHeight = Math.max(maxLabelHeight, totalHeight);
                     }
                 });
-                
+
                 // Add some padding
                 maxLabelHeight += topLabelFontSize * 0.5;
             }
@@ -2375,7 +2435,7 @@
             const PADDING = baseFontSize * 2;
             const LADDER_AREA_WIDTH = baseFontSize * 6;
             const TOP_LABEL_AREA_HEIGHT = maxLabelHeight; // Use calculated dynamic height
-            
+
             // Helper function to get optimal font size for text fitting
             function getOptimalFontSize(ctx, text, maxWidth, maxHeight, baseFontSize, isPresentation = true) {
                 if (isPresentation) {
@@ -2383,11 +2443,11 @@
                     // Research shows 8-12pt fonts are optimal for scientific figures
                     // These sizes ensure readability for presentations and publications
                     const presentationSizes = [48, 42, 36, 32, 28, 24, 20, 16, 14, 12]; // Ordered largest to smallest
-                    
+
                     for (let fontSize of presentationSizes) {
                         ctx.font = `${fontSize}px sans-serif`;
                         const metrics = ctx.measureText(text);
-                        
+
                         if (metrics.width <= maxWidth && fontSize <= maxHeight) {
                             return fontSize;
                         }
@@ -2395,22 +2455,22 @@
                     // Return minimum readable size for presentations
                     return 12;
                 }
-                
+
                 // Fallback for dynamic sizing (original behavior)
                 let fontSize = baseFontSize;
                 ctx.font = `${fontSize}px sans-serif`;
                 let metrics = ctx.measureText(text);
-                
+
                 // Scale down if text is too wide
                 while (metrics.width > maxWidth && fontSize > 6) {
                     fontSize *= 0.9;
                     ctx.font = `${fontSize}px sans-serif`;
                     metrics = ctx.measureText(text);
                 }
-                
+
                 // Ensure font doesn't get too small relative to base size
                 fontSize = Math.max(fontSize, baseFontSize * 0.5);
-                
+
                 return fontSize;
             }
 
@@ -2428,7 +2488,7 @@
             const ofInterestToggle = document.getElementById('ofInterestToggle').checked;
             const ofInterestMarker = document.querySelector('.of-interest-marker');
             let biomoleculeMarkerWidth = 0;
-            
+
             if (ofInterestToggle && ofInterestMarker) {
                 // Estimate width needed for biomolecule marker text
                 const tempCtx = document.createElement('canvas').getContext('2d');
@@ -2442,7 +2502,7 @@
 
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            
+
             // --- HIGH-DPI FIX for Blurry Text ---
             // Force at least a 2x scale factor for sharpness, and use the device's ratio if it's higher.
             const dpr = Math.max(2, window.devicePixelRatio || 1);
@@ -2470,7 +2530,7 @@
             const ladderContainerHeight = ladderContainer.offsetHeight; // Get the actual height from the preview
             const ladderMarkers = document.querySelectorAll('.ladder-label-marker');
             const ladderType = document.getElementById('ladderType').value; // Get current ladder type
-            
+
             ctx.font = `bold ${ladderFontSize}px sans-serif`;
             ctx.fillStyle = 'black';
             ctx.textAlign = 'right';
@@ -2494,7 +2554,7 @@
                 const y = imageY + (imagePreview.naturalHeight * relativeY);
 
                 const x = imageX - (baseFontSize * 0.75); // Position relative to font size
-                
+
                 ctx.fillText(marker.textContent, x, y);
             });
 
@@ -2503,14 +2563,14 @@
             ctx.fillStyle = 'black';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'top';
-            
+
             let units = '';
             if (ladderType === '100bp' || ladderType === '1kbp') {
                 units = 'bp';
             } else if (ladderType === 'protein') {
                 units = 'kDa';
             }
-            
+
             if (units) {
                 ctx.fillText(units, PADDING / 2, PADDING / 2);
             }
@@ -2519,7 +2579,7 @@
             if (ofInterestToggle && ofInterestMarker) {
                 const ofInterestContainer = document.getElementById('ofInterestMarkerContainer');
                 const imagePreviewElement = document.getElementById('imagePreview');
-                
+
                 ctx.font = `bold ${topLabelFontSize}px sans-serif`; // Use larger font for biomolecule marker
                 ctx.fillStyle = '#ff6b6b'; // Use the same color as the marker border
                 ctx.textAlign = 'left';
@@ -2527,7 +2587,7 @@
 
                 // Use the same approach as ladder markers
                 const ofInterestContainerHeight = ofInterestContainer.offsetHeight;
-                
+
                 // Get the exact positioning from the preview
                 let markerTopPx;
                 const topStyle = ofInterestMarker.style.top;
@@ -2547,18 +2607,18 @@
 
                 // Position on the right side of the image with proper spacing
                 const x = imageX + imagePreview.naturalWidth + (baseFontSize * 1.5);
-                
+
                 ctx.fillText(ofInterestMarker.textContent, x, y);
             }
 
             // 4. Draw top labels
             // Only select visible labels (handles removed segments)
             const topLabels = Array.from(document.querySelectorAll('.preview-label')).filter(label => label.style.display !== 'none');
-            
+
             // Replicate the "scrunch" effect from the preview by applying the same padding.
             // If split mode is active, remove padding
             const horizontalPadding = activeWellPositions ? 0 : 0.1;
-            
+
             const topLabelDrawWidth = imagePreview.naturalWidth * (1 - (horizontalPadding * 2));
             const topLabelStartX = imageX + (imagePreview.naturalWidth * horizontalPadding);
 
@@ -2568,7 +2628,7 @@
             ctx.textBaseline = 'bottom'; // Ensure labels don't extend above their position
             topLabels.forEach(label => {
                 const leftPercent = parseFloat(label.style.left) / 100;
-                
+
                 // Calculate position within the new, narrower drawing area.
                 // Note: If split is active, leftPercent is already relative to the full width (including gaps)
                 // but the preview container applies padding. We need to map the percentage to the padded area.
@@ -2597,7 +2657,7 @@
             if (includeDate) {
                 const dateString = new Date().toLocaleDateString();
                 // Use larger font for better readability
-                ctx.font = `bold ${baseFontSize}px sans-serif`; 
+                ctx.font = `bold ${baseFontSize}px sans-serif`;
                 ctx.fillStyle = 'black';
                 ctx.textAlign = 'right';
                 // Adjust vertical position to accommodate the larger font.
@@ -2636,7 +2696,7 @@
         let activeSplitterLine = null;
         let activeWellPositions = null; // Stores { index, centerPercent, startX, width } for active wells
         let savedSplitState = null; // Stores data to re-render split
-        
+
         // Grouping Logic Variables
         let wellGroups = []; // Stores arrays of well indices [ [0,1], [3,4,5] ]
         let selectedWellsForGroup = [];
@@ -2646,7 +2706,7 @@
         // Toggle split image view
         function toggleSplitImage() {
             const isChecked = document.getElementById('splitImageToggle').checked;
-            
+
             if (isChecked) {
                 if (!originalCroppedImageSrc) {
                     alert("Please crop an image first.");
@@ -2659,7 +2719,7 @@
                     document.getElementById('splitImageToggle').checked = false;
                     return;
                 }
-                
+
                 // Open Splitter Modal
                 document.getElementById('splitterModal').style.display = 'flex';
                 initSplitter();
@@ -2674,14 +2734,14 @@
         function toggleGroupWells() {
             const isChecked = document.getElementById('groupWellsToggle').checked;
             const editBtn = document.getElementById('editGroupsBtn');
-            
+
             if (isChecked) {
                 if (!originalCroppedImageSrc) {
                     alert("Please crop an image first.");
                     document.getElementById('groupWellsToggle').checked = false;
                     return;
                 }
-                
+
                 openGroupModal();
                 editBtn.style.display = 'inline-block';
             } else {
@@ -2700,35 +2760,35 @@
         function initGrouper() {
             const imageToGroup = document.getElementById('imageToGroup');
             const overlay = document.getElementById('groupOverlay');
-            
+
             // Use the current preview image (which might be split)
             imageToGroup.src = document.getElementById('imagePreview').src;
             overlay.innerHTML = '';
             selectedWellsForGroup = [];
-            
+
             // Wait for load
             imageToGroup.onload = () => {
                 const rect = imageToGroup.getBoundingClientRect();
                 const scaleX = rect.width / imageToGroup.naturalWidth;
-                
+
                 if (activeWellPositions) {
                     activeWellPositions.forEach(pos => {
                         const el = document.createElement('div');
                         el.className = 'well-selector';
                         el.textContent = pos.index + 1; // 1-based index
                         el.dataset.index = pos.index;
-                        
+
                         // Position
                         el.style.left = `${pos.startX * scaleX}px`;
                         el.style.width = `${pos.width * scaleX}px`;
-                        
+
                         el.addEventListener('click', () => toggleWellSelection(el, pos.index));
-                        
+
                         overlay.appendChild(el);
                     });
                 }
             };
-            
+
             // Force load if cached
             if (imageToGroup.complete) {
                 imageToGroup.onload();
@@ -2753,19 +2813,19 @@
             if (selectedWellsForGroup.length > 0) {
                 // Prompt for group name
                 const name = prompt("Enter a name for this group (optional):", "");
-                
+
                 // Sort indices
                 selectedWellsForGroup.sort((a, b) => a - b);
-                
+
                 // Add to groups with name
                 wellGroups.push({
                     indices: [...selectedWellsForGroup],
                     name: name || ""
                 });
-                
+
                 // Reset selection
                 selectedWellsForGroup = [];
-                
+
                 // Re-render to show bracket in modal
                 renderPreview();
                 setTimeout(() => {
@@ -2790,7 +2850,7 @@
         function initSplitter() {
             const imageToSplit = document.getElementById('imageToSplit');
             const overlay = document.getElementById('splitterLinesOverlay');
-            
+
             imageToSplit.src = originalCroppedImageSrc;
             overlay.innerHTML = ''; // Clear existing lines
             splitterLines = [];
@@ -2801,14 +2861,14 @@
                 const rect = imageToSplit.getBoundingClientRect();
                 // We need (N-1) lines to separate N wells
                 const numLines = currentWellCount > 1 ? currentWellCount - 1 : 0;
-                
+
                 // Create segments first (N segments)
                 for (let i = 0; i < currentWellCount; i++) {
                     const segment = document.createElement('div');
                     segment.className = 'splitter-segment';
                     segment.dataset.index = i;
                     segment.title = "Click to remove this section";
-                    segment.addEventListener('click', function() {
+                    segment.addEventListener('click', function () {
                         this.classList.toggle('removed');
                     });
                     overlay.appendChild(segment);
@@ -2824,14 +2884,14 @@
                         // Initial position
                         const leftPos = step * i;
                         line.style.left = `${leftPos}px`;
-                        
+
                         line.addEventListener('mousedown', startDragLine);
-                        
+
                         overlay.appendChild(line);
                         splitterLines.push(line);
                     }
                 }
-                
+
                 updateSegmentPositions();
             };
         }
@@ -2840,19 +2900,19 @@
             const overlay = document.getElementById('splitterLinesOverlay');
             const rect = overlay.getBoundingClientRect();
             const width = rect.width;
-            
+
             // Get all boundary positions: 0, line1, line2, ..., width
             const boundaries = [0];
             splitterLines.forEach(line => {
                 boundaries.push(parseFloat(line.style.left));
             });
             boundaries.push(width);
-            
+
             // Update each segment
             splitterSegments.forEach((segment, i) => {
                 if (i < boundaries.length - 1) {
                     const left = boundaries[i];
-                    const right = boundaries[i+1];
+                    const right = boundaries[i + 1];
                     segment.style.left = `${left}px`;
                     segment.style.width = `${right - left}px`;
                 }
@@ -2869,14 +2929,14 @@
 
         function dragLine(e) {
             if (!activeSplitterLine) return;
-            
+
             const overlay = document.getElementById('splitterLinesOverlay');
             const rect = overlay.getBoundingClientRect();
             let x = e.clientX - rect.left;
-            
+
             // Constrain within image
             x = Math.max(0, Math.min(x, rect.width));
-            
+
             activeSplitterLine.style.left = `${x}px`;
             updateSegmentPositions();
         }
@@ -2896,7 +2956,7 @@
         function applySplit() {
             const overlay = document.getElementById('splitterLinesOverlay');
             const rect = overlay.getBoundingClientRect();
-            
+
             // Get line positions as percentages
             const splitPositions = splitterLines.map(line => {
                 const left = parseFloat(line.style.left);
@@ -2916,10 +2976,10 @@
                 splitPositions: splitPositions,
                 removedIndices: removedIndices
             };
-            
+
             // Render
             renderPreview();
-            
+
             // Close modal
             document.getElementById('splitterModal').style.display = 'none';
         }
@@ -2931,59 +2991,59 @@
             img.onload = () => {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
-                
+
                 const originalWidth = img.naturalWidth;
                 const originalHeight = img.naturalHeight;
-                
+
                 let activeSegments = [];
-                
+
                 if (savedSplitState) {
                     // --- SPLIT LOGIC ---
                     const splitPositions = savedSplitState.splitPositions;
                     const removedIndices = savedSplitState.removedIndices;
-                    
+
                     // Map split positions to original image coordinates
                     const boundaries = [0];
                     splitPositions.forEach(pos => {
                         boundaries.push(Math.floor(pos * originalWidth));
                     });
                     boundaries.push(originalWidth);
-                    
+
                     // Create segments
                     for (let i = 0; i < boundaries.length - 1; i++) {
                         if (!removedIndices.includes(i)) {
                             activeSegments.push({
                                 sourceX: boundaries[i],
-                                width: boundaries[i+1] - boundaries[i],
+                                width: boundaries[i + 1] - boundaries[i],
                                 originalIndex: i
                             });
                         }
                     }
-                    
+
                     // Calculate new width
                     const numActive = activeSegments.length;
                     const totalGapWidth = numActive > 1 ? (numActive - 1) * SPLIT_GAP : 0;
                     const totalImageWidth = activeSegments.reduce((sum, seg) => sum + seg.width, 0);
-                    
+
                     // Determine extra height for brackets if groups exist
                     const hasGroups = wellGroups.length > 0;
                     const groupSpace = hasGroups ? Math.max(60, originalHeight * 0.15) : 0;
 
                     canvas.width = totalImageWidth + totalGapWidth;
                     canvas.height = originalHeight + groupSpace;
-                    
+
                     // Fill white
                     ctx.fillStyle = 'white';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    
+
                     let currentX = 0;
                     activeWellPositions = [];
-                    
+
                     // Draw segments
                     activeSegments.forEach((seg, index) => {
                         if (seg.width > 0) {
                             ctx.drawImage(img, seg.sourceX, 0, seg.width, originalHeight, currentX, 0, seg.width, originalHeight);
-                            
+
                             activeWellPositions.push({
                                 index: seg.originalIndex,
                                 startX: currentX,
@@ -2991,14 +3051,14 @@
                                 centerPercent: (currentX + (seg.width / 2)) / canvas.width
                             });
                         }
-                        
+
                         if (index < activeSegments.length - 1) {
                             currentX += seg.width + SPLIT_GAP;
                         } else {
                             currentX += seg.width;
                         }
                     });
-                    
+
                 } else {
                     // --- NO SPLIT ---
                     // Determine extra height for brackets if groups exist
@@ -3007,13 +3067,13 @@
 
                     canvas.width = originalWidth;
                     canvas.height = originalHeight + groupSpace;
-                    
+
                     // Fill white background (important if we extended height)
                     ctx.fillStyle = 'white';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
                     ctx.drawImage(img, 0, 0);
-                    
+
                     // Calculate default positions
                     activeWellPositions = [];
                     const step = originalWidth / currentWellCount;
@@ -3026,7 +3086,7 @@
                         });
                     }
                 }
-                
+
                 // --- GROUPING LOGIC ---
                 if (wellGroups.length > 0) {
                     ctx.strokeStyle = 'black';
@@ -3035,20 +3095,20 @@
                     ctx.fillStyle = 'black';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'top';
-                    
+
                     // Font size for group names
                     const groupFontSize = Math.max(16, originalHeight * 0.03);
                     ctx.font = `bold ${groupFontSize}px sans-serif`;
-                    
+
                     const bracketHeight = originalHeight * 0.02; // 2% of image height
-                    
+
                     // Position below the image
                     // Image ends at originalHeight
                     const padding = bracketHeight * 0.5;
-                    const bracketTopY = originalHeight + padding; 
+                    const bracketTopY = originalHeight + padding;
                     const bracketBottomY = bracketTopY + bracketHeight;
                     const textY = bracketBottomY + padding;
-                    
+
                     wellGroups.forEach(groupObj => {
                         // Handle both old (array) and new (object) structure
                         const indices = Array.isArray(groupObj) ? groupObj : groupObj.indices;
@@ -3058,18 +3118,18 @@
                         // Group is array of indices [0, 1, 2]
                         // We need to find the activeWellPositions for these indices
                         const groupPositions = activeWellPositions.filter(p => indices.includes(p.index));
-                        
+
                         if (groupPositions.length > 0) {
                             // Sort by X to be sure
                             groupPositions.sort((a, b) => a.startX - b.startX);
-                            
+
                             const first = groupPositions[0];
                             const last = groupPositions[groupPositions.length - 1];
-                            
+
                             const startX = first.startX + (first.width * 0.1); // Indent slightly
                             const endX = last.startX + last.width - (last.width * 0.1);
                             const centerX = (startX + endX) / 2;
-                            
+
                             // Draw Bracket (Facing UP)
                             // Shape: |____|
                             ctx.beginPath();
@@ -3080,7 +3140,7 @@
                             ctx.lineTo(endX, bracketBottomY);
                             // Right leg (points UP towards image)
                             ctx.lineTo(endX, bracketTopY);
-                            
+
                             ctx.stroke();
 
                             // Draw Name
@@ -3100,4 +3160,5 @@
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
 </body>
+
 </html>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -88,7 +89,7 @@
             position: absolute;
             background-color: var(--pure-white);
             min-width: 160px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
             z-index: 1;
             border-radius: 8px;
             padding: 0.5rem 0;
@@ -120,7 +121,8 @@
 
         /* Main Content */
         .main-content {
-            padding-top: 100px; /* Space for fixed header */
+            padding-top: 100px;
+            /* Space for fixed header */
             min-height: 80vh;
         }
 
@@ -187,7 +189,7 @@
             .nav-links {
                 display: none;
             }
-            
+
             .container {
                 padding: 0 1rem;
             }
@@ -243,8 +245,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* Calculator Forms */
@@ -264,7 +273,8 @@
             color: var(--soft-black);
         }
 
-        .form-group input, .form-group select {
+        .form-group input,
+        .form-group select {
             padding: 0.8rem;
             border: 1px solid #ddd;
             border-radius: 6px;
@@ -272,7 +282,8 @@
             transition: border-color 0.3s;
         }
 
-        .form-group input:focus, .form-group select:focus {
+        .form-group input:focus,
+        .form-group select:focus {
             outline: none;
             border-color: var(--muted-blue);
         }
@@ -331,8 +342,168 @@
             color: var(--muted-blue);
             margin-top: 0.5rem;
         }
+
+        .saved-item {
+            background-color: var(--pure-white);
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            transition: transform 0.2s;
+        }
+
+        .saved-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .saved-header {
+            font-weight: 700;
+            color: var(--primary-black);
+            font-size: 1.05rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .saved-details {
+            font-family: monospace;
+            color: var(--soft-black);
+            background: #f8f9fa;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.95rem;
+        }
+
+        /* Grouping Styles */
+        .group-container {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            background: var(--pure-white);
+        }
+
+        .group-header {
+            background: #f1f3f5;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: var(--primary-black);
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        .group-header:hover {
+            background: #e9ecef;
+        }
+
+        .group-header .group-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .group-header .toggle-icon {
+            transition: transform 0.3s;
+        }
+
+        .group-header.collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .group-content {
+            padding: 1rem;
+            border-top: 1px solid #eee;
+            display: block;
+        }
+
+        .group-content.collapsed {
+            display: none;
+        }
+
+        .group-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .group-btn-icon {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            padding: 2px;
+            font-size: 1rem;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .group-btn-icon:hover {
+            opacity: 1;
+            color: var(--muted-blue);
+        }
+
+        .group-btn-icon.delete:hover {
+            color: #dc3545;
+        }
+
+        .delete-item-btn {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 1.2rem;
+            margin-left: 0.5rem;
+            padding: 0 0.5rem;
+        }
+
+        .delete-item-btn:hover {
+            color: #dc3545;
+        }
+
+        /* Modal for Group Creation */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
     </style>
 </head>
+
 <body>
     <header>
         <nav class="container">
@@ -346,6 +517,7 @@
                         <a href="sequencer.html">Sequencer</a>
                         <a href="calculations.html">Calculations</a>
                         <a href="size_exclusion_graphing.html">Size Exclusion Graphing</a>
+                        <a href="timing.html">Timing</a>
                     </div>
                 </li>
             </ul>
@@ -367,7 +539,8 @@
 
             <div id="dilution" class="tab-content active">
                 <h2>Dilution Calculator</h2>
-                <p style="margin-bottom: 1.5rem; color: #666;">Calculate the volume needed to dilute a stock solution to a desired concentration (C1V1 = C2V2).</p>
+                <p style="margin-bottom: 1.5rem; color: #666;">Calculate the volume needed to dilute a stock solution to
+                    a desired concentration (C1V1 = C2V2).</p>
                 <div class="calc-form">
                     <div class="form-group">
                         <label>Final Concentration (C2)</label>
@@ -416,16 +589,43 @@
                         </div>
                     </div>
                     <button class="calc-btn" onclick="calculateDilution()">Calculate</button>
+                    <!-- Save/Reset Controls -->
+                    <div class="save-controls"
+                        style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem;">
+                        <div style="display:flex; gap:0.5rem;">
+                            <input type="text" id="dil-save-name" placeholder="Name this calculation"
+                                style="flex:2; padding:0.8rem; border:1px solid #ddd; border-radius:6px;">
+                            <select id="dil-group-select"
+                                style="flex:1; padding:0.8rem; border:1px solid #ddd; border-radius:6px;">
+                                <option value="default">All Calculations</option>
+                            </select>
+                        </div>
+                        <div style="display:flex; gap:0.5rem;">
+                            <button class="calc-btn" onclick="openCreateGroupModal('dilution')"
+                                style="margin-top:0; flex:1; background:var(--muted-blue); opacity:0.8;">+ New
+                                Group</button>
+                            <button class="calc-btn" onclick="saveDilution()"
+                                style="margin-top:0; flex:1; background:var(--soft-black);">Save</button>
+                            <button class="calc-btn" onclick="resetDilution()"
+                                style="margin-top:0; flex:1; background:#dc3545;">Reset Inputs</button>
+                            <button class="calc-btn" onclick="clearAllDilutionData()"
+                                style="margin-top:0; flex:1; background:#c82333;">Clear All</button>
+                        </div>
+                    </div>
                 </div>
                 <div id="dil-result" class="result-box">
                     <h3>Result</h3>
                     <div class="result-value" id="dil-output"></div>
                 </div>
+                <div id="dil-saved-list" style="margin-top: 2rem;">
+                    <!-- Saved items will appear here -->
+                </div>
             </div>
 
             <div id="molarity" class="tab-content">
                 <h2>Molarity Calculator</h2>
-                <p style="margin-bottom: 1.5rem; color: #666;">Calculate the mass required to prepare a solution of specific molarity.</p>
+                <p style="margin-bottom: 1.5rem; color: #666;">Calculate the mass required to prepare a solution of
+                    specific molarity.</p>
                 <div class="calc-form">
                     <div class="form-group">
                         <label>Molecular Weight (g/mol)</label>
@@ -455,19 +655,46 @@
                         </div>
                     </div>
                     <button class="calc-btn" onclick="calculateMolarity()">Calculate Mass</button>
+                    <!-- Save/Reset Controls -->
+                    <div class="save-controls"
+                        style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem;">
+                        <div style="display:flex; gap:0.5rem;">
+                            <input type="text" id="mol-save-name" placeholder="Name this calculation"
+                                style="flex:2; padding:0.8rem; border:1px solid #ddd; border-radius:6px;">
+                            <select id="mol-group-select"
+                                style="flex:1; padding:0.8rem; border:1px solid #ddd; border-radius:6px;">
+                                <option value="default">All Calculations</option>
+                            </select>
+                        </div>
+                        <div style="display:flex; gap:0.5rem;">
+                            <button class="calc-btn" onclick="openCreateGroupModal('molarity')"
+                                style="margin-top:0; flex:1; background:var(--muted-blue); opacity:0.8;">+ New
+                                Group</button>
+                            <button class="calc-btn" onclick="saveMolarity()"
+                                style="margin-top:0; flex:1; background:var(--soft-black);">Save</button>
+                            <button class="calc-btn" onclick="resetMolarity()"
+                                style="margin-top:0; flex:1; background:#dc3545;">Reset Inputs</button>
+                            <button class="calc-btn" onclick="clearAllMolarityData()"
+                                style="margin-top:0; flex:1; background:#c82333;">Clear All</button>
+                        </div>
+                    </div>
                 </div>
                 <div id="mol-result" class="result-box">
                     <h3>Required Mass</h3>
                     <div class="result-value" id="mol-output"></div>
+                </div>
+                <div id="mol-saved-list" style="margin-top: 2rem;">
+                    <!-- Saved items will appear here -->
                 </div>
             </div>
 
             <div id="transfection" class="tab-content">
                 <h2>Transfection Calculator</h2>
                 <p style="margin-bottom: 1.5rem; color: #666;">Calculate the amount of DNA needed for transfection.</p>
-                
+
                 <!-- Section 1 -->
-                <div class="calc-section" style="margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid #eee;">
+                <div class="calc-section"
+                    style="margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid #eee;">
                     <h3>DNA Volume Calculation</h3>
                     <div class="calc-form">
                         <div class="form-group">
@@ -507,25 +734,300 @@
                 </div>
             </div>
         </div>
+        </div>
+
+        <!-- Add Group Modal -->
+        <div id="groupModal" class="modal">
+            <div class="modal-content">
+                <h3>Create New Group</h3>
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label>Group Name</label>
+                    <input type="text" id="new-group-name" placeholder="e.g., Week 1 Experiments">
+                </div>
+                <div class="modal-buttons">
+                    <button class="calc-btn" onclick="closeGroupModal()"
+                        style="margin:0; background:#6c757d;">Cancel</button>
+                    <button class="calc-btn" onclick="confirmCreateGroup()" style="margin:0;">Create</button>
+                </div>
+            </div>
+        </div>
 
         <script>
+            // Unified State Management (Session Only)
+            let appState = {
+                inputs: {
+                    dilution: { c1: '', v1: '', c2: '', v2: '', units: {} },
+                    molarity: { mw: '', conc: '', vol: '', units: {} }
+                },
+                savedItems: [], // Array of { id, name, values, group, timestamp, type }
+                groups: [],     // Array of { id, name }
+                activeModal: null // 'dilution' or 'molarity' (used for triggering context)
+            };
+
+            function init() {
+                // Initialize lists (will be empty on load)
+                renderAllLists();
+                updateAllGroupSelects();
+
+                // Add event listeners to capture inputs in real-time (for tab switching preservation)
+                // We don't save to localStorage, but we keep appState.inputs updated so we can
+                // potentially restore them if we implemented logic for that, 
+                // but currently the DOM keeps the state when switching tabs anyway 
+                // because we just hide/show divs. 
+                // However, let's keep appState updated for good measure.
+                document.querySelectorAll('input, select').forEach(el => {
+                    el.addEventListener('change', captureInputs);
+                    el.addEventListener('input', captureInputs);
+                });
+            }
+
+            function captureInputs() {
+                // Dilution
+                appState.inputs.dilution = {
+                    c1: document.getElementById('dil-c1').value,
+                    v1: document.getElementById('dil-v1').value,
+                    c2: document.getElementById('dil-c2').value,
+                    v2: document.getElementById('dil-v2').value,
+                    units: {
+                        c1: document.getElementById('dil-c1-unit').value,
+                        v1: document.getElementById('dil-v1-unit').value,
+                        c2: document.getElementById('dil-c2-unit').value,
+                        v2: document.getElementById('dil-v2-unit').value
+                    }
+                };
+
+                // Molarity
+                appState.inputs.molarity = {
+                    mw: document.getElementById('mol-mw').value,
+                    conc: document.getElementById('mol-conc').value,
+                    vol: document.getElementById('mol-vol').value,
+                    units: {
+                        conc: document.getElementById('mol-conc-unit').value,
+                        vol: document.getElementById('mol-vol-unit').value
+                    }
+                };
+            }
+
             function openTab(tabId, btn) {
                 // Hide all tabs
                 document.querySelectorAll('.tab-content').forEach(tab => {
                     tab.classList.remove('active');
                 });
-                
+
                 // Deactivate all buttons
                 document.querySelectorAll('.tab-button').forEach(button => {
                     button.classList.remove('active');
                 });
-                
+
                 // Show selected tab
                 document.getElementById(tabId).classList.add('active');
-                
+
                 // Activate button
                 btn.classList.add('active');
             }
+
+            // ---- Unified Grouping Logic ----
+
+            function openCreateGroupModal(type) {
+                appState.activeModal = type;
+                document.getElementById('groupModal').classList.add('show');
+                document.getElementById('new-group-name').focus();
+            }
+
+            function closeGroupModal() {
+                document.getElementById('groupModal').classList.remove('show');
+                document.getElementById('new-group-name').value = '';
+                appState.activeModal = null;
+            }
+
+            function confirmCreateGroup() {
+                const name = document.getElementById('new-group-name').value.trim();
+
+                if (!name) return;
+
+                const newGroup = {
+                    id: 'g_' + Date.now(),
+                    name: name
+                };
+
+                appState.groups.push(newGroup);
+
+                updateAllGroupSelects();
+                renderAllLists();
+                closeGroupModal();
+
+                // Select the new group in the active context
+                if (appState.activeModal) {
+                    const selectorId = appState.activeModal === 'dilution' ? 'dil-group-select' : 'mol-group-select';
+                    document.getElementById(selectorId).value = newGroup.id;
+                }
+            }
+
+            function updateAllGroupSelects() {
+                ['dilution', 'molarity'].forEach(type => {
+                    const select = document.getElementById(`${type === 'dilution' ? 'dil' : 'mol'}-group-select`);
+                    // Save current selection to restore it if possible
+                    const currentVal = select.value;
+
+                    // Reset options
+                    select.innerHTML = '<option value="default">All Calculations</option>';
+
+                    appState.groups.forEach(g => {
+                        const opt = document.createElement('option');
+                        opt.value = g.id;
+                        opt.textContent = g.name;
+                        select.appendChild(opt);
+                    });
+
+                    // Restore selection if it still exists
+                    if (Array.from(select.options).some(o => o.value === currentVal)) {
+                        select.value = currentVal;
+                    }
+                });
+            }
+
+            function deleteGroup(groupId) {
+                if (confirm('Delete this group? Calculations will be ungrouped.')) {
+                    // Remove group
+                    appState.groups = appState.groups.filter(g => g.id !== groupId);
+
+                    // Ungroup items
+                    appState.savedItems.forEach(item => {
+                        if (item.group === groupId) {
+                            item.group = 'default';
+                        }
+                    });
+
+                    updateAllGroupSelects();
+                    renderAllLists();
+                }
+            }
+
+            function toggleGroup(header) {
+                header.classList.toggle('collapsed');
+                const content = header.nextElementSibling;
+                content.classList.toggle('collapsed');
+            }
+
+            function renderAllLists() {
+                renderList('dilution');
+                renderList('molarity');
+            }
+
+            function renderList(viewContext) {
+                const containerId = viewContext === 'dilution' ? 'dil-saved-list' : 'mol-saved-list';
+                const container = document.getElementById(containerId);
+                container.innerHTML = '';
+
+                // We display ALL items in both tabs (unified list)
+
+                const items = appState.savedItems;
+                const groups = appState.groups;
+
+                // Helper to create item HTML
+                const createItemHTML = (item) => {
+                    const isDilution = item.type === 'dilution';
+
+                    if (isDilution) {
+                        return `
+                        <div class="saved-item" style="margin-bottom:0.5rem; border-left: 4px solid var(--muted-blue);">
+                           <div class="saved-details" style="display:flex; align-items:center; gap: 1rem; background:none; padding:0;">
+                                <span style="font-size:0.8rem; color:#666; width:20px;" title="Dilution">D</span>
+                                <span style="min-width: 80px;">${item.values.c1}</span>
+                                <span style="font-weight:700; flex:1;">${item.name}</span>
+                                <span style="min-width: 80px;">${item.values.v1}</span>
+                                <span style="min-width: 80px;">${item.values.c2}</span>
+                                <button class="delete-item-btn" onclick="deleteItem('${item.id}')">×</button>
+                            </div>
+                        </div>`;
+                    } else {
+                        return `
+                        <div class="saved-item" style="margin-bottom:0.5rem; border-left: 4px solid var(--soft-black);">
+                            <div class="saved-header" style="justify-content:flex-start; gap:1rem;">
+                                <span style="font-size:0.8rem; color:#666; width:20px;" title="Molarity">M</span>
+                                <span>${item.name}</span>
+                                <button class="delete-item-btn" style="margin-left:auto;" onclick="deleteItem('${item.id}')">×</button>
+                            </div>
+                            <div class="saved-details">
+                                MW: ${item.values.mw} | Conc: ${item.values.conc} | Vol: ${item.values.vol} → Mass: <b>${item.values.mass}</b>
+                            </div>
+                        </div>`;
+                    }
+                };
+
+                // 1. Render groups
+                groups.forEach(group => {
+                    const groupItems = items.filter(i => i.group === group.id);
+
+                    const groupHTML = document.createElement('div');
+                    groupHTML.className = 'group-container';
+                    groupHTML.innerHTML = `
+                        <div class="group-header" onclick="toggleGroup(this)">
+                            <div class="group-title">
+                                <span class="toggle-icon">▼</span>
+                                <span>${group.name} (${groupItems.length})</span>
+                            </div>
+                            <div class="group-actions" onclick="event.stopPropagation()">
+                                <button class="group-btn-icon delete" title="Delete Group" onclick="deleteGroup('${group.id}')">🗑️</button>
+                            </div>
+                        </div>
+                        <div class="group-content">
+                            ${groupItems.length ? groupItems.map(createItemHTML).join('') : '<p style="color:#999; font-size:0.9rem;">No calculations</p>'}
+                        </div>
+                    `;
+                    container.appendChild(groupHTML);
+                });
+
+                // 2. Render ungrouped items
+                const ungroupedItems = items.filter(i => !i.group || i.group === 'default');
+                if (ungroupedItems.length > 0) {
+                    const groupHTML = document.createElement('div');
+                    groupHTML.className = 'group-container';
+                    groupHTML.innerHTML = `
+                        <div class="group-header" onclick="toggleGroup(this)">
+                            <div class="group-title">
+                                <span class="toggle-icon">▼</span>
+                                <span>All Calculations (${ungroupedItems.length})</span>
+                            </div>
+                        </div>
+                        <div class="group-content">
+                             ${ungroupedItems.map(createItemHTML).join('')}
+                        </div>
+                    `;
+                    container.appendChild(groupHTML);
+                }
+            }
+
+            function deleteItem(id) {
+                if (confirm('Delete this calculation?')) {
+                    appState.savedItems = appState.savedItems.filter(i => i.id !== id);
+                    renderAllLists();
+                }
+            }
+
+            function clearAllDilutionData() {
+                if (confirm('Clear Dilution inputs? Saved items will remain.')) {
+                    // Only clear inputs
+                    document.getElementById('dil-c1').value = '';
+                    document.getElementById('dil-v1').value = '';
+                    document.getElementById('dil-c2').value = '';
+                    document.getElementById('dil-v2').value = '';
+                    document.getElementById('dil-result').classList.remove('show');
+                    captureInputs();
+                }
+            }
+            function clearAllMolarityData() {
+                if (confirm('Clear Molarity inputs? Saved items will remain.')) {
+                    // Only clear inputs
+                    document.getElementById('mol-mw').value = '';
+                    document.getElementById('mol-conc').value = '';
+                    document.getElementById('mol-vol').value = '';
+                    document.getElementById('mol-result').classList.remove('show');
+                    captureInputs();
+                }
+            }
+
+            // ---- Calculation Logic ----
 
             function calculateDilution() {
                 const c1Val = document.getElementById('dil-c1').value;
@@ -543,7 +1045,7 @@
                 const v1 = parseFloat(v1Val) * v1Unit;
                 const c2 = parseFloat(c2Val) * c2Unit;
                 const v2 = parseFloat(v2Val) * v2Unit;
-                
+
                 const resultBox = document.getElementById('dil-result');
                 const output = document.getElementById('dil-output');
 
@@ -568,95 +1070,163 @@
                 };
 
                 // Priority Logic: Calculate empty field, or default to V1 if all full
+                let resultField = '';
+
                 if (!hasC1) {
                     // Calculate C1 = (C2 * V2) / V1
                     const calculatedC1_M = (c2 * v2) / v1;
-                    // Convert back to selected unit
                     const calculatedC1 = calculatedC1_M / c1Unit;
-                    
                     document.getElementById('dil-c1').value = calculatedC1.toPrecision(4);
-                    output.innerHTML = `<strong>Calculated Initial Concentration (C1): ${calculatedC1.toPrecision(4)} ${getUnitLabel('dil-c1-unit')}</strong>`;
+                    output.textContent = `${calculatedC1.toPrecision(4)} ${getUnitLabel('dil-c1-unit')}`;
+                    resultField = 'dil-c1';
                 } else if (!hasC2) {
                     // Calculate C2 = (C1 * V1) / V2
                     const calculatedC2_M = (c1 * v1) / v2;
                     const calculatedC2 = calculatedC2_M / c2Unit;
-                    
                     document.getElementById('dil-c2').value = calculatedC2.toPrecision(4);
-                    output.innerHTML = `<strong>Calculated Final Concentration (C2): ${calculatedC2.toPrecision(4)} ${getUnitLabel('dil-c2-unit')}</strong>`;
+                    output.textContent = `${calculatedC2.toPrecision(4)} ${getUnitLabel('dil-c2-unit')}`;
+                    resultField = 'dil-c2';
                 } else if (!hasV2) {
                     // Calculate V2 = (C1 * V1) / C2
                     const calculatedV2_L = (c1 * v1) / c2;
                     const calculatedV2 = calculatedV2_L / v2Unit;
-                    
-                    // Diluent volume in V2 units
-                    // Note: V1 might be in different unit, so we use base units for subtraction then convert
-                    const diluentVolume_L = calculatedV2_L - v1;
-                    const diluentVolume = diluentVolume_L / v2Unit;
-
                     document.getElementById('dil-v2').value = calculatedV2.toPrecision(4);
-                    output.innerHTML = `
-                        <strong>Calculated Final Volume (V2): ${calculatedV2.toPrecision(4)} ${getUnitLabel('dil-v2-unit')}</strong><br>
-                        Add ${parseFloat(v1Val)} ${getUnitLabel('dil-v1-unit')} of stock solution<br>
-                        to ${diluentVolume.toPrecision(4)} ${getUnitLabel('dil-v2-unit')} of diluent
-                    `;
+                    output.textContent = `${calculatedV2.toPrecision(4)} ${getUnitLabel('dil-v2-unit')}`;
+                    resultField = 'dil-v2';
                 } else {
-                    // Default case: Calculate V1 (if V1 is empty OR all fields are full)
-                    // V1 = (C2 * V2) / C1
+                    // Default: Calculate V1 
                     const calculatedV1_L = (c2 * v2) / c1;
                     const calculatedV1 = calculatedV1_L / v1Unit;
-                    
-                    // Diluent volume in V2 units (usually user cares about final volume unit)
-                    const diluentVolume_L = v2 - calculatedV1_L;
-                    const diluentVolume = diluentVolume_L / v2Unit;
-                    
                     document.getElementById('dil-v1').value = calculatedV1.toPrecision(4);
-
-                    output.innerHTML = `
-                        <strong>Calculated Initial Volume (V1): ${calculatedV1.toPrecision(4)} ${getUnitLabel('dil-v1-unit')}</strong><br>
-                        Add ${calculatedV1.toPrecision(4)} ${getUnitLabel('dil-v1-unit')} of stock solution<br>
-                        to ${diluentVolume.toPrecision(4)} ${getUnitLabel('dil-v2-unit')} of diluent<br>
-                        Total Volume: ${parseFloat(v2Val)} ${getUnitLabel('dil-v2-unit')}
-                    `;
+                    output.textContent = `${calculatedV1.toPrecision(4)} ${getUnitLabel('dil-v1-unit')}`;
+                    resultField = 'dil-v1';
                 }
                 resultBox.classList.add('show');
+                // Store result field for saving
+                document.getElementById('calculator-container').dataset.dilLastCalc = resultField;
+                captureInputs();
+            }
+
+            function resetDilution() {
+                document.getElementById('dil-c1').value = '';
+                document.getElementById('dil-v1').value = '';
+                document.getElementById('dil-c2').value = '';
+                document.getElementById('dil-v2').value = '';
+                document.getElementById('dil-result').classList.remove('show');
+                captureInputs();
+            }
+
+            function saveDilution() {
+                const name = document.getElementById('dil-save-name').value;
+                const groupId = document.getElementById('dil-group-select').value;
+
+                if (!name) { alert('Please enter a name'); return; }
+
+                // Auto-calculate
+                calculateDilution();
+                if (!document.getElementById('dil-result').classList.contains('show')) return;
+
+                const c1 = document.getElementById('dil-c1').value + ' ' + document.querySelector('#dil-c1-unit option:checked').text;
+                const v1 = document.getElementById('dil-v1').value + ' ' + document.querySelector('#dil-v1-unit option:checked').text;
+                const c2 = document.getElementById('dil-c2').value + ' ' + document.querySelector('#dil-c2-unit option:checked').text;
+                const v2 = document.getElementById('dil-v2').value + ' ' + document.querySelector('#dil-v2-unit option:checked').text;
+
+                const calcField = document.getElementById('calculator-container').dataset.dilLastCalc;
+                const format = (id, val) => id === calcField ? `<b>${val}</b>` : val;
+
+                const newItem = {
+                    id: 'd_' + Date.now(),
+                    type: 'dilution',
+                    name: name,
+                    group: groupId,
+                    values: {
+                        c1: format('dil-c1', c1),
+                        v1: format('dil-v1', v1),
+                        c2: format('dil-c2', c2),
+                        v2: format('dil-v2', v2)
+                    },
+                    timestamp: Date.now()
+                };
+
+                appState.savedItems.push(newItem);
+                renderAllLists();
+                document.getElementById('dil-save-name').value = '';
             }
 
             function calculateMolarity() {
                 const mw = parseFloat(document.getElementById('mol-mw').value);
-                const concVal = parseFloat(document.getElementById('mol-conc').value);
-                const volVal = parseFloat(document.getElementById('mol-vol').value);
-                
+                const conc = parseFloat(document.getElementById('mol-conc').value);
+                const vol = parseFloat(document.getElementById('mol-vol').value);
+
                 const concUnit = parseFloat(document.getElementById('mol-conc-unit').value);
                 const volUnit = parseFloat(document.getElementById('mol-vol-unit').value);
 
-                const resultBox = document.getElementById('mol-result');
-                const output = document.getElementById('mol-output');
-
-                if (isNaN(mw) || isNaN(concVal) || isNaN(volVal)) {
-                    alert('Please enter valid numbers');
+                if (isNaN(mw) || isNaN(conc) || isNaN(vol)) {
+                    alert('Please fill in all fields.');
                     return;
                 }
 
-                // Convert to base units (Molar and Liter)
-                const conc = concVal * concUnit;
-                const vol = volVal * volUnit;
+                const molarity = conc * concUnit;
+                const volume = vol * volUnit;
+                const mass = mw * molarity * volume;
 
-                // Mass = Molarity * Volume * MW
-                // Mass (g) = (mol/L) * (L) * (g/mol)
-                const mass = conc * vol * mw;
+                let displayMass = mass;
+                let unit = 'g';
 
-                // Format output based on size
-                let massStr;
                 if (mass < 1e-3) {
-                    massStr = `${(mass * 1e6).toPrecision(4)} µg`;
+                    displayMass = mass * 1e6;
+                    unit = 'µg';
                 } else if (mass < 1) {
-                    massStr = `${(mass * 1e3).toPrecision(4)} mg`;
-                } else {
-                    massStr = `${mass.toPrecision(4)} g`;
+                    displayMass = mass * 1e3;
+                    unit = 'mg';
                 }
 
-                output.innerHTML = massStr;
-                resultBox.classList.add('show');
+                const output = document.getElementById('mol-output');
+                const massStr = `${displayMass.toPrecision(4)} ${unit}`;
+                output.textContent = massStr;
+                document.getElementById('mol-result').classList.add('show');
+
+                document.getElementById('calculator-container').dataset.molLastMass = massStr;
+                captureInputs();
+            }
+
+            function resetMolarity() {
+                document.getElementById('mol-mw').value = '';
+                document.getElementById('mol-conc').value = '';
+                document.getElementById('mol-vol').value = '';
+                document.getElementById('mol-result').classList.remove('show');
+                captureInputs();
+            }
+
+            function saveMolarity() {
+                const name = document.getElementById('mol-save-name').value;
+                const groupId = document.getElementById('mol-group-select').value;
+
+                if (!name) { alert('Please enter a name'); return; }
+
+                // Auto-calculate
+                calculateMolarity();
+                if (!document.getElementById('mol-result').classList.contains('show')) return;
+
+                const mw = document.getElementById('mol-mw').value + ' g/mol';
+                const conc = document.getElementById('mol-conc').value + ' ' + document.querySelector('#mol-conc-unit option:checked').text;
+                const vol = document.getElementById('mol-vol').value + ' ' + document.querySelector('#mol-vol-unit option:checked').text;
+                const mass = document.getElementById('calculator-container').dataset.molLastMass;
+
+                const newItem = {
+                    id: 'm_' + Date.now(),
+                    type: 'molarity',
+                    name: name,
+                    group: groupId,
+                    values: {
+                        mw, conc, vol, mass
+                    },
+                    timestamp: Date.now()
+                };
+
+                appState.savedItems.push(newItem);
+                renderAllLists();
+                document.getElementById('mol-save-name').value = '';
             }
 
             function calculateTransfectionSection1() {
@@ -670,12 +1240,7 @@
                     return;
                 }
 
-                // User instruction: "The Volume of the culture should be equal to the ng that is divided by the DNA concentration."
-                // Interpreted as: Mass (ng) = Volume (mL) value.
-                // Result (µL) = Mass (ng) / Concentration (ng/µL)
-                // Therefore: Result = Volume / Concentration
-                // Update: "The number in the DNA concentration should be divided by 1000 before using it for calculations."
-                
+                // User instruction logic
                 const effectiveDnaConc = dnaConc / 1000;
                 const result = volCulture / effectiveDnaConc;
 
@@ -687,7 +1252,7 @@
                 const volCulture = parseFloat(document.getElementById('trans-vol-culture').value);
                 const peiConc = parseFloat(document.getElementById('trans-pei-conc').value);
                 const peiMult = parseFloat(document.getElementById('trans-pei-mult').value);
-                
+
                 const resultBox = document.getElementById('trans-result-2');
                 const output = document.getElementById('trans-output-2');
 
@@ -701,13 +1266,22 @@
                 }
 
                 // Logic: (Culture Volume * PEI Multiplier) / PEI Concentration
-                // Update: Divide by 1000 for final output
                 const rawResult = (volCulture * peiMult) / peiConc;
                 const result = rawResult / 1000;
 
                 output.innerHTML = `${result.toFixed(1)} mL`;
                 resultBox.classList.add('show');
             }
+
+            // Initialize app
+            window.addEventListener('DOMContentLoaded', init);
+
+            // Add input listeners for auto-save state
+            document.querySelectorAll('input, select').forEach(el => {
+                el.addEventListener('change', captureInputs);
+                el.addEventListener('input', captureInputs);
+            });
+
         </script>
     </main>
 
@@ -727,11 +1301,12 @@
                     <a href="size_exclusion_graphing.html">Size Exclusion Graphing</a>
                 </div>
             </div>
-            
+
             <div class="footer-bottom">
                 <p>&copy; 2025 CadeWardInc. All rights reserved. | Advanced scientific analysis tools.</p>
             </div>
         </div>
     </footer>
 </body>
+
 </html>

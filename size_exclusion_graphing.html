@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -91,7 +92,7 @@
             position: absolute;
             background-color: var(--pure-white);
             min-width: 160px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
             z-index: 1;
             border-radius: 8px;
             padding: 0.5rem 0;
@@ -123,7 +124,8 @@
 
         /* Main Content */
         .main-content {
-            padding-top: 100px; /* Space for fixed header */
+            padding-top: 100px;
+            /* Space for fixed header */
             min-height: 80vh;
         }
 
@@ -153,7 +155,7 @@
             border-radius: 12px;
             padding: 2rem;
             margin-bottom: 2rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
 
         .controls-container {
@@ -174,7 +176,8 @@
             color: var(--soft-black);
         }
 
-        .control-group input, .control-group textarea {
+        .control-group input,
+        .control-group textarea {
             padding: 0.8rem;
             border: 1px solid #ddd;
             border-radius: 6px;
@@ -182,7 +185,8 @@
             transition: border-color 0.3s;
         }
 
-        .control-group input:focus, .control-group textarea:focus {
+        .control-group input:focus,
+        .control-group textarea:focus {
             outline: none;
             border-color: var(--muted-blue);
         }
@@ -254,13 +258,14 @@
             .nav-links {
                 display: none;
             }
-            
+
             .container {
                 padding: 0 1rem;
             }
         }
     </style>
 </head>
+
 <body>
     <header>
         <nav class="container">
@@ -274,6 +279,7 @@
                         <a href="sequencer.html">Sequencer</a>
                         <a href="calculations.html">Calculations</a>
                         <a href="size_exclusion_graphing.html">Size Exclusion Graphing</a>
+                        <a href="timing.html">Timing</a>
                     </div>
                 </li>
             </ul>
@@ -303,7 +309,7 @@
                     <div style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
                         <input type="checkbox" id="showFractions" style="width: auto;">
                         <label for="showFractions" style="font-weight: normal; cursor: pointer;">Fraction</label>
-                        
+
                         <input type="checkbox" id="showGridlines" style="width: auto; margin-left: 1rem;">
                         <label for="showGridlines" style="font-weight: normal; cursor: pointer;">Gridlines</label>
                     </div>
@@ -315,7 +321,7 @@
                 <button class="btn btn-secondary" onclick="exportGraph()">Export Graph</button>
                 <button class="btn btn-secondary" onclick="clearData()">Clear Data</button>
             </div>
-            
+
             <div style="position: relative; height: 500px; width: 100%;">
                 <canvas id="secChart"></canvas>
             </div>
@@ -336,9 +342,10 @@
                     <a href="sequencer.html">Sequencer</a>
                     <a href="calculations.html">Calculations</a>
                     <a href="size_exclusion_graphing.html">Size Exclusion Graphing</a>
+                    <a href="timing.html">Timing</a>
                 </div>
             </div>
-            
+
             <div class="footer-bottom">
                 <p>&copy; 2025 CadeWardInc. All rights reserved. | Advanced scientific analysis tools.</p>
             </div>
@@ -365,10 +372,10 @@
             // Default indices for UV Data
             let xIndex = 0;
             let yIndex = 1;
-            
+
             // Fixed indices for Fraction Data (User specified Column 11 and 12)
             // Assuming 1-based column numbering from user -> Index 10 and 11
-            const fracVolIndex = 10; 
+            const fracVolIndex = 10;
             const fracNameIndex = 11;
 
             let startRow = 0;
@@ -381,7 +388,7 @@
                     headerRowIndex = 1;
                 }
             }
-            
+
             // Check 1st line (index 0) if not found on 2nd
             if (headerRowIndex === -1 && lines.length > 0) {
                 const h1 = lines[0].split(delimiter).map(h => h.trim().toLowerCase());
@@ -392,13 +399,13 @@
 
             if (headerRowIndex !== -1) {
                 const headers = lines[headerRowIndex].split(delimiter).map(h => h.trim().toLowerCase());
-                
+
                 const mlIndex = headers.findIndex(h => h === 'ml' || h.includes('volume') || h.includes('time'));
                 const absIndex = headers.findIndex(h => h.includes('absorbance') || h.includes('mau') || h === 'abs');
 
                 if (mlIndex !== -1) xIndex = mlIndex;
                 if (absIndex !== -1) yIndex = absIndex;
-                
+
                 startRow = headerRowIndex + 1;
             }
 
@@ -410,15 +417,15 @@
 
                 // Use strict split to preserve empty columns for correct indexing
                 const parts = line.split(delimiter).map(p => p.trim());
-                
+
                 // Get UV Data (X and Y)
                 if (parts.length > Math.max(xIndex, yIndex)) {
                     const x = parseFloat(parts[xIndex]);
                     const y = parseFloat(parts[yIndex]);
-                    
+
                     if (!isNaN(x) && !isNaN(y)) {
                         // labels.push(x);
-                        dataPoints.push({x, y});
+                        dataPoints.push({ x, y });
                     }
                 }
 
@@ -450,9 +457,9 @@
             id: 'fractionLines',
             afterDraw: (chart, args, options) => {
                 if (!options.fractions || options.fractions.length === 0) return;
-                
+
                 const { ctx, chartArea: { top, bottom, left, right }, scales: { x } } = chart;
-                
+
                 ctx.save();
                 ctx.lineWidth = 1;
                 ctx.strokeStyle = '#d3d3d3'; // Light gray
@@ -460,10 +467,10 @@
                 ctx.fillStyle = 'black'; // Darker text
                 ctx.font = 'bold 14px sans-serif';
                 ctx.textAlign = 'center';
-                
+
                 options.fractions.forEach((fraction, index) => {
                     const xPos = x.getPixelForValue(fraction.x);
-                    
+
                     // Only draw if within chart area
                     if (xPos >= left && xPos <= right) {
                         // Draw Vertical Line
@@ -471,7 +478,7 @@
                         ctx.moveTo(xPos, top);
                         ctx.lineTo(xPos, bottom);
                         ctx.stroke();
-                        
+
                         // Calculate center position for label (between this line and next)
                         let nextXPos;
                         if (index < options.fractions.length - 1) {
@@ -479,19 +486,19 @@
                         } else {
                             nextXPos = right; // Use end of chart for last fraction
                         }
-                        
+
                         // Ensure nextXPos is within bounds for calculation
                         if (nextXPos > right) nextXPos = right;
-                        
+
                         const centerPos = (xPos + nextXPos) / 2;
-                        
+
                         // Draw label at the top, centered in the area
                         if (centerPos >= left && centerPos <= right) {
                             ctx.fillText(fraction.label, centerPos, top + 15);
                         }
                     }
                 });
-                
+
                 ctx.restore();
             }
         };
@@ -500,7 +507,7 @@
         const whiteBackgroundPlugin = {
             id: 'customCanvasBackgroundColor',
             beforeDraw: (chart, args, options) => {
-                const {ctx} = chart;
+                const { ctx } = chart;
                 ctx.save();
                 ctx.globalCompositeOperation = 'destination-over';
                 ctx.fillStyle = options.color || '#ffffff';
@@ -515,14 +522,14 @@
             afterDatasetsDraw: (chart, args, options) => {
                 const { ctx } = chart;
                 const meta = chart.getDatasetMeta(1); // Markers dataset
-                
+
                 if (!meta.hidden && chart.data.datasets[1].data.length > 0) {
                     ctx.save();
                     ctx.font = 'bold 14px sans-serif';
                     ctx.fillStyle = 'black';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'bottom';
-                    
+
                     meta.data.forEach((element, index) => {
                         const dataPoint = chart.data.datasets[1].data[index];
                         if (dataPoint && element.x && element.y) {
@@ -597,19 +604,19 @@
                         devicePixelRatio: 3, // High resolution for export
                         onClick: (e) => {
                             const points = myChart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
-                            
+
                             if (points.length) {
                                 const firstPoint = points[0];
                                 const datasetIndex = firstPoint.datasetIndex;
                                 const index = firstPoint.index;
-                                
+
                                 if (datasetIndex === 0) {
                                     const value = myChart.data.datasets[0].data[index];
                                     const label = prompt("Enter label for this marker:", `(${value.x.toFixed(2)}, ${value.y.toFixed(2)})`);
-                                    
+
                                     if (label !== null) {
                                         // Add to markers dataset
-                                        myChart.data.datasets[1].data.push({x: value.x, y: value.y, label: label});
+                                        myChart.data.datasets[1].data.push({ x: value.x, y: value.y, label: label });
                                         myChart.update();
                                     }
                                 } else if (datasetIndex === 1) {
@@ -745,4 +752,5 @@
         }
     </script>
 </body>
+
 </html>
