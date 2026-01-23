@@ -2390,23 +2390,25 @@
             const canvasArea = imgWidth * imgHeight;
             const canvasAspectRatio = imgWidth / imgHeight;
 
-            // Calculate base font size using a more sophisticated approach
-            // Base on both dimensions, not just height, and use square root for better scaling
-            const areaBasedSize = Math.sqrt(canvasArea) / 40; // Base size from total area
-            const dimensionBasedSize = Math.min(imgWidth / 40, imgHeight / 25); // Based on individual dimensions
-            const hybridSize = (areaBasedSize + dimensionBasedSize) / 2; // Combine both approaches
+
 
             // Apply aspect ratio correction (wider images need slightly smaller fonts)
             const aspectRatioCorrection = canvasAspectRatio > 2 ? 0.85 : canvasAspectRatio < 0.5 ? 1.15 : 1;
-            const correctedSize = hybridSize * aspectRatioCorrection;
+
+            // Calculate scale factor for small images
+            // We maintain the standardized sizes for images >= 800px wide, but scale down for smaller images
+            // to prevent the text from obscuring the data.
+            const referenceWidth = 800;
+            const scaleFactor = Math.min(1, imgWidth / referenceWidth);
 
             // Use standardized font sizes for scientific presentations
             // Based on research: 8-12pt fonts are optimal for scientific figures
             // These ensure readability across different display contexts
-            const baseFontSize = 32;        // 8pt equivalent at 300 DPI
-            const ladderFontSize = 36;      // 9pt equivalent - BOLD and BIGGER ladder markers  
-            const topLabelFontSize = 48;    // 12pt equivalent - LARGER and BOLD for well labels
-            const annotationFontSize = 32;  // 8pt equivalent - for annotations
+            // Apply the scaling factor for small images
+            const baseFontSize = Math.round(32 * scaleFactor);
+            const ladderFontSize = Math.round(36 * scaleFactor);
+            const topLabelFontSize = Math.round(48 * scaleFactor);
+            const annotationFontSize = Math.round(32 * scaleFactor);
             const annotationLineHeight = annotationFontSize * 1.5;
 
             // Calculate dynamic label area height based on actual label lengths
