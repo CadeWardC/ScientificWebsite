@@ -429,6 +429,105 @@
             border-color: var(--muted-blue);
         }
 
+        /* Responsive Ladder Header */
+        .ladder-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .ladder-selection-container h3 {
+            margin-bottom: 0;
+            /* Reset margin since it's now handled by the flex container */
+        }
+
+        /* L/R Switch Styles */
+        .lr-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 28px;
+            margin-left: 1rem;
+        }
+
+        .lr-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .lr-slider-track {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #f0f0f0;
+            /* Off-white/grey background */
+            transition: .4s;
+            border-radius: 4px;
+            /* Rectangular with slight rounding */
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 8px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .lr-slider-track:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 26px;
+            /* Slightly wider to cover letter well */
+            left: 2px;
+            bottom: 2px;
+            background-color: var(--muted-blue);
+            transition: .4s;
+            border-radius: 3px;
+            /* Rectangular */
+            z-index: 1;
+            /* Behind text */
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .lr-text {
+            color: #999;
+            font-size: 0.8rem;
+            font-weight: 700;
+            z-index: 2;
+            /* On top of knob */
+            transition: color 0.4s;
+            user-select: none;
+            position: relative;
+            width: 20px;
+            text-align: center;
+        }
+
+        .lr-text.left {
+            color: var(--pure-white);
+            /* Default selected (show through/on accent) */
+        }
+
+        .lr-text.right {
+            color: #999;
+        }
+
+        input:checked+.lr-slider-track:before {
+            transform: translateX(28px);
+        }
+
+        input:checked+.lr-slider-track .lr-text.left {
+            color: #999;
+        }
+
+        input:checked+.lr-slider-track .lr-text.right {
+            color: var(--pure-white);
+        }
+
         .date-toggle-wrapper {
             display: flex;
             justify-content: space-between;
@@ -563,8 +662,8 @@
             /* Start from the top */
             right: 0;
             /* Position on the right side */
-            pointer-events: auto;
-            /* Allow mouse interactions */
+            pointer-events: none;
+            /* Allow clicks to pass through empty space */
         }
 
         .of-interest-marker {
@@ -585,6 +684,8 @@
             border-radius: 3px;
             transition: background-color 0.2s, box-shadow 0.2s, left 0.2s ease-out;
             border: 1px solid #ff6b6b;
+            pointer-events: auto;
+            /* Re-enable clicks on the marker itself */
         }
 
         .of-interest-marker.dragging {
@@ -595,53 +696,92 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
-        /* Layout for 'big' (8 slots) */
-        .big-layout {
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        }
-
-        /* Layout for 'small' (12 slots) */
-        .small-layout {
-            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+        /* Label Slots Container */
+        .label-slots-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            width: 100%;
+            margin-bottom: 2rem;
         }
 
         .label-slot {
-            background: var(--pure-white);
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
+            position: relative;
+            background: white;
             border: 1px solid var(--border-color);
-            transition: all 0.3s ease;
-            opacity: 0;
-            /* For fade-in animation */
+            border-radius: 8px;
+            width: 100px;
+            /* Fixed width for uniformity */
+            height: 50px;
+            /* Fixed height */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            overflow: hidden;
         }
 
-        .label-slot.active {
-            transform: scale(1.05);
-            box-shadow: 0 8px 25px rgba(74, 144, 164, 0.2);
+        .label-slot:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             border-color: var(--muted-blue);
         }
 
+        .label-slot.active {
+            border-color: var(--muted-blue);
+            box-shadow: 0 0 0 3px rgba(74, 144, 164, 0.2);
+        }
+
         .label-slot-number {
-            font-weight: 600;
+            font-weight: 500;
             color: var(--muted-blue);
-            margin-bottom: 0.75rem;
+            /* Default accent color */
             font-size: 0.9rem;
+            text-align: center;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            width: 100%;
+            /* Absolute centered to ensure it stays in place when input appears */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
 
         .label-slot-input {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            height: 100%;
+            border: none;
             text-align: center;
-            font-size: 1rem;
-            transition: border-color 0.3s ease;
+            background: white;
+            font-family: inherit;
+            font-size: 0.9rem;
+            color: var(--primary-black);
+            opacity: 0;
+            transition: opacity 0.2s;
+            cursor: text;
         }
 
         .label-slot-input:focus {
             outline: none;
-            border-color: var(--muted-blue);
+            opacity: 1;
+        }
+
+        /* Show input on hover */
+        .label-slot:hover .label-slot-input {
+            opacity: 1;
+        }
+
+        /* Hide text on hover or focus */
+        .label-slot:hover .label-slot-number,
+        .label-slot:focus-within .label-slot-number {
+            opacity: 0;
         }
 
         /* Recent Labels Section */
@@ -1089,16 +1229,25 @@
         /* Ladder Labels (Vertical) */
         .ladder-labels-container {
             position: absolute;
-            /* Position inside the preview container */
+            top: 0;
+            height: 100%;
+            left: 0;
+            right: auto;
             width: 50px;
-            pointer-events: auto;
-            /* Allow mouse interactions */
+            pointer-events: none;
+            /* Allow clicks to pass through empty space */
+        }
+
+        .ladder-labels-container.right-side {
+            left: auto;
+            right: 0;
         }
 
         .ladder-label-marker {
             position: absolute;
             right: 0.5rem;
-            /* Align to the right edge of the container */
+            /* Default to right side of the container (since container is on the left) */
+            left: auto;
             transform: translateY(-50%);
             /* Vertically center the marker on its 'top' position */
             font-size: 0.6rem;
@@ -1110,7 +1259,14 @@
             padding: 1px 3px;
             background-color: rgba(255, 255, 255, 0.7);
             border-radius: 3px;
-            transition: background-color 0.2s, box-shadow 0.2s, right 0.2s ease-out;
+            transition: background-color 0.2s, box-shadow 0.2s, right 0.2s ease-out, left 0.2s ease-out;
+            pointer-events: auto;
+            /* Re-enable clicks on the marker itself */
+        }
+
+        .ladder-labels-container.right-side .ladder-label-marker {
+            left: 0.5rem;
+            right: auto;
         }
 
         .ladder-label-marker.dragging {
@@ -1338,6 +1494,9 @@
                     <button class="selection-button small-button" onclick="handleSelection('small')">
                         Ten
                     </button>
+                    <button class="selection-button small-button" onclick="handleSelection('15')">
+                        Fifteen
+                    </button>
                     <button class="selection-button other-button" onclick="handleSelection('other')">
                         Other
                     </button>
@@ -1374,7 +1533,17 @@
 
                 <div class="configuration-row">
                     <div id="ladder-selection-container" class="ladder-selection-container">
-                        <h3>Ladder Type</h3>
+                        <div class="ladder-header">
+                            <h3>Ladder Type</h3>
+                            <label class="lr-switch" title="Ladder Position: Left / Right">
+                                <input type="checkbox" id="ladderPositionToggle"
+                                    onchange="handleLadderPositionChange()">
+                                <span class="lr-slider-track">
+                                    <span class="lr-text left">L</span>
+                                    <span class="lr-text right">R</span>
+                                </span>
+                            </label>
+                        </div>
                         <div class="select-wrapper">
                             <select id="ladderType" name="ladderType">
                                 <option value="none">None</option>
@@ -1412,7 +1581,8 @@
                 <div id="imageUploaderSection" class="image-uploader-section">
                     <h3>Upload Gel Image</h3>
 
-                    <div id="imageControls" class="image-controls" style="display: none; margin-bottom: 1rem;">
+                    <div id="imageControls" class="image-controls"
+                        style="display: none; margin-bottom: 1rem; flex-direction: row; justify-content: center; gap: 2rem;">
                         <div class="date-toggle-wrapper"
                             style="justify-content: center; gap: 1rem; border-top: none; padding-top: 0;">
                             <span class="date-toggle-label">Split Image</span>
@@ -1585,6 +1755,12 @@
                 labelSectionDescription.textContent = 'Configure your 10 label slots';
                 generateLabelSlots(10, 'small');
                 showResultsSection();
+            } else if (size === '15') {
+                currentWellCount = 15;
+                labelSectionTitle.textContent = 'Fifteen Wells Configuration';
+                labelSectionDescription.textContent = 'Configure your 15 label slots';
+                generateLabelSlots(15, 'small');
+                showResultsSection();
             } else if (size === 'other') {
                 labelSectionTitle.textContent = 'Custom Wells Configuration';
                 labelSectionDescription.textContent = 'Specify the number of wells you need';
@@ -1705,8 +1881,8 @@
                 const slot = document.createElement('div');
                 slot.className = 'label-slot';
                 slot.innerHTML = `
-                    <div class="label-slot-number">Slot ${i}</div>
-                    <input type="text" class="label-slot-input" placeholder="Enter label" onclick="activateSlot(this)" onblur="saveRecentLabel(this)" oninput="updateLabelPreview()">
+                    <div class="label-slot-number">Well ${i}</div>
+                    <input type="text" class="label-slot-input" placeholder="Well ${i}" onclick="activateSlot(this)" onblur="saveRecentLabel(this)" oninput="updateLabelSlot(this); updateLabelPreview()" onkeydown="handleSlotKey(event, this)">
                 `;
 
                 // Add staggered animation
@@ -1730,9 +1906,59 @@
             input.focus();
         }
 
+        function updateLabelSlot(input) {
+            // Optional: If we want to update the "Well X" text to match input value when blurring?
+            // For now, per requirement "When the user is done... they move on".
+            // The "Well X" text is only visible when not hovering/editing.
+            // If the user entered a label, should the card show that label instead of "Well X"? 
+            // "Them in a line 'Well 1' 'Well 2' .... and so on when the user hovers... it shows the input"
+            // It suggests the card should ALWAYS show "Well X" until hovered? Or show the value?
+            // "Default state: Shows 'Well X' (or current value text)." -> explicit requirement was ambiguous but likely means show the value if set.
+
+            const textHeader = input.parentElement.querySelector('.label-slot-number');
+            if (input.value.trim() !== '') {
+                textHeader.textContent = input.value;
+                textHeader.style.color = 'var(--primary-black)'; // Change to black when user types
+            } else {
+                // Restore "Well X" if empty. We can use the placeholder which contains "Well {i}"
+                textHeader.textContent = input.placeholder;
+                textHeader.style.color = 'var(--muted-blue)'; // Restore accent color
+            }
+        }
+
+        function handleSlotKey(event, input) {
+            if (event.key === 'Enter' || event.key === 'Tab') {
+                event.preventDefault(); // Prevent default tab behavior to manage it manually if needed, or just allow it.
+                // But specifically for Enter we need to move next.
+
+                const allInputs = Array.from(document.querySelectorAll('.label-slot-input'));
+                const currentIndex = allInputs.indexOf(input);
+
+                if (currentIndex >= 0 && currentIndex < allInputs.length - 1) {
+                    const nextInput = allInputs[currentIndex + 1];
+                    activateSlot(nextInput);
+                } else {
+                    input.blur(); // Done
+                    input.parentElement.classList.remove('active');
+                }
+            }
+        }
+
         // ===== LADDER LOGIC =====
         function handleLadderChange() {
             updateLadderPreview();
+        }
+
+        function handleLadderPositionChange() {
+            const toggle = document.getElementById('ladderPositionToggle');
+            const ladderContainer = document.getElementById('ladderLabelsContainer');
+
+            if (toggle.checked) {
+                ladderContainer.classList.add('right-side');
+            } else {
+                ladderContainer.classList.remove('right-side');
+            }
+            adjustPreviewLayout();
         }
 
         function updateLadderPreview() {
@@ -1934,8 +2160,9 @@
                 }
 
                 // --- Adjust Top Labels ---
+                // --- Adjust Top Labels ---
                 // If split mode is active (activeWellPositions is set), use 0 padding to align with exact segments
-                const horizontalPadding = activeWellPositions ? 0 : 0.10;
+                const horizontalPadding = activeWellPositions ? 0 : 0.15; // Increased padding from 0.15
 
                 const finalWidth = renderedImageWidth * (1 - (horizontalPadding * 2));
                 const finalOffset = imageOffsetLeft + (renderedImageWidth * horizontalPadding);
@@ -1943,9 +2170,18 @@
                 previewContainer.style.marginLeft = `${finalOffset}px`;
 
                 // --- Adjust Vertical Ladder ---
+                const isLadderRight = document.getElementById('ladderPositionToggle').checked;
+
                 ladderContainer.style.height = `${renderedImageHeight}px`;
                 ladderContainer.style.top = `${imageOffsetTop + 105}px`; // Move down by 105px
-                ladderContainer.style.left = '0px'; // Always pin to the far left of the preview area.
+
+                if (isLadderRight) {
+                    ladderContainer.style.left = 'auto';
+                    ladderContainer.style.right = '0px';
+                } else {
+                    ladderContainer.style.left = '0px';
+                    ladderContainer.style.right = 'auto';
+                }
 
                 // If there is a gray area to the left of the image (pillarboxing)...
                 if (imageOffsetLeft > 1) {
@@ -1957,10 +2193,29 @@
                     ladderContainer.style.width = '50px';
                 }
 
-                // --- Adjust Biomolecule Marker Container (same as ladder) ---
+                // --- Adjust Biomolecule Marker Container ---
                 const ofInterestContainer = document.getElementById('ofInterestMarkerContainer');
                 ofInterestContainer.style.height = `${renderedImageHeight}px`;
                 ofInterestContainer.style.top = `${imageOffsetTop + 105}px`; // Same offset as ladder
+
+                // Swap side based on ladder position
+                if (isLadderRight) {
+                    // Ladder Right -> Biomarker Left
+                    ofInterestContainer.style.left = '0px';
+                    ofInterestContainer.style.right = 'auto';
+                    // Check if we need to adjust width for pillarboxing on the left?
+                    if (imageOffsetLeft > 1) {
+                        ofInterestContainer.style.width = `${imageOffsetLeft}px`;
+                    } else {
+                        ofInterestContainer.style.width = '50px';
+                    }
+                } else {
+                    // Ladder Left (default) -> Biomarker Right
+                    ofInterestContainer.style.left = 'auto';
+                    ofInterestContainer.style.right = '0px';
+                    // Reset width to default 50px (as right side usually doesn't have pillarbox logic handled same way, or simply overlays)
+                    ofInterestContainer.style.width = '50px';
+                }
             }
         }
 
@@ -2086,6 +2341,9 @@
             const activeSlotInput = document.querySelector('.label-slot.active .label-slot-input');
             if (activeSlotInput) {
                 activeSlotInput.value = label;
+                updateLabelSlot(activeSlotInput);
+                updateLabelPreview();
+
                 saveRecentLabel(activeSlotInput); // Save and update recent labels list
 
                 const allSlots = Array.from(document.querySelectorAll('.label-slot'));
@@ -2214,7 +2472,7 @@
             document.getElementById('groupWellsToggle').checked = false;
             document.getElementById('editGroupsBtn').style.display = 'none';
 
-            document.getElementById('imageControls').style.display = 'block';
+            document.getElementById('imageControls').style.display = 'flex';
 
             // Render the preview (this will set imagePreview.src and trigger onload)
             renderPreview();
@@ -2491,7 +2749,7 @@
             const ofInterestMarker = document.querySelector('.of-interest-marker');
             let biomoleculeMarkerWidth = 0;
 
-            if (ofInterestToggle && ofInterestMarker) {
+            if (ofInterestMarker) {
                 // Estimate width needed for biomolecule marker text
                 const tempCtx = document.createElement('canvas').getContext('2d');
                 tempCtx.font = `bold ${topLabelFontSize}px sans-serif`; // Use larger font size
@@ -2522,8 +2780,28 @@
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvasWidth, canvasHeight); // Use logical dimensions for drawing
 
-            // 2. Draw the cropped image
-            const imageX = LADDER_AREA_WIDTH;
+            // --- LADDER POSITION LOGIC ---
+            const isLadderRight = document.getElementById('ladderPositionToggle').checked;
+
+            // Determine X positions based on toggle
+            let imageX, ladderUnitX;
+
+            if (isLadderRight) {
+                // Image starts at padding (left side) OR after biomarker if it exists
+                // Ladder is on right
+                if (ofInterestMarker) {
+                    imageX = biomoleculeMarkerWidth + (PADDING / 2);
+                } else {
+                    imageX = PADDING / 2;
+                }
+
+                ladderUnitX = imageX + imgWidth + (baseFontSize * 0.75); // Position units on right
+            } else {
+                // Image starts after ladder area (standard), Ladder is on left
+                imageX = LADDER_AREA_WIDTH;
+                ladderUnitX = PADDING / 2; // Position units on left
+            }
+
             const imageY = TOP_LABEL_AREA_HEIGHT;
             ctx.drawImage(imagePreview, imageX, imageY);
 
@@ -2555,16 +2833,31 @@
                 const relativeY = markerTopPx / ladderContainerHeight;
                 const y = imageY + (imagePreview.naturalHeight * relativeY);
 
-                const x = imageX - (baseFontSize * 0.75); // Position relative to font size
+                let x;
+                if (isLadderRight) {
+                    // Ladder on Right: Align Left against the right edge of image
+                    ctx.textAlign = 'left';
+                    x = imageX + imagePreview.naturalWidth + (baseFontSize * 0.75);
+                } else {
+                    // Ladder on Left (Default): Align Right against left edge of image
+                    ctx.textAlign = 'right';
+                    x = imageX - (baseFontSize * 0.75);
+                }
 
                 ctx.fillText(marker.textContent, x, y);
             });
 
-            // Draw ladder units at top left corner
+            // Draw ladder units at top left corner (or top right if shifted)
             ctx.font = `bold ${ladderFontSize}px sans-serif`;
             ctx.fillStyle = 'black';
-            ctx.textAlign = 'left';
             ctx.textBaseline = 'top';
+
+            if (isLadderRight) {
+                ctx.textAlign = 'left';
+            } else {
+                ctx.textAlign = 'left'; // Always left align the unit header itself relative to its anchor? 
+                // Actually, if it's on the left side, it's usually top-left of the area.
+            }
 
             let units = '';
             if (ladderType === '100bp' || ladderType === '1kbp') {
@@ -2574,11 +2867,11 @@
             }
 
             if (units) {
-                ctx.fillText(units, PADDING / 2, PADDING / 2);
+                ctx.fillText(units, ladderUnitX, PADDING / 2);
             }
 
             // 3.5. Draw biomolecule marker on the right side (if enabled)
-            if (ofInterestToggle && ofInterestMarker) {
+            if (ofInterestMarker) {
                 const ofInterestContainer = document.getElementById('ofInterestMarkerContainer');
                 const imagePreviewElement = document.getElementById('imagePreview');
 
@@ -2608,7 +2901,17 @@
                 const y = imageY + (imagePreview.naturalHeight * relativeY);
 
                 // Position on the right side of the image with proper spacing
-                const x = imageX + imagePreview.naturalWidth + (baseFontSize * 1.5);
+                let x;
+                // Swap positioning based on toggle
+                if (isLadderRight) {
+                    // Ladder on Right -> Biomarker on Left
+                    ctx.textAlign = 'right'; // Align text to point towards the image
+                    x = imageX - (baseFontSize * 1.5);
+                } else {
+                    // Ladder on Left -> Biomarker on Right
+                    ctx.textAlign = 'left';
+                    x = imageX + imagePreview.naturalWidth + (baseFontSize * 1.5);
+                }
 
                 ctx.fillText(ofInterestMarker.textContent, x, y);
             }
@@ -2619,7 +2922,7 @@
 
             // Replicate the "scrunch" effect from the preview by applying the same padding.
             // If split mode is active, remove padding
-            const horizontalPadding = activeWellPositions ? 0 : 0.1;
+            const horizontalPadding = activeWellPositions ? 0 : 0.15; // Increased padding from 0.15
 
             const topLabelDrawWidth = imagePreview.naturalWidth * (1 - (horizontalPadding * 2));
             const topLabelStartX = imageX + (imagePreview.naturalWidth * horizontalPadding);
@@ -2661,9 +2964,18 @@
                 // Use larger font for better readability
                 ctx.font = `bold ${baseFontSize}px sans-serif`;
                 ctx.fillStyle = 'black';
-                ctx.textAlign = 'right';
+
                 // Adjust vertical position to accommodate the larger font.
-                ctx.fillText(dateString, canvasWidth - (PADDING / 2), PADDING / 1.5);
+
+                if (isLadderRight) {
+                    // Ladder is on Right, so Units are on Right. Move Date to LEFT to avoid overlap.
+                    ctx.textAlign = 'left';
+                    ctx.fillText(dateString, PADDING / 2, PADDING / 2);
+                } else {
+                    // Ladder is on Left (Default). Date can stay on RIGHT.
+                    ctx.textAlign = 'right';
+                    ctx.fillText(dateString, canvasWidth - (PADDING / 2), PADDING / 2);
+                }
             }
 
             // 7. Trigger download
