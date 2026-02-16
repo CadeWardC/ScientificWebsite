@@ -231,11 +231,10 @@
 
         .tab-content {
             display: none;
-            background: var(--pure-white);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 2rem;
-            max-width: 800px;
+            background: transparent;
+            border: none;
+            padding: 0;
+            max-width: 1200px;
             margin: 0 auto;
             animation: fadeIn 0.5s ease;
         }
@@ -501,6 +500,37 @@
             gap: 1rem;
             margin-top: 1.5rem;
         }
+
+        .calc-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .calc-main {
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .calc-sidebar {
+            background: var(--pure-white);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-top: 0 !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            height: fit-content;
+        }
+
+        @media (max-width: 900px) {
+            .calc-layout {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 
@@ -538,153 +568,185 @@
             </div>
 
             <div id="dilution" class="tab-content active">
-                <h2>Dilution Calculator</h2>
-                <p style="margin-bottom: 1.5rem; color: #666;">Calculate the volume needed to dilute a stock solution to
-                    a desired concentration (C1V1 = C2V2).</p>
-                <div class="calc-form">
-                    <div class="form-group">
-                        <label>Final Concentration (C2)</label>
-                        <div class="input-group">
-                            <input type="number" id="dil-c2" placeholder="e.g., 10">
-                            <select id="dil-c2-unit">
-                                <option value="1">M</option>
-                                <option value="1e-3">mM</option>
-                                <option value="1e-6">µM</option>
-                                <option value="1e-9">nM</option>
-                            </select>
+                <div class="calc-layout">
+                    <!-- Left Column: Calculator -->
+                    <div class="calc-main">
+                        <h2>Dilution Calculator</h2>
+                        <p style="margin-bottom: 1.5rem; color: #666;">Calculate the volume needed to dilute a stock
+                            solution to
+                            a desired concentration (C1V1 = C2V2).</p>
+                        <div class="calc-form">
+                            <div class="form-group">
+                                <label>Final Concentration (C2)</label>
+                                <div class="input-group">
+                                    <input type="number" id="dil-c2" placeholder="e.g., 10">
+                                    <select id="dil-c2-unit">
+                                        <option value="1">M</option>
+                                        <option value="1e-3">mM</option>
+                                        <option value="1e-6">µM</option>
+                                        <option value="1e-9">nM</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Final Volume (V2)</label>
+                                <div class="input-group">
+                                    <input type="number" id="dil-v2" placeholder="e.g., 50">
+                                    <select id="dil-v2-unit">
+                                        <option value="1">L</option>
+                                        <option value="1e-3" selected>mL</option>
+                                        <option value="1e-6">µL</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Initial Concentration (C1)</label>
+                                <div class="input-group">
+                                    <input type="number" id="dil-c1" placeholder="e.g., 100">
+                                    <select id="dil-c1-unit">
+                                        <option value="1">M</option>
+                                        <option value="1e-3">mM</option>
+                                        <option value="1e-6">µM</option>
+                                        <option value="1e-9">nM</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Initial Volume (V1)</label>
+                                <div class="input-group">
+                                    <input type="number" id="dil-v1" placeholder="Calculated by default">
+                                    <select id="dil-v1-unit">
+                                        <option value="1">L</option>
+                                        <option value="1e-3" selected>mL</option>
+                                        <option value="1e-6">µL</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button class="calc-btn" onclick="calculateDilution()">Calculate</button>
+
+                        </div>
+                        <div id="dil-result" class="result-box">
+                            <h3>Result</h3>
+                            <div class="result-value" id="dil-output"></div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label>Final Volume (V2)</label>
-                        <div class="input-group">
-                            <input type="number" id="dil-v2" placeholder="e.g., 50">
-                            <select id="dil-v2-unit">
-                                <option value="1">L</option>
-                                <option value="1e-3" selected>mL</option>
-                                <option value="1e-6">µL</option>
-                            </select>
+
+                    <!-- Right Column: Saved Groups -->
+                    <div class="calc-sidebar">
+                        <h3 style="margin-bottom: 1rem; color: var(--primary-black);">Saved Calculations</h3>
+                        <div class="save-controls"
+                            style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #eee;">
+                            <label style="display:block; margin-bottom:0.5rem; font-weight:500;">Save
+                                Calculation</label>
+                            <div style="display:flex; flex-direction:column; gap:0.8rem;">
+                                <input type="text" id="dil-save-name" placeholder="Name this calculation"
+                                    style="padding:0.8rem; border:1px solid #ddd; border-radius:6px; width:100%;">
+
+                                <div style="display:flex; gap:0.5rem;">
+                                    <select id="dil-group-select"
+                                        style="flex:1; padding:0.8rem; border:1px solid #ddd; border-radius:6px;">
+                                        <option value="default">All Calculations</option>
+                                    </select>
+                                    <button class="calc-btn" onclick="openCreateGroupModal('dilution')"
+                                        style="margin:0; padding:0 1rem; background:var(--muted-blue); opacity:0.8;"
+                                        title="New Group">+</button>
+                                </div>
+
+                                <div style="display:flex; gap:0.5rem;">
+                                    <button class="calc-btn" onclick="saveDilution()"
+                                        style="margin-top:0; flex:1; background:var(--soft-black);">Save</button>
+                                    <button class="calc-btn" onclick="clearAllData()"
+                                        style="margin-top:0; flex:1; background:#dc3545; opacity:0.9;">Reset
+                                        All</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="dil-saved-list" class="saved-list">
+                            <!-- Saved items will appear here -->
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label>Initial Concentration (C1)</label>
-                        <div class="input-group">
-                            <input type="number" id="dil-c1" placeholder="e.g., 100">
-                            <select id="dil-c1-unit">
-                                <option value="1">M</option>
-                                <option value="1e-3">mM</option>
-                                <option value="1e-6">µM</option>
-                                <option value="1e-9">nM</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Initial Volume (V1)</label>
-                        <div class="input-group">
-                            <input type="number" id="dil-v1" placeholder="Calculated by default">
-                            <select id="dil-v1-unit">
-                                <option value="1">L</option>
-                                <option value="1e-3" selected>mL</option>
-                                <option value="1e-6">µL</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button class="calc-btn" onclick="calculateDilution()">Calculate</button>
-                    <!-- Save/Reset Controls -->
-                    <div class="save-controls"
-                        style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem;">
-                        <div style="display:flex; gap:0.5rem;">
-                            <input type="text" id="dil-save-name" placeholder="Name this calculation"
-                                style="flex:2; padding:0.8rem; border:1px solid #ddd; border-radius:6px;">
-                            <select id="dil-group-select"
-                                style="flex:1; padding:0.8rem; border:1px solid #ddd; border-radius:6px;">
-                                <option value="default">All Calculations</option>
-                            </select>
-                        </div>
-                        <div style="display:flex; gap:0.5rem;">
-                            <button class="calc-btn" onclick="openCreateGroupModal('dilution')"
-                                style="margin-top:0; flex:1; background:var(--muted-blue); opacity:0.8;">+ New
-                                Group</button>
-                            <button class="calc-btn" onclick="saveDilution()"
-                                style="margin-top:0; flex:1; background:var(--soft-black);">Save</button>
-                            <button class="calc-btn" onclick="resetDilution()"
-                                style="margin-top:0; flex:1; background:#dc3545;">Reset Inputs</button>
-                            <button class="calc-btn" onclick="clearAllDilutionData()"
-                                style="margin-top:0; flex:1; background:#c82333;">Clear All</button>
-                        </div>
-                    </div>
-                </div>
-                <div id="dil-result" class="result-box">
-                    <h3>Result</h3>
-                    <div class="result-value" id="dil-output"></div>
-                </div>
-                <div id="dil-saved-list" style="margin-top: 2rem;">
-                    <!-- Saved items will appear here -->
                 </div>
             </div>
 
             <div id="molarity" class="tab-content">
-                <h2>Molarity Calculator</h2>
-                <p style="margin-bottom: 1.5rem; color: #666;">Calculate the mass required to prepare a solution of
-                    specific molarity.</p>
-                <div class="calc-form">
-                    <div class="form-group">
-                        <label>Molecular Weight (g/mol)</label>
-                        <input type="number" id="mol-mw" placeholder="e.g., 58.44">
-                    </div>
-                    <div class="form-group">
-                        <label>Desired Concentration</label>
-                        <div class="input-group">
-                            <input type="number" id="mol-conc" placeholder="e.g., 0.5">
-                            <select id="mol-conc-unit">
-                                <option value="1">M</option>
-                                <option value="1e-3">mM</option>
-                                <option value="1e-6">µM</option>
-                                <option value="1e-9">nM</option>
-                            </select>
+                <div class="calc-layout">
+                    <!-- Left Column -->
+                    <div class="calc-main">
+                        <h2>Molarity Calculator</h2>
+                        <p style="margin-bottom: 1.5rem; color: #666;">Calculate the mass required to prepare a solution
+                            of
+                            specific molarity.</p>
+                        <div class="calc-form">
+                            <div class="form-group">
+                                <label>Molecular Weight (g/mol)</label>
+                                <input type="number" id="mol-mw" placeholder="e.g., 58.44">
+                            </div>
+                            <div class="form-group">
+                                <label>Desired Concentration</label>
+                                <div class="input-group">
+                                    <input type="number" id="mol-conc" placeholder="e.g., 0.5">
+                                    <select id="mol-conc-unit">
+                                        <option value="1">M</option>
+                                        <option value="1e-3">mM</option>
+                                        <option value="1e-6">µM</option>
+                                        <option value="1e-9">nM</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Desired Volume</label>
+                                <div class="input-group">
+                                    <input type="number" id="mol-vol" placeholder="e.g., 1">
+                                    <select id="mol-vol-unit">
+                                        <option value="1">L</option>
+                                        <option value="1e-3">mL</option>
+                                        <option value="1e-6">µL</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button class="calc-btn" onclick="calculateMolarity()">Calculate Mass</button>
+
+                        </div>
+                        <div id="mol-result" class="result-box">
+                            <h3>Required Mass</h3>
+                            <div class="result-value" id="mol-output"></div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label>Desired Volume</label>
-                        <div class="input-group">
-                            <input type="number" id="mol-vol" placeholder="e.g., 1">
-                            <select id="mol-vol-unit">
-                                <option value="1">L</option>
-                                <option value="1e-3">mL</option>
-                                <option value="1e-6">µL</option>
-                            </select>
+
+                    <!-- Right Column -->
+                    <div class="calc-sidebar">
+                        <h3 style="margin-bottom: 1rem; color: var(--primary-black);">Saved Calculations</h3>
+                        <div class="save-controls"
+                            style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #eee;">
+                            <label style="display:block; margin-bottom:0.5rem; font-weight:500;">Save
+                                Calculation</label>
+                            <div style="display:flex; flex-direction:column; gap:0.8rem;">
+                                <input type="text" id="mol-save-name" placeholder="Name this calculation"
+                                    style="padding:0.8rem; border:1px solid #ddd; border-radius:6px; width:100%;">
+
+                                <div style="display:flex; gap:0.5rem;">
+                                    <select id="mol-group-select"
+                                        style="flex:1; padding:0.8rem; border:1px solid #ddd; border-radius:6px;">
+                                        <option value="default">All Calculations</option>
+                                    </select>
+                                    <button class="calc-btn" onclick="openCreateGroupModal('molarity')"
+                                        style="margin:0; padding:0 1rem; background:var(--muted-blue); opacity:0.8;"
+                                        title="New Group">+</button>
+                                </div>
+
+                                <div style="display:flex; gap:0.5rem;">
+                                    <button class="calc-btn" onclick="saveMolarity()"
+                                        style="margin-top:0; flex:1; background:var(--soft-black);">Save</button>
+                                    <button class="calc-btn" onclick="clearAllData()"
+                                        style="margin-top:0; flex:1; background:#dc3545; opacity:0.9;">Reset
+                                        All</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="mol-saved-list" class="saved-list">
+                            <!-- Saved items will appear here -->
                         </div>
                     </div>
-                    <button class="calc-btn" onclick="calculateMolarity()">Calculate Mass</button>
-                    <!-- Save/Reset Controls -->
-                    <div class="save-controls"
-                        style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem;">
-                        <div style="display:flex; gap:0.5rem;">
-                            <input type="text" id="mol-save-name" placeholder="Name this calculation"
-                                style="flex:2; padding:0.8rem; border:1px solid #ddd; border-radius:6px;">
-                            <select id="mol-group-select"
-                                style="flex:1; padding:0.8rem; border:1px solid #ddd; border-radius:6px;">
-                                <option value="default">All Calculations</option>
-                            </select>
-                        </div>
-                        <div style="display:flex; gap:0.5rem;">
-                            <button class="calc-btn" onclick="openCreateGroupModal('molarity')"
-                                style="margin-top:0; flex:1; background:var(--muted-blue); opacity:0.8;">+ New
-                                Group</button>
-                            <button class="calc-btn" onclick="saveMolarity()"
-                                style="margin-top:0; flex:1; background:var(--soft-black);">Save</button>
-                            <button class="calc-btn" onclick="resetMolarity()"
-                                style="margin-top:0; flex:1; background:#dc3545;">Reset Inputs</button>
-                            <button class="calc-btn" onclick="clearAllMolarityData()"
-                                style="margin-top:0; flex:1; background:#c82333;">Clear All</button>
-                        </div>
-                    </div>
-                </div>
-                <div id="mol-result" class="result-box">
-                    <h3>Required Mass</h3>
-                    <div class="result-value" id="mol-output"></div>
-                </div>
-                <div id="mol-saved-list" style="margin-top: 2rem;">
-                    <!-- Saved items will appear here -->
                 </div>
             </div>
 
@@ -968,6 +1030,7 @@
                                 <span>${group.name} (${groupItems.length})</span>
                             </div>
                             <div class="group-actions" onclick="event.stopPropagation()">
+                                <button class="group-btn-icon copy" title="Copy Group Data" onclick="copyGroupData('${group.id}', '${group.name}')">📋</button>
                                 <button class="group-btn-icon delete" title="Delete Group" onclick="deleteGroup('${group.id}')">🗑️</button>
                             </div>
                         </div>
@@ -1005,26 +1068,50 @@
                 }
             }
 
-            function clearAllDilutionData() {
-                if (confirm('Clear Dilution inputs? Saved items will remain.')) {
-                    // Only clear inputs
-                    document.getElementById('dil-c1').value = '';
-                    document.getElementById('dil-v1').value = '';
-                    document.getElementById('dil-c2').value = '';
-                    document.getElementById('dil-v2').value = '';
-                    document.getElementById('dil-result').classList.remove('show');
-                    captureInputs();
+            function clearAllData() {
+                if (confirm('Are you sure you want to delete ALL saved calculations and groups? This cannot be undone.')) {
+                    appState.savedItems = [];
+                    appState.groups = [];
+                    renderAllLists();
+                    updateAllGroupSelects();
                 }
             }
-            function clearAllMolarityData() {
-                if (confirm('Clear Molarity inputs? Saved items will remain.')) {
-                    // Only clear inputs
-                    document.getElementById('mol-mw').value = '';
-                    document.getElementById('mol-conc').value = '';
-                    document.getElementById('mol-vol').value = '';
-                    document.getElementById('mol-result').classList.remove('show');
-                    captureInputs();
+
+            function stripHtml(html) {
+                let tmp = document.createElement("DIV");
+                tmp.innerHTML = html;
+                return tmp.textContent || tmp.innerText || "";
+            }
+
+            function copyGroupData(groupId, groupName) {
+                const items = appState.savedItems.filter(i => i.group === groupId && i.type === 'dilution');
+
+                if (items.length === 0) {
+                    alert('No dilution calculations in this group to copy.');
+                    return;
                 }
+
+                // Header: GroupName(tab)Volume Added(tab)Final Concentration
+                let clipboardText = `${groupName}\tVolume Added\tFinal Concentration\n`;
+
+                items.forEach(item => {
+                    // Format: InitialConcentration NameOfCalculation(tab)InitialVolume(tab)FinalConcentration
+                    // We need to strip HTML tags (like <b>) from values
+                    const c1 = stripHtml(item.values.c1); // Initial Concentration
+                    const v1 = stripHtml(item.values.v1); // Initial Volume 
+                    const c2 = stripHtml(item.values.c2); // Final Concentration
+
+                    // Combined first column: "Concentration Name"
+                    clipboardText += `${c1} ${item.name}\t${v1}\t${c2}\n`;
+                });
+
+                navigator.clipboard.writeText(clipboardText).then(() => {
+                    // Visual feedback could go here
+                    alert('Group data copied to clipboard!');
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                    alert('Failed to copy to clipboard');
+                });
             }
 
             // ---- Calculation Logic ----
@@ -1107,14 +1194,6 @@
                 captureInputs();
             }
 
-            function resetDilution() {
-                document.getElementById('dil-c1').value = '';
-                document.getElementById('dil-v1').value = '';
-                document.getElementById('dil-c2').value = '';
-                document.getElementById('dil-v2').value = '';
-                document.getElementById('dil-result').classList.remove('show');
-                captureInputs();
-            }
 
             function saveDilution() {
                 const name = document.getElementById('dil-save-name').value;
@@ -1190,13 +1269,6 @@
                 captureInputs();
             }
 
-            function resetMolarity() {
-                document.getElementById('mol-mw').value = '';
-                document.getElementById('mol-conc').value = '';
-                document.getElementById('mol-vol').value = '';
-                document.getElementById('mol-result').classList.remove('show');
-                captureInputs();
-            }
 
             function saveMolarity() {
                 const name = document.getElementById('mol-save-name').value;
