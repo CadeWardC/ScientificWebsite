@@ -1085,7 +1085,8 @@
             margin: auto;
         }
 
-        #imageToSplit {
+        #imageToSplit,
+        #imageToGroup {
             max-width: 100%;
             max-height: 60vh;
             display: block;
@@ -1202,6 +1203,54 @@
             background-color: rgba(0, 123, 255, 0.4);
             border: 2px solid #007bff;
             color: #fff;
+        }
+
+        .group-list-container {
+            margin-top: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--off-white);
+            padding: 0.5rem;
+            text-align: left;
+        }
+
+        .group-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .group-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .group-list-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+        }
+
+        .group-list-name-input {
+            padding: 0.25rem 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            flex: 1;
+        }
+
+        .group-list-name-input:focus {
+            outline: none;
+            border-color: var(--muted-blue);
+        }
+
+        .group-list-actions {
+            display: flex;
+            gap: 0.5rem;
         }
 
         .group-bracket-preview {
@@ -1680,6 +1729,14 @@
                     <div id="groupOverlay"></div>
                 </div>
             </div>
+
+            <div id="groupListWrapper" style="display: none; margin-bottom: 1.5rem;">
+                <h3 style="text-align: left; margin-bottom: 0.5rem;">Current Groups</h3>
+                <div id="groupListContainer" class="group-list-container">
+                    <!-- Group items dynamically rendered here -->
+                </div>
+            </div>
+
             <div class="modal-actions">
                 <button id="addGroupBtn" class="choose-file-btn">Add Group</button>
                 <button id="clearGroupsBtn" class="choose-file-btn secondary">Clear All</button>
@@ -3107,6 +3164,8 @@
             if (imageToGroup.complete) {
                 imageToGroup.onload();
             }
+
+            renderWellGroupList();
         }
 
         function toggleWellSelection(el, index) {
@@ -3122,6 +3181,57 @@
         document.getElementById('addGroupBtn').addEventListener('click', addGroup);
         document.getElementById('clearGroupsBtn').addEventListener('click', clearGroups);
         document.getElementById('doneGroupBtn').addEventListener('click', doneGroup);
+
+        function renderWellGroupList() {
+            const container = document.getElementById('groupListContainer');
+            const wrapper = document.getElementById('groupListWrapper');
+
+            if (wellGroups.length === 0) {
+                wrapper.style.display = 'none';
+                return;
+            }
+
+            wrapper.style.display = 'block';
+            container.innerHTML = '';
+
+            wellGroups.forEach((group, index) => {
+                const item = document.createElement('div');
+                item.className = 'group-list-item';
+
+                const wellsText = group.indices.map(i => i + 1).join(', ');
+
+                item.innerHTML = `
+                    <div class="group-list-info">
+                        <span style="font-size: 0.9rem; font-weight: bold; min-width: 80px;">Wells: ${wellsText}</span>
+                        <input type="text" class="group-list-name-input" value="${group.name}" placeholder="Group name..." 
+                            onchange="renameWellGroup(${index}, this.value)">
+                    </div>
+                    <div class="group-list-actions">
+                        <button class="group-btn-icon delete" style="padding: 0 0.5rem; cursor: pointer; border: none; background: none; font-size: 1.2rem; color: #999;" title="Delete Group" onclick="deleteWellGroup(${index})">×</button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function deleteWellGroup(index) {
+            wellGroups.splice(index, 1);
+            renderWellGroupList();
+            renderPreview();
+            setTimeout(() => {
+                initGrouper();
+            }, 100);
+        }
+
+        // Must attach to window to be accessible from inline HTML string in innerHTML
+        window.deleteWellGroup = deleteWellGroup;
+
+        function renameWellGroup(index, newName) {
+            wellGroups[index].name = newName;
+            renderPreview(); // Update name on exported image
+        }
+
+        window.renameWellGroup = renameWellGroup;
 
         function addGroup() {
             if (selectedWellsForGroup.length > 0) {
@@ -3142,6 +3252,7 @@
 
                 // Re-render to show bracket in modal
                 renderPreview();
+                renderWellGroupList();
                 setTimeout(() => {
                     initGrouper();
                 }, 100);
@@ -3152,6 +3263,7 @@
             wellGroups = [];
             selectedWellsForGroup = [];
             renderPreview();
+            renderWellGroupList();
             setTimeout(() => {
                 initGrouper();
             }, 100);
@@ -3415,52 +3527,95 @@
                     ctx.font = `bold ${groupFontSize}px sans-serif`;
 
                     const bracketHeight = originalHeight * 0.02; // 2% of image height
-
-                    // Position below the image
-                    // Image ends at originalHeight
                     const padding = bracketHeight * 0.5;
-                    const bracketTopY = originalHeight + padding;
-                    const bracketBottomY = bracketTopY + bracketHeight;
-                    const textY = bracketBottomY + padding;
+                    const tierHeight = bracketHeight + groupFontSize + padding * 2;
 
+                    // Calculate overlaps and assign tiers
+                    const groupInfos = [];
                     wellGroups.forEach(groupObj => {
-                        // Handle both old (array) and new (object) structure
                         const indices = Array.isArray(groupObj) ? groupObj : groupObj.indices;
                         const name = groupObj.name || "";
-
-                        // Find start and end X
-                        // Group is array of indices [0, 1, 2]
-                        // We need to find the activeWellPositions for these indices
                         const groupPositions = activeWellPositions.filter(p => indices.includes(p.index));
 
                         if (groupPositions.length > 0) {
-                            // Sort by X to be sure
                             groupPositions.sort((a, b) => a.startX - b.startX);
-
                             const first = groupPositions[0];
                             const last = groupPositions[groupPositions.length - 1];
 
-                            const startX = first.startX + (first.width * 0.1); // Indent slightly
+                            const startX = first.startX + (first.width * 0.1);
                             const endX = last.startX + last.width - (last.width * 0.1);
                             const centerX = (startX + endX) / 2;
+                            groupInfos.push({ startX, endX, centerX, name, tier: 0 });
+                        }
+                    });
 
-                            // Draw Bracket (Facing UP)
-                            // Shape: |____|
-                            ctx.beginPath();
-                            // Left leg (points UP towards image)
-                            ctx.moveTo(startX, bracketTopY);
-                            ctx.lineTo(startX, bracketBottomY);
-                            // Bottom bar
-                            ctx.lineTo(endX, bracketBottomY);
-                            // Right leg (points UP towards image)
-                            ctx.lineTo(endX, bracketTopY);
+                    // Sort by startX to ensure consistent tier assignment
+                    groupInfos.sort((a, b) => a.startX - b.startX);
 
-                            ctx.stroke();
+                    // Assign tiers based on overlap
+                    const endOfTiers = []; // Tracks the furthest X coordinate for each tier
+                    groupInfos.forEach(info => {
+                        let tier = 0;
+                        while (endOfTiers[tier] !== undefined && endOfTiers[tier] >= info.startX - 5) {
+                            tier++;
+                        }
+                        info.tier = tier;
+                        endOfTiers[tier] = info.endX;
+                    });
 
-                            // Draw Name
-                            if (name) {
-                                ctx.fillText(name, centerX, textY);
-                            }
+                    // Ensure canvas is tall enough to fit all tiers (recalculate groupSpace)
+                    const maxTier = groupInfos.reduce((max, info) => Math.max(max, info.tier), 0);
+                    const groupSpace = (maxTier + 1) * tierHeight + padding * 2;
+                    let extraHeightNeeded = groupSpace - (canvas.height - originalHeight);
+                    if (extraHeightNeeded > 0) {
+                        // Create a new canvas with the updated height
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = canvas.width;
+                        tempCanvas.height = canvas.height + extraHeightNeeded;
+                        const tempCtx = tempCanvas.getContext('2d');
+                        tempCtx.fillStyle = 'white';
+                        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                        tempCtx.drawImage(canvas, 0, 0);
+
+                        // Replace canvas and ctx references with the new one
+                        canvas.width = tempCanvas.width;
+                        canvas.height = tempCanvas.height;
+                        ctx.fillStyle = 'white';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(tempCanvas, 0, 0);
+
+                        // Reset context properties as they reset on resize
+                        ctx.strokeStyle = 'black';
+                        ctx.lineWidth = Math.max(2, originalHeight * 0.005);
+                        ctx.lineCap = 'round';
+                        ctx.fillStyle = 'black';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'top';
+                        ctx.font = `bold ${groupFontSize}px sans-serif`;
+                    }
+
+                    // Render groups
+                    groupInfos.forEach(info => {
+                        const bracketTopY = originalHeight + padding + (info.tier * tierHeight);
+                        const bracketBottomY = bracketTopY + bracketHeight;
+                        const textY = bracketBottomY + padding;
+
+                        // Draw Bracket (Facing UP)
+                        // Shape: |____|
+                        ctx.beginPath();
+                        // Left leg (points UP towards image)
+                        ctx.moveTo(info.startX, bracketTopY);
+                        ctx.lineTo(info.startX, bracketBottomY);
+                        // Bottom bar
+                        ctx.lineTo(info.endX, bracketBottomY);
+                        // Right leg (points UP towards image)
+                        ctx.lineTo(info.endX, bracketTopY);
+
+                        ctx.stroke();
+
+                        // Draw Name
+                        if (info.name) {
+                            ctx.fillText(info.name, info.centerX, textY);
                         }
                     });
                 }

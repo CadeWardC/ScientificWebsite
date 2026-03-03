@@ -1083,35 +1083,71 @@
                 return tmp.textContent || tmp.innerText || "";
             }
 
-            function copyGroupData(groupId, groupName) {
-                const items = appState.savedItems.filter(i => i.group === groupId && i.type === 'dilution');
+            async function copyGroupData(groupId, groupName) {
+                const groupItems = appState.savedItems.filter(i => i.group === groupId);
+                const dilutionItems = groupItems.filter(i => i.type === 'dilution');
+                const molarityItems = groupItems.filter(i => i.type === 'molarity');
 
-                if (items.length === 0) {
-                    alert('No dilution calculations in this group to copy.');
+                if (groupItems.length === 0) {
+                    alert('No calculations in this group to copy.');
                     return;
                 }
 
-                // Header: GroupName(tab)Volume Added(tab)Final Concentration
-                let clipboardText = `${groupName}\tVolume Added\tFinal Concentration\n`;
+                let plainText = "";
+                let htmlText = "";
 
-                items.forEach(item => {
-                    // Format: InitialConcentration NameOfCalculation(tab)InitialVolume(tab)FinalConcentration
-                    // We need to strip HTML tags (like <b>) from values
-                    const c1 = stripHtml(item.values.c1); // Initial Concentration
-                    const v1 = stripHtml(item.values.v1); // Initial Volume 
-                    const c2 = stripHtml(item.values.c2); // Final Concentration
+                if (dilutionItems.length > 0) {
+                    plainText += `${groupName}\tVolume Added\tFinal Concentration\n`;
+                    htmlText += `<table border="1" style="border-collapse: collapse;">
+                        <tr><th style="padding: 5px; text-align: left; background-color: #f1f3f5;">${groupName}</th><th style="padding: 5px; text-align: left; background-color: #f1f3f5;">Volume Added</th><th style="padding: 5px; text-align: left; background-color: #f1f3f5;">Final Concentration</th></tr>`;
 
-                    // Combined first column: "Concentration Name"
-                    clipboardText += `${c1} ${item.name}\t${v1}\t${c2}\n`;
-                });
+                    dilutionItems.forEach(item => {
+                        const c1 = stripHtml(item.values.c1);
+                        const v1 = stripHtml(item.values.v1);
+                        const c2 = stripHtml(item.values.c2);
 
-                navigator.clipboard.writeText(clipboardText).then(() => {
-                    // Visual feedback could go here
-                    alert('Group data copied to clipboard!');
-                }).catch(err => {
+                        plainText += `${c1} ${item.name}\t${v1}\t${c2}\n`;
+                        htmlText += `<tr><td style="padding: 5px;">${c1} ${item.name}</td><td style="padding: 5px;">${v1}</td><td style="padding: 5px;">${c2}</td></tr>`;
+                    });
+                    htmlText += `</table><br>`;
+                }
+
+                if (molarityItems.length > 0) {
+                    plainText += `${groupName} (Molarity)\tMW\tVolume\tMass\n`;
+                    htmlText += `<table border="1" style="border-collapse: collapse;">
+                        <tr><th style="padding: 5px; text-align: left; background-color: #f1f3f5;">${groupName} (Molarity)</th><th style="padding: 5px; text-align: left; background-color: #f1f3f5;">MW</th><th style="padding: 5px; text-align: left; background-color: #f1f3f5;">Volume</th><th style="padding: 5px; text-align: left; background-color: #f1f3f5;">Mass</th></tr>`;
+
+                    molarityItems.forEach(item => {
+                        const mw = stripHtml(item.values.mw);
+                        const vol = stripHtml(item.values.vol);
+                        const mass = stripHtml(item.values.mass);
+                        const conc = stripHtml(item.values.conc);
+
+                        plainText += `${conc} ${item.name}\t${mw}\t${vol}\t${mass}\n`;
+                        htmlText += `<tr><td style="padding: 5px;">${conc} ${item.name}</td><td style="padding: 5px;">${mw}</td><td style="padding: 5px;">${vol}</td><td style="padding: 5px;">${mass}</td></tr>`;
+                    });
+                    htmlText += `</table><br>`;
+                }
+
+                try {
+                    if (navigator.clipboard && window.ClipboardItem) {
+                        const htmlBlob = new Blob([htmlText], { type: 'text/html' });
+                        const textBlob = new Blob([plainText], { type: 'text/plain' });
+                        await navigator.clipboard.write([
+                            new ClipboardItem({
+                                'text/html': htmlBlob,
+                                'text/plain': textBlob
+                            })
+                        ]);
+                        alert('Group data copied to clipboard as table!');
+                    } else {
+                        await navigator.clipboard.writeText(plainText);
+                        alert('Group data copied to clipboard!');
+                    }
+                } catch (err) {
                     console.error('Failed to copy: ', err);
-                    alert('Failed to copy to clipboard');
-                });
+                    alert('Failed to copy to clipboard (check browser permissions)');
+                }
             }
 
             // ---- Calculation Logic ----
