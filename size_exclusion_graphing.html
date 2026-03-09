@@ -307,11 +307,19 @@
                     <input type="text" id="xAxisLabel" placeholder="X-Axis Label" value="Volume (mL)">
                     <input type="text" id="yAxisLabel" placeholder="Y-Axis Label" value="Absorbance (mAU)">
                     <div style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                        <input type="checkbox" id="showFractions" style="width: auto;">
+                        <input type="checkbox" id="showFractions" style="width: auto;" onchange="updateShowFractions()">
                         <label for="showFractions" style="font-weight: normal; cursor: pointer;">Fraction</label>
 
-                        <input type="checkbox" id="showGridlines" style="width: auto; margin-left: 1rem;">
+                        <input type="checkbox" id="showGridlines" style="width: auto; margin-left: 1rem;"
+                            onchange="updateShowGridlines()">
                         <label for="showGridlines" style="font-weight: normal; cursor: pointer;">Gridlines</label>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Series Toggles</label>
+                    <div id="seriesTogglesContainer"
+                        style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 200px; overflow-y: auto; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px; background: #fafafa;">
+                        <em style="color: #888; font-size: 0.9rem;">Upload a CSV to see available series</em>
                     </div>
                 </div>
             </div>
@@ -357,56 +365,103 @@
 
         function parseData(text) {
             const lines = text.trim().split('\n');
-            // const labels = []; // Removed for optimization
-            const dataPoints = [];
-            const fractions = []; // Stores { x: value, label: string }
+            const datasetsInfo = [];
+            const fractions = [];
 
-            if (lines.length === 0) return { dataPoints, fractions };
+            if (lines.length === 0) return { datasetsInfo, fractions };
 
-            // Determine delimiter (comma or tab) based on first few lines
             let delimiter = ',';
             if (lines[0].includes('\t') || (lines.length > 1 && lines[1].includes('\t'))) {
                 delimiter = '\t';
             }
 
-            // Default indices for UV Data
-            let xIndex = 0;
-            let yIndex = 1;
-
-            // Fixed indices for Fraction Data (User specified Column 11 and 12)
-            // Assuming 1-based column numbering from user -> Index 10 and 11
-            const fracVolIndex = 10;
-            const fracNameIndex = 11;
+            let unitsRowIndex = -1;
+            for (let i = 0; i < Math.min(5, lines.length); i++) {
+                const row = lines[i].split(delimiter).map(h => h.trim().toLowerCase());
+                const mlCount = row.filter(h => h === 'ml').length;
+                if (mlCount >= 2 || row.includes('mau') || row.includes('abs') || row.some(h => h.includes('absorbance')) || (row.length > 1 && row[0] === 'ml')) {
+                    unitsRowIndex = i;
+                    break;
+                }
+            }
 
             let startRow = 0;
-            let headerRowIndex = -1;
+            let fracVolIndex = -1;
+            let fracNameIndex = -1;
 
-            // Check 2nd line (index 1) for headers
-            if (lines.length > 1) {
-                const h2 = lines[1].split(delimiter).map(h => h.trim().toLowerCase());
-                if (h2.some(h => h === 'ml' || h.includes('volume') || h.includes('absorbance'))) {
-                    headerRowIndex = 1;
+            if (unitsRowIndex !== -1) {
+                startRow = unitsRowIndex + 1;
+                const units = lines[unitsRowIndex].split(delimiter).map(h => h.trim());
+                let names = [];
+                if (unitsRowIndex > 0) {
+                    names = lines[unitsRowIndex - 1].split(delimiter).map(h => h.trim());
                 }
-            }
 
-            // Check 1st line (index 0) if not found on 2nd
-            if (headerRowIndex === -1 && lines.length > 0) {
-                const h1 = lines[0].split(delimiter).map(h => h.trim().toLowerCase());
-                if (h1.some(h => h === 'ml' || h.includes('volume') || h.includes('absorbance'))) {
-                    headerRowIndex = 0;
+                let currentXIndex = 0;
+                for (let c = 0; c < units.length; c++) {
+                    let unit1 = units[c].toLowerCase();
+                    let name1 = names[c] ? names[c].trim() : '';
+
+                    if (name1.toLowerCase().includes('fraction') || name1.toLowerCase().includes('log') || unit1.includes('logbook') || unit1 === 'fraction' || unit1 === '') {
+                        continue;
+                    }
+
+                    if (unit1 === 'ml' || unit1.includes('vol') || unit1.includes('time') || unit1 === 'min') {
+                        currentXIndex = c;
+                    } else {
+                        // It's a Y column
+                        let seriesName = name1 || units[c] || `Series ${c + 1}`;
+                        if (!name1 && names[currentXIndex]) {
+                            seriesName = names[currentXIndex].trim();
+                        }
+
+                        let label = seriesName;
+                        if (seriesName !== units[c] && units[c].length > 0) {
+                            label = `${seriesName} (${units[c]})`;
+                        }
+
+                        datasetsInfo.push({
+                            label: label,
+                            xIndex: currentXIndex,
+                            yIndex: c,
+                            dataPoints: []
+                        });
+                    }
                 }
-            }
 
-            if (headerRowIndex !== -1) {
-                const headers = lines[headerRowIndex].split(delimiter).map(h => h.trim().toLowerCase());
+                // Identify Fraction columns
+                for (let j = 0; j < units.length; j++) {
+                    let u = units[j].toLowerCase();
+                    let n = names[j] ? names[j].toLowerCase() : '';
+                    if (u === 'fraction' || n.includes('fraction')) {
+                        if (j > 0 && (units[j - 1].toLowerCase() === 'ml' || units[j - 1].toLowerCase().includes('vol'))) {
+                            fracVolIndex = j - 1;
+                            fracNameIndex = j;
+                        } else {
+                            fracNameIndex = j;
+                        }
+                    }
+                }
 
-                const mlIndex = headers.findIndex(h => h === 'ml' || h.includes('volume') || h.includes('time'));
-                const absIndex = headers.findIndex(h => h.includes('absorbance') || h.includes('mau') || h === 'abs');
-
-                if (mlIndex !== -1) xIndex = mlIndex;
-                if (absIndex !== -1) yIndex = absIndex;
-
-                startRow = headerRowIndex + 1;
+                if (datasetsInfo.length === 0 && units.length > 1) {
+                    for (let c = 1; c < units.length; c++) {
+                        datasetsInfo.push({
+                            label: names[c] || units[c] || `Data ${c}`,
+                            xIndex: 0,
+                            yIndex: c,
+                            dataPoints: []
+                        });
+                    }
+                }
+            } else {
+                datasetsInfo.push({
+                    label: 'Y Data',
+                    xIndex: 0,
+                    yIndex: 1,
+                    dataPoints: []
+                });
+                fracVolIndex = 10;
+                fracNameIndex = 11;
             }
 
             let lastFraction = null;
@@ -415,41 +470,41 @@
                 const line = lines[i].trim();
                 if (!line) continue;
 
-                // Use strict split to preserve empty columns for correct indexing
                 const parts = line.split(delimiter).map(p => p.trim());
 
-                // Get UV Data (X and Y)
-                if (parts.length > Math.max(xIndex, yIndex)) {
-                    const x = parseFloat(parts[xIndex]);
-                    const y = parseFloat(parts[yIndex]);
-
-                    if (!isNaN(x) && !isNaN(y)) {
-                        // labels.push(x);
-                        dataPoints.push({ x, y });
+                datasetsInfo.forEach(ds => {
+                    if (parts.length > Math.max(ds.xIndex, ds.yIndex)) {
+                        if (parts[ds.xIndex] !== '' && parts[ds.yIndex] !== '') {
+                            const x = parseFloat(parts[ds.xIndex]);
+                            const y = parseFloat(parts[ds.yIndex]);
+                            if (!isNaN(x) && !isNaN(y)) {
+                                ds.dataPoints.push({ x, y });
+                            }
+                        }
                     }
-                }
+                });
 
-                // Get Fraction Data (Col 11 and 12)
-                if (parts.length > Math.max(fracVolIndex, fracNameIndex)) {
-                    const fVol = parseFloat(parts[fracVolIndex]);
-                    let fName = parts[fracNameIndex];
+                if (fracVolIndex !== -1 && fracNameIndex !== -1 && parts.length > Math.max(fracVolIndex, fracNameIndex)) {
+                    if (parts[fracVolIndex] !== '') {
+                        const fVol = parseFloat(parts[fracVolIndex]);
+                        let fName = parts[fracNameIndex];
 
-                    if (fName) {
-                        fName = fName.replace(/"/g, ''); // Remove quotes
-                    }
+                        if (fName) {
+                            fName = fName.replace(/"/g, '');
+                        }
 
-                    // Check if we have a valid fraction name
-                    if (fName && fName !== lastFraction) {
-                        // Use the Fraction Volume (Col 11) as the X coordinate
-                        if (!isNaN(fVol)) {
-                            fractions.push({ x: fVol, label: fName });
-                            lastFraction = fName;
+                        if (fName && fName !== lastFraction) {
+                            if (!isNaN(fVol)) {
+                                fractions.push({ x: fVol, label: fName });
+                                lastFraction = fName;
+                            }
                         }
                     }
                 }
             }
 
-            return { dataPoints, fractions };
+            const validDatasets = datasetsInfo.filter(ds => ds.dataPoints.length > 0);
+            return { datasetsInfo: validDatasets, fractions };
         }
 
         // Custom plugin to draw fraction lines and labels
@@ -521,9 +576,10 @@
             id: 'markerLabels',
             afterDatasetsDraw: (chart, args, options) => {
                 const { ctx } = chart;
-                const meta = chart.getDatasetMeta(1); // Markers dataset
+                const markerDatasetIdx = chart.data.datasets.length - 1;
+                const meta = chart.getDatasetMeta(markerDatasetIdx);
 
-                if (!meta.hidden && chart.data.datasets[1].data.length > 0) {
+                if (meta && !meta.hidden && chart.data.datasets[markerDatasetIdx].data.length > 0) {
                     ctx.save();
                     ctx.font = 'bold 14px sans-serif';
                     ctx.fillStyle = 'black';
@@ -531,7 +587,7 @@
                     ctx.textBaseline = 'bottom';
 
                     meta.data.forEach((element, index) => {
-                        const dataPoint = chart.data.datasets[1].data[index];
+                        const dataPoint = chart.data.datasets[markerDatasetIdx].data[index];
                         if (dataPoint && element.x && element.y) {
                             const label = dataPoint.label || `(${dataPoint.x.toFixed(2)}, ${dataPoint.y.toFixed(2)})`;
                             ctx.fillText(label, element.x, element.y - 10);
@@ -556,9 +612,9 @@
 
             try {
                 const text = await file.text();
-                const { dataPoints, fractions } = parseData(text);
+                const { datasetsInfo, fractions } = parseData(text);
 
-                if (dataPoints.length === 0) {
+                if (datasetsInfo.length === 0) {
                     alert("No valid data found in the file. Please check the format.");
                     return;
                 }
@@ -566,7 +622,7 @@
                 const ctx = document.getElementById('secChart').getContext('2d');
                 const title = document.getElementById('graphTitle').value;
                 const xLabel = document.getElementById('xAxisLabel').value;
-                const yLabel = document.getElementById('yAxisLabel').value;
+                const userYLabel = document.getElementById('yAxisLabel').value;
                 const showFractions = document.getElementById('showFractions').checked;
                 const showGridlines = document.getElementById('showGridlines').checked;
 
@@ -574,34 +630,88 @@
                     myChart.destroy();
                 }
 
+                const graphColors = ['#4a90a4', '#d9534f', '#5cb85c', '#f0ad4e', '#5bc0de', '#9b59b6', '#34495e', '#e67e22'];
+
+                const chartDatasets = datasetsInfo.map((ds, index) => {
+                    const axisId = 'y-axis-' + index;
+                    return {
+                        label: ds.label,
+                        data: ds.dataPoints,
+                        borderColor: graphColors[index % graphColors.length],
+                        backgroundColor: graphColors[index % graphColors.length] + '1A',
+                        borderWidth: index === 0 ? 3 : 2,
+                        pointRadius: 1,
+                        pointHoverRadius: 4,
+                        fill: false,
+                        normalized: true,
+                        parsing: false,
+                        tension: 0.4,
+                        yAxisID: axisId,
+                        hidden: index >= 3
+                    };
+                });
+
+                const markerDatasetIdx = chartDatasets.length;
+                chartDatasets.push({
+                    label: 'Markers',
+                    data: [],
+                    pointRadius: 6,
+                    pointBackgroundColor: 'red',
+                    pointBorderColor: 'white',
+                    pointBorderWidth: 2,
+                    showLine: false,
+                    parsing: false,
+                    yAxisID: 'y-axis-0'
+                });
+
+                const configScales = {
+                    x: {
+                        type: 'linear',
+                        title: {
+                            display: true,
+                            text: xLabel,
+                            color: 'black',
+                            font: { weight: 'bold', size: 14 }
+                        },
+                        ticks: { color: 'black', font: { weight: 'bold' } },
+                        border: { color: 'black', width: 2 },
+                        grid: {
+                            display: showGridlines,
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    }
+                };
+
+                datasetsInfo.forEach((ds, index) => {
+                    const axisId = 'y-axis-' + index;
+                    const dsLabel = index === 0 && userYLabel ? userYLabel : ds.label;
+                    configScales[axisId] = {
+                        type: 'linear',
+                        position: index % 2 === 0 ? 'left' : 'right',
+                        display: index < 3, // Initial visibility matches datasets
+                        title: {
+                            display: true,
+                            text: dsLabel,
+                            color: graphColors[index % graphColors.length],
+                            font: { weight: 'bold', size: 14 }
+                        },
+                        ticks: { color: graphColors[index % graphColors.length], font: { weight: 'bold' } },
+                        border: { color: graphColors[index % graphColors.length], width: 2 },
+                        grid: {
+                            drawOnChartArea: index === 0,
+                            display: showGridlines
+                        },
+                        beginAtZero: false
+                    };
+                });
+
                 myChart = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        datasets: [{
-                            label: 'Absorbance',
-                            data: dataPoints,
-                            borderColor: '#4a90a4',
-                            backgroundColor: 'rgba(74, 144, 164, 0.1)',
-                            borderWidth: 3,
-                            pointRadius: 1, // Small points for performance
-                            pointHoverRadius: 4,
-                            fill: false,
-                            normalized: true, // Optimize for large datasets
-                            parsing: false, // Use {x,y} data directly
-                            tension: 0.4 // Smooth curve
-                        }, {
-                            label: 'Markers',
-                            data: [],
-                            pointRadius: 6,
-                            pointBackgroundColor: 'red',
-                            pointBorderColor: 'white',
-                            pointBorderWidth: 2,
-                            showLine: false,
-                            parsing: false
-                        }]
+                        datasets: chartDatasets
                     },
                     options: {
-                        devicePixelRatio: 3, // High resolution for export
+                        devicePixelRatio: 3,
                         onClick: (e) => {
                             const points = myChart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
 
@@ -610,36 +720,28 @@
                                 const datasetIndex = firstPoint.datasetIndex;
                                 const index = firstPoint.index;
 
-                                if (datasetIndex === 0) {
-                                    const value = myChart.data.datasets[0].data[index];
+                                if (datasetIndex < markerDatasetIdx) {
+                                    const value = myChart.data.datasets[datasetIndex].data[index];
                                     const label = prompt("Enter label for this marker:", `(${value.x.toFixed(2)}, ${value.y.toFixed(2)})`);
 
                                     if (label !== null) {
-                                        // Add to markers dataset
-                                        myChart.data.datasets[1].data.push({ x: value.x, y: value.y, label: label });
+                                        myChart.data.datasets[markerDatasetIdx].data.push({ x: value.x, y: value.y, label: label });
                                         myChart.update();
                                     }
-                                } else if (datasetIndex === 1) {
-                                    // Remove marker if clicked again
+                                } else if (datasetIndex === markerDatasetIdx) {
                                     if (confirm("Remove this marker?")) {
-                                        myChart.data.datasets[1].data.splice(index, 1);
+                                        myChart.data.datasets[markerDatasetIdx].data.splice(index, 1);
                                         myChart.update();
                                     }
                                 }
                             }
                         },
-                        animation: false, // Disable animation for performance
+                        animation: false,
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            decimation: {
-                                enabled: true,
-                                algorithm: 'lttb',
-                                samples: 500,
-                            },
-                            customCanvasBackgroundColor: {
-                                color: 'white',
-                            },
+                            decimation: { enabled: true, algorithm: 'lttb', samples: 500 },
+                            customCanvasBackgroundColor: { color: 'white' },
                             title: {
                                 display: true,
                                 text: title,
@@ -654,12 +756,8 @@
                             },
                             zoom: {
                                 zoom: {
-                                    wheel: {
-                                        enabled: false,
-                                    },
-                                    pinch: {
-                                        enabled: true
-                                    },
+                                    wheel: { enabled: false },
+                                    pinch: { enabled: true },
                                     drag: {
                                         enabled: true,
                                         backgroundColor: 'rgba(74, 144, 164, 0.3)',
@@ -670,59 +768,110 @@
                                 }
                             }
                         },
-                        scales: {
-                            x: {
-                                type: 'linear',
-                                title: {
-                                    display: true,
-                                    text: xLabel,
-                                    color: 'black',
-                                    font: { weight: 'bold', size: 14 }
-                                },
-                                ticks: {
-                                    color: 'black',
-                                    font: { weight: 'bold' }
-                                },
-                                border: {
-                                    color: 'black',
-                                    width: 2
-                                },
-                                grid: {
-                                    display: showGridlines,
-                                    color: 'rgba(0,0,0,0.05)'
-                                }
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: yLabel,
-                                    color: 'black',
-                                    font: { weight: 'bold', size: 14 }
-                                },
-                                ticks: {
-                                    color: 'black',
-                                    font: { weight: 'bold' }
-                                },
-                                border: {
-                                    color: 'black',
-                                    width: 2
-                                },
-                                grid: {
-                                    display: showGridlines,
-                                    color: 'rgba(0,0,0,0.05)'
-                                },
-                                beginAtZero: true
-                            }
-                        },
+                        scales: configScales,
                         interaction: {
                             intersect: false,
                             mode: 'index'
                         }
                     }
                 });
+
+                buildSeriesToggles(datasetsInfo, graphColors);
+
             } catch (error) {
                 console.error(error);
                 alert("Error reading file: " + error.message);
+            }
+        }
+
+        function buildSeriesToggles(datasetsInfo, graphColors) {
+            const container = document.getElementById('seriesTogglesContainer');
+            container.innerHTML = '';
+
+            datasetsInfo.forEach((ds, index) => {
+                const isChecked = index < 3; // Match initial hidden state
+
+                const wrapper = document.createElement('div');
+                wrapper.style.display = 'flex';
+                wrapper.style.alignItems = 'center';
+                wrapper.style.gap = '0.5rem';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = 'toggle-series-' + index;
+                checkbox.checked = isChecked;
+                checkbox.style.width = 'auto';
+                checkbox.style.accentColor = graphColors[index % graphColors.length];
+                checkbox.dataset.seriesIndex = index;
+
+                checkbox.onchange = function () {
+                    toggleSeries(index, this.checked);
+                };
+
+                const label = document.createElement('label');
+                label.htmlFor = 'toggle-series-' + index;
+                label.textContent = ds.label;
+                label.style.fontWeight = 'normal';
+                label.style.cursor = 'pointer';
+                label.style.color = graphColors[index % graphColors.length];
+                label.style.fontSize = '0.95rem';
+
+                wrapper.appendChild(checkbox);
+                wrapper.appendChild(label);
+                container.appendChild(wrapper);
+            });
+        }
+
+        function toggleSeries(index, isVisible) {
+            if (myChart) {
+                // Toggle dataset
+                myChart.data.datasets[index].hidden = !isVisible;
+
+                // Toggle corresponding Y-axis
+                const axisId = 'y-axis-' + index;
+                if (myChart.options.scales[axisId]) {
+                    myChart.options.scales[axisId].display = isVisible;
+                }
+
+                myChart.update();
+            }
+        }
+
+        function updateShowFractions() {
+            if (myChart) {
+                const showFractions = document.getElementById('showFractions').checked;
+                const fileInput = document.getElementById('csvFileInput');
+
+                // Need to re-parse or store fractions globally. The plugin reads from options.
+                if (myChart.options.plugins.fractionLines) {
+                    // The plugin options are set during creation. An easy way is to re-plot or handle state better.
+                    // A full plotGraph() call is the safest if the file is loaded.
+                    if (fileInput.files.length > 0) {
+                        plotGraph();
+                    }
+                }
+            }
+        }
+
+        function updateShowGridlines() {
+            if (myChart) {
+                const showGridlines = document.getElementById('showGridlines').checked;
+
+                // Update X axis grid
+                if (myChart.options.scales.x && myChart.options.scales.x.grid) {
+                    myChart.options.scales.x.grid.display = showGridlines;
+                }
+
+                // Update all Y axes grids (only first one usually draws on chart area, but we update the display logic)
+                Object.keys(myChart.options.scales).forEach(key => {
+                    if (key.startsWith('y-axis')) {
+                        if (myChart.options.scales[key].grid) {
+                            myChart.options.scales[key].grid.display = showGridlines;
+                        }
+                    }
+                });
+
+                myChart.update();
             }
         }
 
@@ -745,6 +894,7 @@
 
         function clearData() {
             document.getElementById('csvFileInput').value = '';
+            document.getElementById('seriesTogglesContainer').innerHTML = '<em style="color: #888; font-size: 0.9rem;">Upload a CSV to see available series</em>';
             if (myChart) {
                 myChart.destroy();
                 myChart = null;
