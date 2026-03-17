@@ -1,0 +1,2579 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Conversions - Scientific Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-black: #0a0a0a;
+            --soft-black: #1a1a1a;
+            --pure-white: #ffffff;
+            --off-white: #f8f9fa;
+            --muted-blue: #4a90a4;
+            --light-blue: rgba(74, 144, 164, 0.1);
+            --border-color: rgba(74, 144, 164, 0.2);
+            --success-green: #28a745;
+            --warning-orange: #fd7e14;
+            --danger-red: #dc3545;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--primary-black);
+            background: var(--pure-white);
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* === HEADER/NAV === */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-black);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--primary-black);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--muted-blue);
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: var(--pure-white);
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+            border-radius: 8px;
+            padding: 0.5rem 0;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .dropdown-content a {
+            color: var(--primary-black);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            text-align: left;
+        }
+
+        .dropdown-content a:hover {
+            background-color: var(--off-white);
+            color: var(--muted-blue);
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropbtn {
+            cursor: pointer;
+        }
+
+        /* === HERO SECTION (compact) === */
+        .hero {
+            min-height: auto;
+            padding: 8rem 0 3rem;
+            display: flex;
+            align-items: center;
+            position: relative;
+            background: linear-gradient(135deg, var(--pure-white) 0%, var(--off-white) 100%);
+        }
+
+        .hero-content {
+            width: 100%;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--primary-black), var(--muted-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: rgba(10, 10, 10, 0.7);
+            margin-bottom: 0;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* === CARD SELECTION GRID === */
+        .card-selection-section {
+            padding: 3rem 0 4rem;
+            background: var(--off-white);
+        }
+
+        .conversion-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .conversion-card {
+            padding: 2rem 1.5rem;
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .conversion-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--muted-blue);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .conversion-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .conversion-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .conversion-card h3 {
+            font-size: 1.15rem;
+            margin-bottom: 0.25rem;
+            color: var(--primary-black);
+        }
+
+        .card-format {
+            font-family: 'Courier New', monospace;
+            color: var(--muted-blue);
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .conversion-card p {
+            font-size: 0.9rem;
+            color: rgba(10, 10, 10, 0.6);
+            line-height: 1.5;
+        }
+
+        .card-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            background: var(--light-blue);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            color: var(--muted-blue);
+            font-weight: 500;
+            margin-top: 0.75rem;
+        }
+
+        /* === CONVERSION SECTIONS === */
+        .conversion-section {
+            display: none;
+            padding: 4rem 0;
+            background: var(--off-white);
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .conversion-section.show {
+            opacity: 1;
+        }
+
+        .back-button {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: none;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: var(--muted-blue);
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
+        }
+
+        .back-button:hover {
+            background: var(--light-blue);
+            border-color: var(--muted-blue);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .section-header h2 {
+            font-size: clamp(2rem, 4vw, 2.5rem);
+            margin-bottom: 0.75rem;
+            color: var(--primary-black);
+        }
+
+        .section-header p {
+            font-size: 1.1rem;
+            color: rgba(10, 10, 10, 0.7);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* === OPTIONS PANEL === */
+        .options-panel {
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .options-panel label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+            color: var(--primary-black);
+            cursor: pointer;
+        }
+
+        .options-panel input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--muted-blue);
+        }
+
+        /* === FILE UPLOADER === */
+        .file-uploader-section {
+            margin-bottom: 2rem;
+        }
+
+        .drop-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 3rem;
+            background: var(--light-blue);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .drop-zone.drag-over {
+            border-color: var(--muted-blue);
+            background: rgba(74, 144, 164, 0.2);
+        }
+
+        .drop-zone p {
+            font-size: 1.1rem;
+            color: var(--primary-black);
+            margin-bottom: 0.5rem;
+            pointer-events: none;
+        }
+
+        .drop-zone span {
+            display: block;
+            margin-bottom: 1rem;
+            color: rgba(10, 10, 10, 0.6);
+            pointer-events: none;
+        }
+
+        .choose-file-btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--muted-blue);
+            color: var(--pure-white);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            font-weight: 500;
+        }
+
+        .choose-file-btn:hover {
+            background: #3a7a8a;
+        }
+
+        /* === PROGRESS BAR === */
+        .progress-container {
+            display: none;
+            margin: 1rem 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--muted-blue);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: rgba(10, 10, 10, 0.7);
+        }
+
+        /* === FILE INFO / STATS === */
+        .file-info {
+            display: none;
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .file-info h3 {
+            margin-bottom: 1rem;
+            color: var(--primary-black);
+        }
+
+        .file-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 0.75rem;
+            background: var(--light-blue);
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--muted-blue);
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: rgba(10, 10, 10, 0.7);
+        }
+
+        /* === STATUS MESSAGE === */
+        .status-message {
+            display: none;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+
+        .status-message.show {
+            display: block;
+        }
+
+        .status-message.success {
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid var(--success-green);
+            color: var(--success-green);
+        }
+
+        .status-message.error {
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid var(--danger-red);
+            color: var(--danger-red);
+        }
+
+        .status-message.warning {
+            background: rgba(253, 126, 20, 0.1);
+            border: 1px solid var(--warning-orange);
+            color: var(--warning-orange);
+        }
+
+        /* === PREVIEW PANEL === */
+        .preview-panel {
+            display: none;
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .preview-panel.show {
+            display: block;
+        }
+
+        .preview-panel h3 {
+            margin-bottom: 1rem;
+            color: var(--primary-black);
+        }
+
+        .preview-container {
+            max-height: 400px;
+            overflow-y: auto;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: #f8f9fa;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            white-space: pre;
+        }
+
+        /* === DOWNLOAD SECTION === */
+        .download-section {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .download-section.show {
+            display: block;
+        }
+
+        .download-btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--success-green);
+            color: var(--pure-white);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .download-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        /* === FOOTER === */
+        footer {
+            background: var(--soft-black);
+            color: var(--pure-white);
+            padding: 3rem 0;
+            text-align: center;
+            margin-top: 4rem;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            color: var(--muted-blue);
+        }
+
+        .footer-section a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: var(--muted-blue);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 2rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .container {
+                padding: 0 1rem;
+            }
+
+            .conversion-cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .options-panel {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        /* === ANIMATIONS === */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        /* === CATEGORY CARDS GRID === */
+        .category-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .category-card {
+            padding: 2.5rem 2rem;
+        }
+
+        .category-card .card-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .category-card h3 {
+            font-size: 1.3rem;
+        }
+
+        /* === IMAGE PREVIEW === */
+        .image-preview-section {
+            display: none;
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .image-preview-section.show {
+            display: block;
+        }
+
+        .image-preview-section h3 {
+            margin-bottom: 1rem;
+            color: var(--primary-black);
+        }
+
+        .image-preview-container {
+            text-align: center;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            background: #f8f9fa;
+        }
+
+        .image-preview-container img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 4px;
+        }
+
+        .image-info {
+            font-size: 0.9rem;
+            color: rgba(10, 10, 10, 0.7);
+            text-align: center;
+        }
+
+        /* === FORMAT CONTROLS === */
+        .format-controls {
+            display: none;
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            align-items: flex-end;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .format-controls.show {
+            display: flex;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-group label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--primary-black);
+        }
+
+        .control-group select {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background: var(--pure-white);
+            color: var(--primary-black);
+            cursor: pointer;
+            min-width: 120px;
+        }
+
+        .control-group select:focus {
+            outline: none;
+            border-color: var(--muted-blue);
+        }
+
+        .control-group input[type="range"] {
+            width: 180px;
+            accent-color: var(--muted-blue);
+        }
+
+        @media (max-width: 768px) {
+            .category-cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .format-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .control-group input[type="range"] {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <nav class="container">
+            <a href="index.html" class="logo">Scientific Tools</a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropbtn">Tools &#9662;</a>
+                    <div class="dropdown-content">
+                        <a href="gelelectrophoresis.html">Gel Analysis</a>
+                        <a href="sequencer.html">Sequencer</a>
+                        <a href="calculations.html">Calculations</a>
+                        <a href="size_exclusion_graphing.html">Size Exclusion Graphing</a>
+                        <a href="timing.html">Timing</a>
+                        <a href="fileconversions.html">File Conversions</a>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- HERO (compact) -->
+    <section id="home" class="hero">
+        <div class="container">
+            <div class="hero-content fade-in">
+                <h1>File Conversions</h1>
+                <p>Convert molecular structure files and image formats. All processing happens entirely in your
+                    browser.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- TOP-LEVEL CATEGORY CARDS -->
+    <section id="categorySelection" class="card-selection-section">
+        <div class="container">
+            <div class="category-cards-grid">
+                <div class="conversion-card category-card" onclick="selectCategory('structure')">
+                    <div class="card-icon">&#129516;</div>
+                    <h3>Structure Files</h3>
+                    <div class="card-format">PDB, CIF, SDF, MOL2, PDBQT</div>
+                    <p>Molecular structure conversions for docking simulations. Receptor prep, ligand prep, and format
+                        conversions with Gasteiger charges and AutoDock atom typing.</p>
+                    <div class="card-badge">Molecular</div>
+                </div>
+                <div class="conversion-card category-card" onclick="selectCategory('images')">
+                    <div class="card-icon">&#128444;</div>
+                    <h3>Image Conversions</h3>
+                    <div class="card-format">HEIC, JPG, PNG, WebP, BMP, GIF, TIFF</div>
+                    <p>Convert between common image formats. HEIC to JPG/PNG, format changes, and quality adjustments
+                        processed entirely in your browser.</p>
+                    <div class="card-badge">Media</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- STRUCTURE SUB-CARDS -->
+    <section id="structureSubCards" class="card-selection-section" style="display: none;">
+        <div class="container">
+            <button class="back-button" onclick="backToCategories()">&larr; Back to Categories</button>
+            <div class="section-header" style="margin-bottom: 2rem;">
+                <h2>Structure File Conversions</h2>
+                <p>Select a conversion type</p>
+            </div>
+            <div class="conversion-cards-grid">
+                <div class="conversion-card" onclick="selectConversion('structure')">
+                    <div class="card-icon">&#129516;</div>
+                    <h3>Structure Preparation</h3>
+                    <div class="card-format">PDB / CIF &rarr; PDBQT</div>
+                    <p>Prepare protein and receptor structures for molecular docking with Gasteiger charges and AutoDock
+                        atom types</p>
+                    <div class="card-badge">Receptor</div>
+                </div>
+                <div class="conversion-card" onclick="selectConversion('ligand')">
+                    <div class="card-icon">&#128138;</div>
+                    <h3>Ligand Preparation</h3>
+                    <div class="card-format">PDB / SDF / MOL2 &rarr; PDBQT</div>
+                    <p>Prepare small molecule ligands with torsion tree, charges, and AutoDock atom types for docking</p>
+                    <div class="card-badge">Ligand</div>
+                </div>
+                <div class="conversion-card" onclick="selectConversion('sdf2pdb')">
+                    <div class="card-icon">&#128260;</div>
+                    <h3>SDF to PDB</h3>
+                    <div class="card-format">SDF / MOL &rarr; PDB</div>
+                    <p>Convert Structure Data Files from chemical databases to standard PDB format</p>
+                    <div class="card-badge">Format</div>
+                </div>
+                <div class="conversion-card" onclick="selectConversion('cif2pdb')">
+                    <div class="card-icon">&#128196;</div>
+                    <h3>CIF to PDB</h3>
+                    <div class="card-format">mmCIF &rarr; PDB</div>
+                    <p>Convert macromolecular CIF files from the Protein Data Bank to legacy PDB format</p>
+                    <div class="card-badge">Format</div>
+                </div>
+                <div class="conversion-card" onclick="selectConversion('mol2pdb')">
+                    <div class="card-icon">&#9878;</div>
+                    <h3>MOL2 to PDB</h3>
+                    <div class="card-format">MOL2 &rarr; PDB</div>
+                    <p>Convert Tripos MOL2 files with atom types and charges to standard PDB format</p>
+                    <div class="card-badge">Format</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- IMAGE CONVERTER -->
+    <section id="conv-images" class="conversion-section">
+        <div class="container">
+            <button class="back-button" onclick="backToCategories()">&larr; Back to Categories</button>
+            <div class="section-header">
+                <h2>Image Conversions</h2>
+                <p>Upload an image and convert it to a different format</p>
+            </div>
+            <div class="file-uploader-section">
+                <div id="dropZone-images" class="drop-zone" data-conv="images">
+                    <p>Drop image file here</p>
+                    <span>Supports HEIC, JPG, PNG, WebP, BMP, GIF, TIFF</span>
+                    <button class="choose-file-btn">Choose File</button>
+                </div>
+                <input type="file" id="fileInput-images" accept=".heic,.heif,.jpg,.jpeg,.png,.webp,.bmp,.gif,.tiff,.tif" style="display: none;">
+                <div id="progressContainer-images" class="progress-container">
+                    <div class="progress-bar"><div id="progressFill-images" class="progress-fill"></div></div>
+                    <div id="progressText-images" class="progress-text">Processing...</div>
+                </div>
+            </div>
+            <div id="imagePreviewSection" class="image-preview-section">
+                <h3>Preview</h3>
+                <div class="image-preview-container">
+                    <img id="imagePreview" src="" alt="Preview">
+                </div>
+                <div id="imageInfo" class="image-info"></div>
+            </div>
+            <div id="imageControls" class="format-controls">
+                <div class="control-group">
+                    <label for="outputFormat">Output Format</label>
+                    <select id="outputFormat">
+                        <option value="image/jpeg">JPG</option>
+                        <option value="image/png">PNG</option>
+                        <option value="image/webp">WebP</option>
+                    </select>
+                </div>
+                <div class="control-group" id="qualityGroup">
+                    <label for="qualitySlider">Quality: <span id="qualityValue">92</span>%</label>
+                    <input type="range" id="qualitySlider" min="10" max="100" value="92" step="1">
+                </div>
+                <button class="download-btn" id="convertImageBtn" onclick="convertAndDownloadImage()">Convert &amp; Download</button>
+            </div>
+            <div id="statusMessage-images" class="status-message"></div>
+        </div>
+    </section>
+
+    <!-- CONVERSION: Structure PDB/CIF -> PDBQT -->
+    <section id="conv-structure" class="conversion-section">
+        <div class="container">
+            <button class="back-button" onclick="backToCards()">&larr; Back to Conversions</button>
+            <div class="section-header">
+                <h2>Structure Preparation</h2>
+                <p>Upload a PDB or CIF file to generate a PDBQT with Gasteiger charges and AutoDock atom types</p>
+            </div>
+            <div class="options-panel">
+                <label><input type="checkbox" id="opt-addH-structure" checked> Add polar hydrogens</label>
+                <label><input type="checkbox" id="opt-keepHETATM" checked> Keep HETATM (heme, ligands, cofactors)</label>
+            </div>
+            <div class="file-uploader-section">
+                <div id="dropZone-structure" class="drop-zone" data-conv="structure">
+                    <p>Drop PDB or CIF file here</p>
+                    <span>Supports .pdb and .cif files</span>
+                    <button class="choose-file-btn">Choose File</button>
+                </div>
+                <input type="file" id="fileInput-structure" accept=".pdb,.cif" style="display: none;">
+                <div id="progressContainer-structure" class="progress-container">
+                    <div class="progress-bar"><div id="progressFill-structure" class="progress-fill"></div></div>
+                    <div id="progressText-structure" class="progress-text">Processing...</div>
+                </div>
+            </div>
+            <div id="fileInfo-structure" class="file-info"><h3>File Summary</h3><div id="fileStats-structure" class="file-stats"></div></div>
+            <div id="statusMessage-structure" class="status-message"></div>
+            <div id="previewPanel-structure" class="preview-panel"><h3>PDBQT Preview (first 50 lines)</h3><div id="previewContainer-structure" class="preview-container"></div></div>
+            <div id="downloadSection-structure" class="download-section"><button class="download-btn" onclick="downloadOutput('structure')">Download PDBQT File</button></div>
+        </div>
+    </section>
+
+    <!-- CONVERSION: Ligand -> PDBQT -->
+    <section id="conv-ligand" class="conversion-section">
+        <div class="container">
+            <button class="back-button" onclick="backToCards()">&larr; Back to Conversions</button>
+            <div class="section-header">
+                <h2>Ligand Preparation</h2>
+                <p>Upload a small molecule file to generate a PDBQT with torsion tree for docking</p>
+            </div>
+            <div class="options-panel">
+                <label><input type="checkbox" id="opt-addH-ligand" checked> Add hydrogens</label>
+            </div>
+            <div class="file-uploader-section">
+                <div id="dropZone-ligand" class="drop-zone" data-conv="ligand">
+                    <p>Drop ligand file here</p>
+                    <span>Supports .pdb, .sdf, .mol, .mol2 files</span>
+                    <button class="choose-file-btn">Choose File</button>
+                </div>
+                <input type="file" id="fileInput-ligand" accept=".pdb,.sdf,.mol,.mol2" style="display: none;">
+                <div id="progressContainer-ligand" class="progress-container">
+                    <div class="progress-bar"><div id="progressFill-ligand" class="progress-fill"></div></div>
+                    <div id="progressText-ligand" class="progress-text">Processing...</div>
+                </div>
+            </div>
+            <div id="fileInfo-ligand" class="file-info"><h3>File Summary</h3><div id="fileStats-ligand" class="file-stats"></div></div>
+            <div id="statusMessage-ligand" class="status-message"></div>
+            <div id="previewPanel-ligand" class="preview-panel"><h3>PDBQT Preview (first 50 lines)</h3><div id="previewContainer-ligand" class="preview-container"></div></div>
+            <div id="downloadSection-ligand" class="download-section"><button class="download-btn" onclick="downloadOutput('ligand')">Download PDBQT File</button></div>
+        </div>
+    </section>
+
+    <!-- CONVERSION: SDF -> PDB -->
+    <section id="conv-sdf2pdb" class="conversion-section">
+        <div class="container">
+            <button class="back-button" onclick="backToCards()">&larr; Back to Conversions</button>
+            <div class="section-header">
+                <h2>SDF to PDB</h2>
+                <p>Convert Structure Data Files to PDB format with CONECT records</p>
+            </div>
+            <div class="file-uploader-section">
+                <div id="dropZone-sdf2pdb" class="drop-zone" data-conv="sdf2pdb">
+                    <p>Drop SDF or MOL file here</p>
+                    <span>Supports .sdf and .mol files</span>
+                    <button class="choose-file-btn">Choose File</button>
+                </div>
+                <input type="file" id="fileInput-sdf2pdb" accept=".sdf,.mol" style="display: none;">
+                <div id="progressContainer-sdf2pdb" class="progress-container">
+                    <div class="progress-bar"><div id="progressFill-sdf2pdb" class="progress-fill"></div></div>
+                    <div id="progressText-sdf2pdb" class="progress-text">Processing...</div>
+                </div>
+            </div>
+            <div id="fileInfo-sdf2pdb" class="file-info"><h3>File Summary</h3><div id="fileStats-sdf2pdb" class="file-stats"></div></div>
+            <div id="statusMessage-sdf2pdb" class="status-message"></div>
+            <div id="previewPanel-sdf2pdb" class="preview-panel"><h3>PDB Preview (first 50 lines)</h3><div id="previewContainer-sdf2pdb" class="preview-container"></div></div>
+            <div id="downloadSection-sdf2pdb" class="download-section"><button class="download-btn" onclick="downloadOutput('sdf2pdb')">Download PDB File</button></div>
+        </div>
+    </section>
+
+    <!-- CONVERSION: CIF -> PDB -->
+    <section id="conv-cif2pdb" class="conversion-section">
+        <div class="container">
+            <button class="back-button" onclick="backToCards()">&larr; Back to Conversions</button>
+            <div class="section-header">
+                <h2>CIF to PDB</h2>
+                <p>Convert macromolecular CIF files to legacy PDB format</p>
+            </div>
+            <div class="file-uploader-section">
+                <div id="dropZone-cif2pdb" class="drop-zone" data-conv="cif2pdb">
+                    <p>Drop CIF file here</p>
+                    <span>Supports .cif files</span>
+                    <button class="choose-file-btn">Choose File</button>
+                </div>
+                <input type="file" id="fileInput-cif2pdb" accept=".cif" style="display: none;">
+                <div id="progressContainer-cif2pdb" class="progress-container">
+                    <div class="progress-bar"><div id="progressFill-cif2pdb" class="progress-fill"></div></div>
+                    <div id="progressText-cif2pdb" class="progress-text">Processing...</div>
+                </div>
+            </div>
+            <div id="fileInfo-cif2pdb" class="file-info"><h3>File Summary</h3><div id="fileStats-cif2pdb" class="file-stats"></div></div>
+            <div id="statusMessage-cif2pdb" class="status-message"></div>
+            <div id="previewPanel-cif2pdb" class="preview-panel"><h3>PDB Preview (first 50 lines)</h3><div id="previewContainer-cif2pdb" class="preview-container"></div></div>
+            <div id="downloadSection-cif2pdb" class="download-section"><button class="download-btn" onclick="downloadOutput('cif2pdb')">Download PDB File</button></div>
+        </div>
+    </section>
+
+    <!-- CONVERSION: MOL2 -> PDB -->
+    <section id="conv-mol2pdb" class="conversion-section">
+        <div class="container">
+            <button class="back-button" onclick="backToCards()">&larr; Back to Conversions</button>
+            <div class="section-header">
+                <h2>MOL2 to PDB</h2>
+                <p>Convert Tripos MOL2 files to standard PDB format</p>
+            </div>
+            <div class="file-uploader-section">
+                <div id="dropZone-mol2pdb" class="drop-zone" data-conv="mol2pdb">
+                    <p>Drop MOL2 file here</p>
+                    <span>Supports .mol2 files</span>
+                    <button class="choose-file-btn">Choose File</button>
+                </div>
+                <input type="file" id="fileInput-mol2pdb" accept=".mol2" style="display: none;">
+                <div id="progressContainer-mol2pdb" class="progress-container">
+                    <div class="progress-bar"><div id="progressFill-mol2pdb" class="progress-fill"></div></div>
+                    <div id="progressText-mol2pdb" class="progress-text">Processing...</div>
+                </div>
+            </div>
+            <div id="fileInfo-mol2pdb" class="file-info"><h3>File Summary</h3><div id="fileStats-mol2pdb" class="file-stats"></div></div>
+            <div id="statusMessage-mol2pdb" class="status-message"></div>
+            <div id="previewPanel-mol2pdb" class="preview-panel"><h3>PDB Preview (first 50 lines)</h3><div id="previewContainer-mol2pdb" class="preview-container"></div></div>
+            <div id="downloadSection-mol2pdb" class="download-section"><button class="download-btn" onclick="downloadOutput('mol2pdb')">Download PDB File</button></div>
+        </div>
+    </section>
+
+    <footer id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>CadeWardInc</h3>
+                    <a href="#">About Us</a>
+                    <a href="#">Contact</a>
+                </div>
+                <div class="footer-section">
+                    <h3>Tools</h3>
+                    <a href="gelelectrophoresis.html">Gel Analysis</a>
+                    <a href="sequencer.html">Sequencer</a>
+                    <a href="calculations.html">Calculations</a>
+                    <a href="size_exclusion_graphing.html">Size Exclusion Graphing</a>
+                    <a href="timing.html">Timing</a>
+                    <a href="fileconversions.html">File Conversions</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 CadeWardInc. All rights reserved. | Advanced scientific analysis tools.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+    <script>
+        // ========================================
+        // MODULE 0: STATE & UI MANAGEMENT
+        // ========================================
+        let activeCategory = null;
+        let activeConversion = null;
+        const conversionOutputs = {};
+        const CONV_TYPES = ['structure', 'ligand', 'sdf2pdb', 'cif2pdb', 'mol2pdb', 'images'];
+
+        function selectCategory(cat) {
+            activeCategory = cat;
+            document.getElementById('categorySelection').style.display = 'none';
+            if (cat === 'structure') {
+                const sub = document.getElementById('structureSubCards');
+                sub.style.display = 'block';
+                sub.scrollIntoView({ behavior: 'smooth' });
+            } else if (cat === 'images') {
+                const section = document.getElementById('conv-images');
+                section.style.display = 'block';
+                requestAnimationFrame(() => {
+                    section.classList.add('show');
+                    section.scrollIntoView({ behavior: 'smooth' });
+                });
+            }
+        }
+
+        function backToCategories() {
+            if (activeCategory === 'structure') {
+                document.getElementById('structureSubCards').style.display = 'none';
+            } else if (activeCategory === 'images') {
+                const section = document.getElementById('conv-images');
+                section.classList.remove('show');
+                section.style.display = 'none';
+                resetImageConverter();
+            }
+            activeCategory = null;
+            const cats = document.getElementById('categorySelection');
+            cats.style.display = 'block';
+            cats.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function selectConversion(type) {
+            activeConversion = type;
+            document.getElementById('structureSubCards').style.display = 'none';
+            const section = document.getElementById('conv-' + type);
+            section.style.display = 'block';
+            requestAnimationFrame(() => {
+                section.classList.add('show');
+                section.scrollIntoView({ behavior: 'smooth' });
+            });
+        }
+
+        function backToCards() {
+            if (!activeConversion) return;
+            const section = document.getElementById('conv-' + activeConversion);
+            section.classList.remove('show');
+            setTimeout(() => {
+                section.style.display = 'none';
+                resetConversionUI(activeConversion);
+                activeConversion = null;
+                const sub = document.getElementById('structureSubCards');
+                sub.style.display = 'block';
+                sub.scrollIntoView({ behavior: 'smooth' });
+            }, 300);
+        }
+
+        function resetConversionUI(prefix) {
+            const ids = ['fileInfo', 'statusMessage', 'previewPanel', 'downloadSection', 'progressContainer'];
+            for (const id of ids) {
+                const el = document.getElementById(id + '-' + prefix);
+                if (el) {
+                    el.classList.remove('show');
+                    if (id === 'progressContainer') el.style.display = 'none';
+                    if (id === 'statusMessage') el.className = 'status-message';
+                    if (id === 'fileInfo') el.classList.remove('show');
+                }
+            }
+        }
+
+        function updateProgress(prefix, percent, text) {
+            document.getElementById('progressFill-' + prefix).style.width = percent + '%';
+            document.getElementById('progressText-' + prefix).textContent = text;
+        }
+
+        function showStatus(prefix, message, type) {
+            const el = document.getElementById('statusMessage-' + prefix);
+            el.textContent = message;
+            el.className = 'status-message show ' + type;
+        }
+
+        function yieldToUI() {
+            return new Promise(resolve => setTimeout(resolve, 0));
+        }
+
+        // ========================================
+        // MODULE 1: FILE UPLOAD (shared)
+        // ========================================
+        const ACCEPTED_EXTENSIONS = {
+            'structure': ['pdb', 'cif'],
+            'ligand': ['pdb', 'sdf', 'mol', 'mol2'],
+            'sdf2pdb': ['sdf', 'mol'],
+            'cif2pdb': ['cif'],
+            'mol2pdb': ['mol2'],
+            'images': ['heic', 'heif', 'jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif', 'tiff', 'tif']
+        };
+
+        function initFileUploaders() {
+            for (const type of CONV_TYPES) {
+                const dropZone = document.getElementById('dropZone-' + type);
+                const fileInput = document.getElementById('fileInput-' + type);
+                if (!dropZone || !fileInput) continue;
+
+                const chooseBtn = dropZone.querySelector('.choose-file-btn');
+                chooseBtn.addEventListener('click', (e) => { e.stopPropagation(); fileInput.click(); });
+                dropZone.addEventListener('click', () => fileInput.click());
+                dropZone.addEventListener('dragenter', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+                dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+                dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+
+                ((t) => {
+                    dropZone.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        dropZone.classList.remove('drag-over');
+                        if (e.dataTransfer.files.length > 0) handleConversionFile(t, e.dataTransfer.files[0]);
+                    });
+                    fileInput.addEventListener('change', () => {
+                        if (fileInput.files.length > 0) handleConversionFile(t, fileInput.files[0]);
+                    });
+                })(type);
+            }
+        }
+
+        async function handleConversionFile(convType, file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (!ACCEPTED_EXTENSIONS[convType].includes(ext)) {
+                showStatus(convType, 'Unsupported file format: .' + ext + '. Expected: ' + ACCEPTED_EXTENSIONS[convType].map(e => '.' + e).join(', '), 'error');
+                return;
+            }
+
+            // Image files are handled separately (binary, not text)
+            if (convType === 'images') {
+                await handleImageFile(file);
+                return;
+            }
+
+            resetConversionUI(convType);
+            const progressContainer = document.getElementById('progressContainer-' + convType);
+            progressContainer.style.display = 'block';
+            updateProgress(convType, 5, 'Reading file...');
+
+            try {
+                const text = await file.text();
+                switch (convType) {
+                    case 'structure': await runStructurePipeline(text, ext, file.name); break;
+                    case 'ligand': await runLigandPipeline(text, ext, file.name); break;
+                    case 'sdf2pdb': await runSDF2PDBPipeline(text, file.name); break;
+                    case 'cif2pdb': await runCIF2PDBPipeline(text, file.name); break;
+                    case 'mol2pdb': await runMOL2PDBPipeline(text, file.name); break;
+                }
+            } catch (err) {
+                showStatus(convType, 'Error: ' + err.message, 'error');
+                progressContainer.style.display = 'none';
+            }
+        }
+
+        // ========================================
+        // MODULE 2: PDB PARSER
+        // ========================================
+        function parsePDB(text) {
+            const lines = text.split('\n');
+            const atoms = [];
+            for (const line of lines) {
+                const recordType = line.substring(0, 6).trim();
+                if (recordType !== 'ATOM' && recordType !== 'HETATM') continue;
+                const atom = {
+                    recordType: recordType,
+                    serial: parseInt(line.substring(6, 11).trim()) || 0,
+                    name: line.length >= 16 ? line.substring(12, 16) : ' C  ',
+                    altLoc: line.length >= 17 ? line.substring(16, 17).trim() : '',
+                    resName: line.length >= 20 ? line.substring(17, 20).trim() : 'UNK',
+                    chainID: line.length >= 22 ? line.substring(21, 22).trim() : '',
+                    resSeq: parseInt(line.substring(22, 26).trim()) || 0,
+                    iCode: line.length >= 27 ? line.substring(26, 27).trim() : '',
+                    x: parseFloat(line.substring(30, 38).trim()) || 0,
+                    y: parseFloat(line.substring(38, 46).trim()) || 0,
+                    z: parseFloat(line.substring(46, 54).trim()) || 0,
+                    occupancy: parseFloat(line.substring(54, 60).trim()) || 1.0,
+                    tempFactor: parseFloat(line.substring(60, 66).trim()) || 0.0,
+                    element: '',
+                    charge: 0.0,
+                    adType: '',
+                    bonds: [],
+                    _warned: false
+                };
+                if (line.length >= 78) atom.element = line.substring(76, 78).trim().toUpperCase();
+                if (!atom.element) atom.element = guessElement(atom.name);
+                atoms.push(atom);
+            }
+            return atoms;
+        }
+
+        function guessElement(atomName) {
+            const name = atomName.trim();
+            const twoLetter = name.substring(0, 2).trim().toUpperCase();
+            const twoLetterElements = ['FE', 'ZN', 'MG', 'MN', 'CU', 'CO', 'NI', 'SE', 'BR', 'CL', 'SI'];
+            if (name.length <= 2 && twoLetterElements.includes(twoLetter)) return twoLetter;
+            for (let i = 0; i < name.length; i++) {
+                const ch = name[i];
+                if (ch !== ' ' && (ch < '0' || ch > '9')) return ch.toUpperCase();
+            }
+            return 'C';
+        }
+
+        // ========================================
+        // MODULE 3: CIF PARSER
+        // ========================================
+        function parseCIF(text) {
+            const atoms = [];
+            const lines = text.split('\n');
+            let inAtomSiteLoop = false;
+            let columnNames = [];
+            let dataStarted = false;
+            const colIndex = {};
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line === 'loop_') {
+                    columnNames = [];
+                    dataStarted = false;
+                    inAtomSiteLoop = false;
+                    continue;
+                }
+                if (line.startsWith('_atom_site.')) {
+                    inAtomSiteLoop = true;
+                    colIndex[line] = columnNames.length;
+                    columnNames.push(line);
+                    continue;
+                }
+                if (inAtomSiteLoop && !line.startsWith('_') && line.length > 0 && !line.startsWith('#') && !line.startsWith('loop_')) {
+                    dataStarted = true;
+                    const fields = tokenizeCIFLine(line);
+                    if (fields.length < columnNames.length) continue;
+
+                    const get = (name) => {
+                        const idx = colIndex[name];
+                        if (idx === undefined) return undefined;
+                        const v = fields[idx];
+                        return (v === '.' || v === '?') ? undefined : v;
+                    };
+
+                    const groupPDB = get('_atom_site.group_PDB');
+                    if (groupPDB !== 'ATOM' && groupPDB !== 'HETATM') continue;
+
+                    const element = (get('_atom_site.type_symbol') || 'C').toUpperCase();
+                    const rawName = get('_atom_site.auth_atom_id') || get('_atom_site.label_atom_id') || 'C';
+                    const atomName = formatCIFAtomName(rawName, element);
+
+                    atoms.push({
+                        recordType: groupPDB,
+                        serial: parseInt(get('_atom_site.id')) || atoms.length + 1,
+                        name: atomName,
+                        altLoc: get('_atom_site.label_alt_id') || '',
+                        resName: get('_atom_site.auth_comp_id') || get('_atom_site.label_comp_id') || 'UNK',
+                        chainID: get('_atom_site.auth_asym_id') || get('_atom_site.label_asym_id') || '',
+                        resSeq: parseInt(get('_atom_site.auth_seq_id') || get('_atom_site.label_seq_id')) || 1,
+                        iCode: get('_atom_site.pdbx_PDB_ins_code') || '',
+                        x: parseFloat(get('_atom_site.Cartn_x')) || 0,
+                        y: parseFloat(get('_atom_site.Cartn_y')) || 0,
+                        z: parseFloat(get('_atom_site.Cartn_z')) || 0,
+                        occupancy: parseFloat(get('_atom_site.occupancy')) || 1.0,
+                        tempFactor: parseFloat(get('_atom_site.B_iso_or_equiv')) || 0.0,
+                        element: element,
+                        charge: 0.0,
+                        adType: '',
+                        bonds: [],
+                        _warned: false
+                    });
+                } else if (inAtomSiteLoop && dataStarted) {
+                    break;
+                }
+            }
+            return atoms;
+        }
+
+        function tokenizeCIFLine(line) {
+            const tokens = [];
+            let i = 0;
+            while (i < line.length) {
+                while (i < line.length && (line[i] === ' ' || line[i] === '\t')) i++;
+                if (i >= line.length) break;
+                if (line[i] === "'" || line[i] === '"') {
+                    const quote = line[i]; i++;
+                    let start = i;
+                    while (i < line.length && line[i] !== quote) i++;
+                    tokens.push(line.substring(start, i));
+                    i++;
+                } else {
+                    let start = i;
+                    while (i < line.length && line[i] !== ' ' && line[i] !== '\t') i++;
+                    tokens.push(line.substring(start, i));
+                }
+            }
+            return tokens;
+        }
+
+        function formatCIFAtomName(name, element) {
+            name = name.trim();
+            if (element.length === 1 && name.length <= 3) return ' ' + name.padEnd(3);
+            return name.padEnd(4).substring(0, 4);
+        }
+
+        // ========================================
+        // MODULE 4: SDF PARSER
+        // ========================================
+        function parseSDF(text) {
+            const atoms = [];
+            const bonds = [];
+            const lines = text.split('\n');
+            if (lines.length < 4) return { atoms, bonds, name: 'UNK' };
+
+            const molName = lines[0].trim() || 'UNK';
+            const countsLine = lines[3];
+            const numAtoms = parseInt(countsLine.substring(0, 3).trim());
+            const numBonds = parseInt(countsLine.substring(3, 6).trim());
+            if (isNaN(numAtoms) || isNaN(numBonds)) return { atoms, bonds, name: molName };
+
+            const resName = molName.substring(0, 3).toUpperCase().padEnd(3) || 'LIG';
+
+            for (let i = 0; i < numAtoms; i++) {
+                const line = lines[4 + i];
+                if (!line) continue;
+                const x = parseFloat(line.substring(0, 10).trim());
+                const y = parseFloat(line.substring(10, 20).trim());
+                const z = parseFloat(line.substring(20, 30).trim());
+                const symbol = line.substring(31, 34).trim().toUpperCase();
+                const el = symbol.length <= 2 ? symbol : symbol.charAt(0);
+                atoms.push({
+                    recordType: 'HETATM',
+                    serial: i + 1,
+                    name: formatCIFAtomName(el + (i + 1), el),
+                    altLoc: '',
+                    resName: resName,
+                    chainID: 'A',
+                    resSeq: 1,
+                    iCode: '',
+                    x: x, y: y, z: z,
+                    occupancy: 1.0, tempFactor: 0.0,
+                    element: el,
+                    charge: 0.0, adType: '',
+                    bonds: [], _warned: false
+                });
+            }
+
+            for (let i = 0; i < numBonds; i++) {
+                const line = lines[4 + numAtoms + i];
+                if (!line) continue;
+                const a1 = parseInt(line.substring(0, 3).trim()) - 1;
+                const a2 = parseInt(line.substring(3, 6).trim()) - 1;
+                const bt = parseInt(line.substring(6, 9).trim()) || 1;
+                if (a1 >= 0 && a2 >= 0 && a1 < atoms.length && a2 < atoms.length) {
+                    bonds.push([a1, a2, bt]);
+                    atoms[a1].bonds.push(a2);
+                    atoms[a2].bonds.push(a1);
+                }
+            }
+            return { atoms, bonds, name: molName };
+        }
+
+        // ========================================
+        // MODULE 5: MOL2 PARSER
+        // ========================================
+        function parseMOL2(text) {
+            const atoms = [];
+            const bonds = [];
+            const lines = text.split('\n');
+            let section = null;
+            let molName = 'LIG';
+            let molNameRead = false;
+
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (trimmed.startsWith('@<TRIPOS>')) {
+                    section = trimmed.replace('@<TRIPOS>', '');
+                    continue;
+                }
+                if (!trimmed || trimmed.startsWith('#')) continue;
+
+                if (section === 'MOLECULE' && !molNameRead) {
+                    molName = trimmed.substring(0, 20).trim() || 'LIG';
+                    molNameRead = true;
+                    continue;
+                }
+
+                if (section === 'ATOM') {
+                    const parts = trimmed.split(/\s+/);
+                    if (parts.length < 6) continue;
+                    const id = parseInt(parts[0]);
+                    const name = parts[1];
+                    const x = parseFloat(parts[2]);
+                    const y = parseFloat(parts[3]);
+                    const z = parseFloat(parts[4]);
+                    const mol2Type = parts[5];
+                    const resId = parts.length > 6 ? parseInt(parts[6]) : 1;
+                    const resName = parts.length > 7 ? parts[7].substring(0, 3).toUpperCase() : 'LIG';
+                    const charge = parts.length > 8 ? parseFloat(parts[8]) : 0.0;
+                    const element = mol2Type.split('.')[0].toUpperCase();
+                    atoms.push({
+                        recordType: 'HETATM',
+                        serial: id,
+                        name: formatCIFAtomName(name, element),
+                        altLoc: '',
+                        resName: resName || 'LIG',
+                        chainID: 'A',
+                        resSeq: resId || 1,
+                        iCode: '',
+                        x: x, y: y, z: z,
+                        occupancy: 1.0, tempFactor: 0.0,
+                        element: element,
+                        charge: charge, adType: '',
+                        bonds: [], _warned: false,
+                        _mol2Type: mol2Type
+                    });
+                }
+
+                if (section === 'BOND') {
+                    const parts = trimmed.split(/\s+/);
+                    if (parts.length < 4) continue;
+                    const a1 = parseInt(parts[1]) - 1;
+                    const a2 = parseInt(parts[2]) - 1;
+                    const bts = parts[3];
+                    let bt = 1;
+                    if (bts === 'ar') bt = 4;
+                    else if (bts === 'am') bt = 1;
+                    else bt = parseInt(bts) || 1;
+                    if (a1 >= 0 && a2 >= 0 && a1 < atoms.length && a2 < atoms.length) {
+                        bonds.push([a1, a2, bt]);
+                        atoms[a1].bonds.push(a2);
+                        atoms[a2].bonds.push(a1);
+                    }
+                }
+            }
+            return { atoms, bonds, name: molName };
+        }
+
+        // ========================================
+        // MODULE 6: BOND INFERENCE (with metal coordination)
+        // ========================================
+        const BOND_TOLERANCE = 0.45;
+        const COVALENT_RADII = {
+            'H': 0.31, 'C': 0.76, 'N': 0.71, 'O': 0.66, 'S': 1.05,
+            'P': 1.07, 'F': 0.57, 'CL': 0.99, 'BR': 1.14, 'I': 1.33,
+            'SE': 1.20, 'FE': 1.32, 'ZN': 1.22, 'MG': 1.41, 'MN': 1.39,
+            'CA': 1.76, 'CU': 1.32, 'CO': 1.26, 'NI': 1.24, 'NA': 1.66, 'SI': 1.11
+        };
+
+        const METALS = new Set(['FE', 'ZN', 'MG', 'MN', 'CA', 'CU', 'CO', 'NI', 'NA', 'K', 'MO', 'W', 'V', 'CR']);
+        const COORDINATION_MAX_DIST = {
+            'FE': 2.4, 'ZN': 2.3, 'MG': 2.3, 'MN': 2.4, 'CA': 2.6,
+            'CU': 2.3, 'CO': 2.3, 'NI': 2.3, 'NA': 2.6, 'K': 2.8, 'MO': 2.5, 'W': 2.5, 'V': 2.4, 'CR': 2.4
+        };
+
+        function inferBonds(atoms) {
+            const CELL_SIZE = 2.8; // wider for coordination bonds
+            const grid = {};
+            const bonds = [];
+
+            for (let i = 0; i < atoms.length; i++) {
+                const a = atoms[i];
+                const cx = Math.floor(a.x / CELL_SIZE);
+                const cy = Math.floor(a.y / CELL_SIZE);
+                const cz = Math.floor(a.z / CELL_SIZE);
+                const key = cx + ',' + cy + ',' + cz;
+                if (!grid[key]) grid[key] = [];
+                grid[key].push(i);
+                a._gridCell = [cx, cy, cz];
+                a.bonds = [];
+            }
+
+            for (let i = 0; i < atoms.length; i++) {
+                const a = atoms[i];
+                const [cx, cy, cz] = a._gridCell;
+
+                for (let dx = -1; dx <= 1; dx++) {
+                    for (let dy = -1; dy <= 1; dy++) {
+                        for (let dz = -1; dz <= 1; dz++) {
+                            const key = (cx + dx) + ',' + (cy + dy) + ',' + (cz + dz);
+                            const cell = grid[key];
+                            if (!cell) continue;
+
+                            for (const j of cell) {
+                                if (j <= i) continue;
+                                const b = atoms[j];
+                                const dx2 = a.x - b.x;
+                                const dy2 = a.y - b.y;
+                                const dz2 = a.z - b.z;
+                                const distSq = dx2 * dx2 + dy2 * dy2 + dz2 * dz2;
+                                if (distSq < 0.16) continue; // min 0.4A
+
+                                const isMetal = METALS.has(a.element) || METALS.has(b.element);
+                                let maxDist;
+                                if (isMetal) {
+                                    const metalEl = METALS.has(a.element) ? a.element : b.element;
+                                    maxDist = COORDINATION_MAX_DIST[metalEl] || 2.4;
+                                } else {
+                                    const rA = COVALENT_RADII[a.element] || 0.76;
+                                    const rB = COVALENT_RADII[b.element] || 0.76;
+                                    maxDist = rA + rB + BOND_TOLERANCE;
+                                }
+
+                                if (distSq <= maxDist * maxDist) {
+                                    bonds.push([i, j]);
+                                    a.bonds.push(j);
+                                    b.bonds.push(i);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return bonds;
+        }
+
+        // ========================================
+        // MODULE 7: HYDROGEN ADDITION
+        // ========================================
+        const H_BOND_LENGTHS = { 'N': 1.01, 'O': 0.96, 'S': 1.34, 'C': 1.09 };
+
+        const STANDARD_RESIDUES = new Set([
+            'ALA', 'ARG', 'ASN', 'ASP', 'CYS', 'GLN', 'GLU', 'GLY', 'HIS', 'ILE',
+            'LEU', 'LYS', 'MET', 'PHE', 'PRO', 'SER', 'THR', 'TRP', 'TYR', 'VAL',
+            'HIE', 'HID', 'HIP', 'CYX', 'ACE', 'NME'
+        ]);
+
+        // Which sidechain atoms get polar H (for standard residues)
+        const POLAR_H_SITES = {
+            'SER': { 'OG': 1 }, 'THR': { 'OG1': 1 }, 'TYR': { 'OH': 1 },
+            'CYS': { 'SG': 1 }, 'LYS': { 'NZ': 3 },
+            'ARG': { 'NH1': 2, 'NH2': 2, 'NE': 1 },
+            'HIS': { 'ND1': 1, 'NE2': 1 }, 'HIE': { 'NE2': 1 }, 'HID': { 'ND1': 1 },
+            'HIP': { 'ND1': 1, 'NE2': 1 },
+            'TRP': { 'NE1': 1 },
+            'ASN': { 'ND2': 2 }, 'GLN': { 'NE2': 2 }
+        };
+
+        const STANDARD_VALENCE = { 'C': 4, 'N': 3, 'O': 2, 'S': 2, 'P': 5, 'F': 1, 'CL': 1, 'BR': 1, 'I': 1, 'H': 1 };
+
+        function addPolarHydrogens(atoms, bonds) {
+            const newH = [];
+            // Group atoms by residue
+            const residueMap = {};
+            for (let i = 0; i < atoms.length; i++) {
+                const a = atoms[i];
+                const key = a.chainID + ':' + a.resSeq + a.iCode;
+                if (!residueMap[key]) residueMap[key] = [];
+                residueMap[key].push(i);
+            }
+
+            for (const [, indices] of Object.entries(residueMap)) {
+                const resName = atoms[indices[0]].resName;
+                if (!STANDARD_RESIDUES.has(resName)) continue;
+
+                // Backbone NH (not PRO)
+                if (resName !== 'PRO') {
+                    const nIdx = indices.find(i => atoms[i].name.trim() === 'N');
+                    if (nIdx !== undefined) {
+                        const nAtom = atoms[nIdx];
+                        const existingH = nAtom.bonds.some(j => atoms[j].element === 'H');
+                        if (!existingH && nAtom.bonds.length > 0) {
+                            const pos = placeH(nAtom, nAtom.bonds.map(j => atoms[j]), H_BOND_LENGTHS['N']);
+                            if (pos) newH.push(makeHAtom(pos, nAtom, nIdx, atoms.length + newH.length + 1, 'H'));
+                        }
+                    }
+                }
+
+                // Sidechain polar H
+                const sites = POLAR_H_SITES[resName];
+                if (!sites) continue;
+                for (const [atomName, hCount] of Object.entries(sites)) {
+                    const targetIdx = indices.find(i => atoms[i].name.trim() === atomName);
+                    if (targetIdx === undefined) continue;
+                    const targetAtom = atoms[targetIdx];
+                    const existingHCount = targetAtom.bonds.filter(j => atoms[j].element === 'H').length;
+                    const needed = hCount - existingHCount;
+                    if (needed <= 0) continue;
+                    const neighbors = targetAtom.bonds.map(j => atoms[j]);
+                    const bl = H_BOND_LENGTHS[targetAtom.element] || 1.0;
+                    const positions = placeMultipleH(targetAtom, neighbors, needed, bl);
+                    for (const pos of positions) {
+                        newH.push(makeHAtom(pos, targetAtom, targetIdx, atoms.length + newH.length + 1, 'H'));
+                    }
+                }
+            }
+
+            // Append new H atoms
+            for (const { atom: hAtom, bondedTo } of newH) {
+                const hIdx = atoms.length;
+                atoms.push(hAtom);
+                bonds.push([bondedTo, hIdx]);
+                atoms[bondedTo].bonds.push(hIdx);
+                hAtom.bonds.push(bondedTo);
+            }
+            return newH.length;
+        }
+
+        function addAllHydrogens(atoms, bonds) {
+            const newH = [];
+            for (let i = 0; i < atoms.length; i++) {
+                const atom = atoms[i];
+                const expectedValence = STANDARD_VALENCE[atom.element];
+                if (!expectedValence) continue;
+                // Estimate current bond order
+                let currentBondOrder = 0;
+                for (const [a1, a2, bt] of bonds) {
+                    if (a1 === i || a2 === i) currentBondOrder += (bt === 4 ? 1.5 : (bt || 1));
+                }
+                // For simple bonds (inferred without bond types), count bonds
+                if (currentBondOrder === 0) currentBondOrder = atom.bonds.length;
+                const hNeeded = Math.max(0, Math.round(expectedValence - currentBondOrder));
+                if (hNeeded === 0) continue;
+                const neighbors = atom.bonds.map(j => atoms[j]);
+                const bl = H_BOND_LENGTHS[atom.element] || 1.0;
+                const positions = placeMultipleH(atom, neighbors, hNeeded, bl);
+                for (const pos of positions) {
+                    newH.push(makeHAtom(pos, atom, i, atoms.length + newH.length + 1, 'H'));
+                }
+            }
+            for (const { atom: hAtom, bondedTo } of newH) {
+                const hIdx = atoms.length;
+                atoms.push(hAtom);
+                bonds.push([bondedTo, hIdx]);
+                atoms[bondedTo].bonds.push(hIdx);
+                hAtom.bonds.push(bondedTo);
+            }
+            return newH.length;
+        }
+
+        function makeHAtom(pos, parentAtom, parentIdx, serial, namePrefix) {
+            return {
+                atom: {
+                    recordType: parentAtom.recordType,
+                    serial: serial,
+                    name: (' ' + namePrefix).padEnd(4).substring(0, 4),
+                    altLoc: '', resName: parentAtom.resName,
+                    chainID: parentAtom.chainID, resSeq: parentAtom.resSeq, iCode: parentAtom.iCode,
+                    x: pos.x, y: pos.y, z: pos.z,
+                    occupancy: 1.0, tempFactor: 0.0,
+                    element: 'H', charge: 0.0, adType: '', bonds: [], _warned: false
+                },
+                bondedTo: parentIdx
+            };
+        }
+
+        function placeH(target, neighbors, bondLength) {
+            if (neighbors.length === 0) return null;
+            let avgX = 0, avgY = 0, avgZ = 0;
+            for (const n of neighbors) {
+                avgX += n.x - target.x;
+                avgY += n.y - target.y;
+                avgZ += n.z - target.z;
+            }
+            const mag = Math.sqrt(avgX * avgX + avgY * avgY + avgZ * avgZ);
+            if (mag < 0.001) return { x: target.x + bondLength, y: target.y, z: target.z };
+            return {
+                x: target.x - (avgX / mag) * bondLength,
+                y: target.y - (avgY / mag) * bondLength,
+                z: target.z - (avgZ / mag) * bondLength
+            };
+        }
+
+        function placeMultipleH(target, neighbors, count, bondLength) {
+            const positions = [];
+            if (count <= 0) return positions;
+
+            // Get the average direction away from existing neighbors
+            let avgX = 0, avgY = 0, avgZ = 0;
+            for (const n of neighbors) {
+                avgX += n.x - target.x;
+                avgY += n.y - target.y;
+                avgZ += n.z - target.z;
+            }
+            let mag = Math.sqrt(avgX * avgX + avgY * avgY + avgZ * avgZ);
+            if (mag < 0.001) { avgX = 1; avgY = 0; avgZ = 0; mag = 1; }
+            // Base direction: opposite of neighbors
+            const baseX = -(avgX / mag);
+            const baseY = -(avgY / mag);
+            const baseZ = -(avgZ / mag);
+
+            if (count === 1) {
+                positions.push({
+                    x: target.x + baseX * bondLength,
+                    y: target.y + baseY * bondLength,
+                    z: target.z + baseZ * bondLength
+                });
+            } else {
+                // Find a perpendicular vector
+                let perpX, perpY, perpZ;
+                if (Math.abs(baseX) < 0.9) { perpX = 0; perpY = -baseZ; perpZ = baseY; }
+                else { perpX = -baseZ; perpY = 0; perpZ = baseX; }
+                mag = Math.sqrt(perpX * perpX + perpY * perpY + perpZ * perpZ);
+                if (mag > 0.001) { perpX /= mag; perpY /= mag; perpZ /= mag; }
+
+                const angleStep = (2 * Math.PI) / count;
+                const tiltAngle = 0.9; // ~52 degrees from base axis (tetrahedral-ish)
+                for (let k = 0; k < count; k++) {
+                    const angle = k * angleStep;
+                    // Second perpendicular via cross product
+                    const perp2X = baseY * perpZ - baseZ * perpY;
+                    const perp2Y = baseZ * perpX - baseX * perpZ;
+                    const perp2Z = baseX * perpY - baseY * perpX;
+
+                    const sinT = Math.sin(tiltAngle);
+                    const cosT = Math.cos(tiltAngle);
+                    const cosA = Math.cos(angle);
+                    const sinA = Math.sin(angle);
+
+                    const hx = cosT * baseX + sinT * (cosA * perpX + sinA * perp2X);
+                    const hy = cosT * baseY + sinT * (cosA * perpY + sinA * perp2Y);
+                    const hz = cosT * baseZ + sinT * (cosA * perpZ + sinA * perp2Z);
+
+                    positions.push({
+                        x: target.x + hx * bondLength,
+                        y: target.y + hy * bondLength,
+                        z: target.z + hz * bondLength
+                    });
+                }
+            }
+            return positions;
+        }
+
+        // ========================================
+        // MODULE 8: GASTEIGER CHARGES
+        // ========================================
+        const GASTEIGER_PARAMS = {
+            'H': { a: 7.17, b: 6.24, c: -0.56 },
+            'C': { a: 7.98, b: 9.18, c: 1.88 },
+            'N': { a: 11.54, b: 10.82, c: 1.36 },
+            'O': { a: 14.18, b: 12.92, c: 1.39 },
+            'S': { a: 10.14, b: 9.13, c: 1.38 },
+            'P': { a: 8.90, b: 8.24, c: 0.96 },
+            'F': { a: 14.66, b: 13.85, c: 2.31 },
+            'CL': { a: 11.00, b: 9.69, c: 1.35 },
+            'BR': { a: 10.08, b: 8.47, c: 1.16 },
+            'I': { a: 9.90, b: 7.96, c: 0.96 },
+            'SE': { a: 10.00, b: 9.00, c: 1.30 }
+        };
+
+        const METAL_CHARGES = {
+            'FE': 2.0, 'ZN': 2.0, 'MG': 2.0, 'MN': 2.0, 'CA': 2.0,
+            'CU': 2.0, 'CO': 2.0, 'NI': 2.0, 'NA': 1.0, 'K': 1.0, 'MO': 4.0, 'W': 4.0, 'V': 3.0, 'CR': 3.0
+        };
+
+        function electronegativity(element, charge) {
+            const p = GASTEIGER_PARAMS[element];
+            if (!p) return 7.98 + 9.18 * charge + 1.88 * charge * charge;
+            return p.a + p.b * charge + p.c * charge * charge;
+        }
+
+        function calculateGasteigerCharges(atoms, bonds) {
+            // Set metal charges directly, others start at 0
+            for (const atom of atoms) {
+                if (METALS.has(atom.element)) {
+                    atom.charge = METAL_CHARGES[atom.element] || 0.0;
+                } else {
+                    atom.charge = 0.0;
+                }
+            }
+            const NUM_ITERATIONS = 6;
+            for (let iter = 0; iter < NUM_ITERATIONS; iter++) {
+                const damping = Math.pow(0.5, iter + 1);
+                const delta = new Float64Array(atoms.length);
+                for (const bond of bonds) {
+                    const i = bond[0], j = bond[1];
+                    const aA = atoms[i], aB = atoms[j];
+                    // Skip bonds involving metals (their charge is fixed)
+                    if (METALS.has(aA.element) || METALS.has(aB.element)) continue;
+                    const xA = electronegativity(aA.element, aA.charge);
+                    const xB = electronegativity(aB.element, aB.charge);
+                    if (xA > xB) {
+                        const pA = GASTEIGER_PARAMS[aA.element];
+                        const denom = pA ? (pA.a + pA.b + pA.c) : 19.04;
+                        const t = damping * (xA - xB) / denom;
+                        delta[i] -= t; delta[j] += t;
+                    } else {
+                        const pB = GASTEIGER_PARAMS[aB.element];
+                        const denom = pB ? (pB.a + pB.b + pB.c) : 19.04;
+                        const t = damping * (xB - xA) / denom;
+                        delta[j] -= t; delta[i] += t;
+                    }
+                }
+                for (let i = 0; i < atoms.length; i++) {
+                    if (!METALS.has(atoms[i].element)) atoms[i].charge += delta[i];
+                }
+            }
+        }
+
+        // ========================================
+        // MODULE 9: AUTODOCK ATOM TYPE ASSIGNMENT
+        // ========================================
+        const BACKBONE_OA = new Set(['O', 'OXT']);
+        const SIDECHAIN_OA_MAP = {
+            'ASN': ['OD1'], 'ASP': ['OD1', 'OD2'], 'GLN': ['OE1'], 'GLU': ['OE1', 'OE2'],
+            'SER': ['OG'], 'THR': ['OG1'], 'TYR': ['OH']
+        };
+        const SIDECHAIN_NA_MAP = {
+            'HIS': ['ND1', 'NE2'], 'HIE': ['ND1'], 'HID': ['NE2'],
+            'ASN': ['ND2'], 'GLN': ['NE2']
+        };
+        const AROMATIC_ATOMS = {
+            'PHE': new Set(['CG', 'CD1', 'CD2', 'CE1', 'CE2', 'CZ']),
+            'TYR': new Set(['CG', 'CD1', 'CD2', 'CE1', 'CE2', 'CZ']),
+            'TRP': new Set(['CG', 'CD1', 'CD2', 'CE2', 'CE3', 'CZ2', 'CZ3', 'CH2', 'NE1']),
+            'HIS': new Set(['CG', 'ND1', 'CD2', 'CE1', 'NE2']),
+            'HIE': new Set(['CG', 'ND1', 'CD2', 'CE1', 'NE2']),
+            'HID': new Set(['CG', 'ND1', 'CD2', 'CE1', 'NE2']),
+            'HIP': new Set(['CG', 'ND1', 'CD2', 'CE1', 'NE2'])
+        };
+        // Heme-specific aromatic atoms
+        const HEME_AROMATIC = new Set([
+            'CHA', 'CHB', 'CHC', 'CHD',
+            'C1A', 'C2A', 'C3A', 'C4A', 'C1B', 'C2B', 'C3B', 'C4B',
+            'C1C', 'C2C', 'C3C', 'C4C', 'C1D', 'C2D', 'C3D', 'C4D',
+            'NA', 'NB', 'NC', 'ND', 'N A', 'N B', 'N C', 'N D'
+        ]);
+
+        function assignAtomTypes(atoms, bonds) {
+            for (let i = 0; i < atoms.length; i++) {
+                const atom = atoms[i];
+                const el = atom.element;
+                const atomName = atom.name.trim();
+                const resName = atom.resName;
+                const isStandard = STANDARD_RESIDUES.has(resName);
+                const isHeme = (resName === 'HEM' || resName === 'HEC');
+
+                // Metals
+                if (METALS.has(el)) {
+                    atom.adType = el.charAt(0).toUpperCase() + el.substring(1).toLowerCase();
+                    continue;
+                }
+
+                if (el === 'H') {
+                    let bondedToHetero = false;
+                    for (const j of atom.bonds) {
+                        const ne = atoms[j].element;
+                        if (ne === 'N' || ne === 'O' || ne === 'S') { bondedToHetero = true; break; }
+                    }
+                    atom.adType = bondedToHetero ? 'HD' : 'H';
+                } else if (el === 'C') {
+                    let isAromatic = false;
+                    if (isHeme) {
+                        isAromatic = HEME_AROMATIC.has(atomName);
+                    } else if (isStandard && AROMATIC_ATOMS[resName]) {
+                        isAromatic = AROMATIC_ATOMS[resName].has(atomName);
+                    } else if (!isStandard) {
+                        isAromatic = detectAromaticCarbon(atoms, i);
+                    }
+                    atom.adType = isAromatic ? 'A' : 'C';
+                } else if (el === 'N') {
+                    if (isHeme) {
+                        // Heme nitrogens coordinated to Fe are NA
+                        const coordFe = atom.bonds.some(j => atoms[j].element === 'FE');
+                        atom.adType = coordFe ? 'NA' : 'N';
+                    } else if (isStandard) {
+                        const naAtoms = SIDECHAIN_NA_MAP[resName] || [];
+                        atom.adType = naAtoms.includes(atomName) ? 'NA' : 'N';
+                    } else {
+                        const hCount = atom.bonds.filter(j => atoms[j].element === 'H').length;
+                        const heavyBonds = atom.bonds.length - hCount;
+                        atom.adType = (heavyBonds <= 2 && hCount === 0) ? 'NA' : 'N';
+                    }
+                } else if (el === 'O') {
+                    atom.adType = 'OA'; // Almost all oxygens are H-bond acceptors
+                } else if (el === 'S') {
+                    atom.adType = 'SA';
+                } else if (el === 'F') {
+                    atom.adType = 'F';
+                } else if (el === 'CL') {
+                    atom.adType = 'Cl';
+                } else if (el === 'BR') {
+                    atom.adType = 'Br';
+                } else if (el === 'I') {
+                    atom.adType = 'I';
+                } else if (el === 'P') {
+                    atom.adType = 'P';
+                } else {
+                    atom.adType = el.charAt(0) + el.substring(1).toLowerCase();
+                    atom._warned = true;
+                }
+            }
+        }
+
+        function detectAromaticCarbon(atoms, idx) {
+            const atom = atoms[idx];
+            if (atom.bonds.length !== 3) return false;
+            let sp2Neighbors = 0;
+            for (const j of atom.bonds) {
+                if (atoms[j].element !== 'H' && atoms[j].bonds.length >= 3) sp2Neighbors++;
+            }
+            return sp2Neighbors >= 2;
+        }
+
+        // ========================================
+        // MODULE 10: PDBQT FORMATTER - RECEPTOR
+        // ========================================
+        function formatPDBQT(atoms) {
+            const lines = [];
+            lines.push('REMARK  PDBQT file generated by Scientific Tools - File Conversions');
+            lines.push('REMARK  Gasteiger charges calculated in-browser');
+            for (const atom of atoms) lines.push(formatPDBQTLine(atom));
+            lines.push('END');
+            return lines.join('\n');
+        }
+
+        function formatPDBQTLine(atom) {
+            const record = atom.recordType.padEnd(6);
+            const serial = String(atom.serial).padStart(5);
+            const name = atom.name;
+            const altLoc = atom.altLoc || ' ';
+            const resName = atom.resName.padStart(3);
+            const chainID = atom.chainID || ' ';
+            const resSeq = String(atom.resSeq).padStart(4);
+            const iCode = atom.iCode || ' ';
+            const x = atom.x.toFixed(3).padStart(8);
+            const y = atom.y.toFixed(3).padStart(8);
+            const z = atom.z.toFixed(3).padStart(8);
+            const occ = atom.occupancy.toFixed(2).padStart(6);
+            const tf = atom.tempFactor.toFixed(2).padStart(6);
+            const charge = atom.charge.toFixed(3).padStart(8);
+            const adType = (atom.adType || atom.element).padEnd(2);
+            return record + serial + ' ' + name + altLoc + resName + ' ' +
+                chainID + resSeq + iCode + '   ' + x + y + z + occ + tf + '    ' + charge + ' ' + adType;
+        }
+
+        // ========================================
+        // MODULE 11: PDBQT FORMATTER - LIGAND (torsion tree)
+        // ========================================
+        function findRings(atoms, bonds) {
+            const n = atoms.length;
+            const adj = Array.from({ length: n }, () => []);
+            for (const b of bonds) { adj[b[0]].push(b[1]); adj[b[1]].push(b[0]); }
+
+            const ringBondSet = new Set();
+            // DFS-based ring detection
+            const color = new Array(n).fill(0); // 0=white, 1=gray, 2=black
+            const parent = new Array(n).fill(-1);
+            const depth = new Array(n).fill(0);
+
+            function dfs(u, d) {
+                color[u] = 1;
+                depth[u] = d;
+                for (const v of adj[u]) {
+                    if (v === parent[u]) continue;
+                    if (color[v] === 1 && d - depth[v] < 8) {
+                        // Found a ring, mark all bonds in it
+                        let curr = u;
+                        while (curr !== v) {
+                            const p = parent[curr];
+                            ringBondSet.add(Math.min(curr, p) + ',' + Math.max(curr, p));
+                            curr = p;
+                        }
+                        ringBondSet.add(Math.min(u, v) + ',' + Math.max(u, v));
+                    }
+                    if (color[v] === 0) {
+                        parent[v] = u;
+                        dfs(v, d + 1);
+                    }
+                }
+                color[u] = 2;
+            }
+
+            for (let i = 0; i < n; i++) {
+                if (color[i] === 0) dfs(i, 0);
+            }
+            return ringBondSet;
+        }
+
+        function identifyRotatableBonds(atoms, bonds) {
+            const ringBonds = findRings(atoms, bonds);
+            const rotatable = [];
+            for (const b of bonds) {
+                const a1 = b[0], a2 = b[1];
+                const bt = b[2] || 1;
+                if (bt !== 1) continue; // only single bonds rotate
+                const key = Math.min(a1, a2) + ',' + Math.max(a1, a2);
+                if (ringBonds.has(key)) continue;
+                if (atoms[a1].bonds.length <= 1 || atoms[a2].bonds.length <= 1) continue;
+                // Skip amide-like bonds: C(=O)-N
+                if (isAmideBond(atoms, bonds, a1, a2)) continue;
+                rotatable.push([a1, a2]);
+            }
+            return rotatable;
+        }
+
+        function isAmideBond(atoms, bonds, a1, a2) {
+            // Check if this is a C-N bond where C also has a double bond to O
+            const elA = atoms[a1].element, elB = atoms[a2].element;
+            let cIdx = -1, nIdx = -1;
+            if (elA === 'C' && elB === 'N') { cIdx = a1; nIdx = a2; }
+            else if (elA === 'N' && elB === 'C') { cIdx = a2; nIdx = a1; }
+            else return false;
+            // Check if C is bonded to O with 2 or fewer heavy bonds (suggesting C=O)
+            for (const j of atoms[cIdx].bonds) {
+                if (atoms[j].element === 'O' && atoms[j].bonds.length <= 2) return true;
+            }
+            return false;
+        }
+
+        function buildTorsionTree(atoms, bonds) {
+            const rotatable = identifyRotatableBonds(atoms, bonds);
+            const rotSet = new Set(rotatable.map(([a, b]) => Math.min(a, b) + ',' + Math.max(a, b)));
+
+            // Build adjacency without rotatable bonds to find rigid fragments
+            const n = atoms.length;
+            const adj = Array.from({ length: n }, () => []);
+            for (const b of bonds) {
+                const key = Math.min(b[0], b[1]) + ',' + Math.max(b[0], b[1]);
+                if (!rotSet.has(key)) {
+                    adj[b[0]].push(b[1]);
+                    adj[b[1]].push(b[0]);
+                }
+            }
+
+            // Find connected components (rigid fragments)
+            const fragId = new Array(n).fill(-1);
+            const fragments = [];
+            let fid = 0;
+            for (let i = 0; i < n; i++) {
+                if (fragId[i] !== -1) continue;
+                const queue = [i];
+                const members = [];
+                fragId[i] = fid;
+                while (queue.length > 0) {
+                    const u = queue.shift();
+                    members.push(u);
+                    for (const v of adj[u]) {
+                        if (fragId[v] === -1) { fragId[v] = fid; queue.push(v); }
+                    }
+                }
+                fragments.push({ id: fid, atomIndices: members });
+                fid++;
+            }
+
+            // Find the largest fragment as root
+            let rootFrag = fragments[0];
+            for (const f of fragments) {
+                if (f.atomIndices.length > rootFrag.atomIndices.length) rootFrag = f;
+            }
+
+            // Build a tree of fragments connected by rotatable bonds
+            const fragAdj = Array.from({ length: fragments.length }, () => []);
+            for (const [a1, a2] of rotatable) {
+                const f1 = fragId[a1], f2 = fragId[a2];
+                if (f1 !== f2) {
+                    fragAdj[f1].push({ frag: f2, parentAtom: a1, childAtom: a2 });
+                    fragAdj[f2].push({ frag: f1, parentAtom: a2, childAtom: a1 });
+                }
+            }
+
+            // BFS from root fragment to build the tree
+            const visited = new Set([rootFrag.id]);
+            const treeRoot = { fragment: rootFrag, children: [] };
+            const queue = [treeRoot];
+            while (queue.length > 0) {
+                const node = queue.shift();
+                for (const edge of fragAdj[node.fragment.id]) {
+                    if (visited.has(edge.frag)) continue;
+                    visited.add(edge.frag);
+                    const child = {
+                        fragment: fragments[edge.frag],
+                        parentAtom: edge.parentAtom,
+                        childAtom: edge.childAtom,
+                        children: []
+                    };
+                    node.children.push(child);
+                    queue.push(child);
+                }
+            }
+
+            treeRoot.rotatableBondCount = rotatable.length;
+            return treeRoot;
+        }
+
+        function formatLigandPDBQT(atoms, tree) {
+            const lines = [];
+            lines.push('REMARK  PDBQT file generated by Scientific Tools - File Conversions');
+            lines.push('REMARK  ' + tree.rotatableBondCount + ' active torsions');
+            lines.push('ROOT');
+            for (const idx of tree.fragment.atomIndices) lines.push(formatPDBQTLine(atoms[idx]));
+            lines.push('ENDROOT');
+
+            function outputBranch(node) {
+                for (const child of node.children) {
+                    const pSerial = atoms[child.parentAtom].serial;
+                    const cSerial = atoms[child.childAtom].serial;
+                    lines.push('BRANCH ' + String(pSerial).padStart(4) + String(cSerial).padStart(4));
+                    for (const idx of child.fragment.atomIndices) lines.push(formatPDBQTLine(atoms[idx]));
+                    outputBranch(child);
+                    lines.push('ENDBRANCH ' + String(pSerial).padStart(4) + String(cSerial).padStart(4));
+                }
+            }
+
+            outputBranch(tree);
+            lines.push('TORSDOF ' + tree.rotatableBondCount);
+            return lines.join('\n');
+        }
+
+        // ========================================
+        // MODULE 12: FORMAT CONVERTERS
+        // ========================================
+        function formatAsPDB(atoms) {
+            const lines = [];
+            lines.push('REMARK  Converted by Scientific Tools - File Conversions');
+            for (const atom of atoms) {
+                const record = atom.recordType.padEnd(6);
+                const serial = String(atom.serial).padStart(5);
+                const name = atom.name;
+                const altLoc = atom.altLoc || ' ';
+                const resName = atom.resName.padStart(3);
+                const chainID = atom.chainID || ' ';
+                const resSeq = String(atom.resSeq).padStart(4);
+                const iCode = atom.iCode || ' ';
+                const x = atom.x.toFixed(3).padStart(8);
+                const y = atom.y.toFixed(3).padStart(8);
+                const z = atom.z.toFixed(3).padStart(8);
+                const occ = atom.occupancy.toFixed(2).padStart(6);
+                const tf = atom.tempFactor.toFixed(2).padStart(6);
+                const el = atom.element.padStart(2);
+                lines.push(record + serial + ' ' + name + altLoc + resName + ' ' +
+                    chainID + resSeq + iCode + '   ' + x + y + z + occ + tf + '          ' + el);
+            }
+            return lines;
+        }
+
+        function formatCONECT(atoms, bonds) {
+            const lines = [];
+            const bondMap = {};
+            for (const b of bonds) {
+                const s1 = atoms[b[0]].serial, s2 = atoms[b[1]].serial;
+                if (!bondMap[s1]) bondMap[s1] = [];
+                if (!bondMap[s2]) bondMap[s2] = [];
+                bondMap[s1].push(s2);
+                bondMap[s2].push(s1);
+            }
+            for (const atom of atoms) {
+                const bonded = bondMap[atom.serial];
+                if (!bonded || bonded.length === 0) continue;
+                for (let i = 0; i < bonded.length; i += 4) {
+                    let line = 'CONECT' + String(atom.serial).padStart(5);
+                    for (let j = i; j < Math.min(i + 4, bonded.length); j++) {
+                        line += String(bonded[j]).padStart(5);
+                    }
+                    lines.push(line);
+                }
+            }
+            return lines;
+        }
+
+        // ========================================
+        // MODULE 13: CONVERSION PIPELINES
+        // ========================================
+
+        // --- Structure (PDB/CIF -> PDBQT) ---
+        async function runStructurePipeline(text, ext, fileName) {
+            const p = 'structure';
+            updateProgress(p, 10, 'Parsing ' + ext.toUpperCase() + ' file...');
+            await yieldToUI();
+            let atoms = (ext === 'cif') ? parseCIF(text) : parsePDB(text);
+            if (atoms.length === 0) { showStatus(p, 'No atoms found in file.', 'error'); document.getElementById('progressContainer-' + p).style.display = 'none'; return; }
+
+            // Filter HETATM if unchecked
+            if (!document.getElementById('opt-keepHETATM').checked) {
+                atoms = atoms.filter(a => a.recordType === 'ATOM');
+                if (atoms.length === 0) { showStatus(p, 'No ATOM records remain after filtering.', 'error'); document.getElementById('progressContainer-' + p).style.display = 'none'; return; }
+            }
+            displayFileStats(p, atoms);
+
+            updateProgress(p, 25, 'Inferring bonds...');
+            await yieldToUI();
+            const bonds = inferBonds(atoms);
+
+            if (document.getElementById('opt-addH-' + p).checked) {
+                updateProgress(p, 35, 'Adding polar hydrogens...');
+                await yieldToUI();
+                addPolarHydrogens(atoms, bonds);
+            }
+
+            updateProgress(p, 50, 'Calculating Gasteiger charges...');
+            await yieldToUI();
+            calculateGasteigerCharges(atoms, bonds);
+
+            updateProgress(p, 70, 'Assigning AutoDock atom types...');
+            await yieldToUI();
+            assignAtomTypes(atoms, bonds);
+
+            updateProgress(p, 90, 'Formatting PDBQT...');
+            await yieldToUI();
+            const output = formatPDBQT(atoms);
+
+            updateProgress(p, 100, 'Complete!');
+            showResults(p, output, fileName.replace(/\.(pdb|cif)$/i, '.pdbqt'));
+        }
+
+        // --- Ligand -> PDBQT ---
+        async function runLigandPipeline(text, ext, fileName) {
+            const p = 'ligand';
+            updateProgress(p, 10, 'Parsing ligand...');
+            await yieldToUI();
+
+            let parseResult;
+            if (ext === 'sdf' || ext === 'mol') parseResult = parseSDF(text);
+            else if (ext === 'mol2') parseResult = parseMOL2(text);
+            else parseResult = { atoms: parsePDB(text), bonds: null };
+
+            const atoms = parseResult.atoms;
+            let bonds = parseResult.bonds;
+            if (atoms.length === 0) { showStatus(p, 'No atoms found.', 'error'); document.getElementById('progressContainer-' + p).style.display = 'none'; return; }
+            displayFileStats(p, atoms);
+
+            if (!bonds || bonds.length === 0) {
+                updateProgress(p, 20, 'Inferring bonds...');
+                await yieldToUI();
+                const inferredBonds = inferBonds(atoms);
+                bonds = inferredBonds.map(b => [b[0], b[1], 1]); // default single bond
+            }
+
+            if (document.getElementById('opt-addH-ligand').checked) {
+                updateProgress(p, 35, 'Adding hydrogens...');
+                await yieldToUI();
+                addAllHydrogens(atoms, bonds);
+            }
+
+            updateProgress(p, 50, 'Calculating Gasteiger charges...');
+            await yieldToUI();
+            calculateGasteigerCharges(atoms, bonds);
+
+            updateProgress(p, 65, 'Assigning atom types...');
+            await yieldToUI();
+            assignAtomTypes(atoms, bonds);
+
+            updateProgress(p, 80, 'Building torsion tree...');
+            await yieldToUI();
+            const tree = buildTorsionTree(atoms, bonds);
+
+            updateProgress(p, 95, 'Formatting ligand PDBQT...');
+            await yieldToUI();
+            const output = formatLigandPDBQT(atoms, tree);
+
+            updateProgress(p, 100, 'Complete!');
+            showResults(p, output, fileName.replace(/\.\w+$/i, '.pdbqt'));
+        }
+
+        // --- SDF -> PDB ---
+        async function runSDF2PDBPipeline(text, fileName) {
+            const p = 'sdf2pdb';
+            updateProgress(p, 10, 'Parsing SDF...');
+            await yieldToUI();
+            const { atoms, bonds } = parseSDF(text);
+            if (atoms.length === 0) { showStatus(p, 'No atoms found.', 'error'); document.getElementById('progressContainer-' + p).style.display = 'none'; return; }
+            displayFileStats(p, atoms);
+
+            updateProgress(p, 50, 'Formatting PDB...');
+            await yieldToUI();
+            const pdbLines = formatAsPDB(atoms);
+            const conectLines = formatCONECT(atoms, bonds);
+            pdbLines.push(...conectLines);
+            pdbLines.push('END');
+            const output = pdbLines.join('\n');
+
+            updateProgress(p, 100, 'Complete!');
+            showResults(p, output, fileName.replace(/\.(sdf|mol)$/i, '.pdb'));
+        }
+
+        // --- CIF -> PDB ---
+        async function runCIF2PDBPipeline(text, fileName) {
+            const p = 'cif2pdb';
+            updateProgress(p, 10, 'Parsing CIF...');
+            await yieldToUI();
+            const atoms = parseCIF(text);
+            if (atoms.length === 0) { showStatus(p, 'No atoms found.', 'error'); document.getElementById('progressContainer-' + p).style.display = 'none'; return; }
+            displayFileStats(p, atoms);
+
+            updateProgress(p, 50, 'Formatting PDB...');
+            await yieldToUI();
+            const pdbLines = formatAsPDB(atoms);
+            pdbLines.push('END');
+            const output = pdbLines.join('\n');
+
+            updateProgress(p, 100, 'Complete!');
+            showResults(p, output, fileName.replace(/\.cif$/i, '.pdb'));
+        }
+
+        // --- MOL2 -> PDB ---
+        async function runMOL2PDBPipeline(text, fileName) {
+            const p = 'mol2pdb';
+            updateProgress(p, 10, 'Parsing MOL2...');
+            await yieldToUI();
+            const { atoms, bonds } = parseMOL2(text);
+            if (atoms.length === 0) { showStatus(p, 'No atoms found.', 'error'); document.getElementById('progressContainer-' + p).style.display = 'none'; return; }
+            displayFileStats(p, atoms);
+
+            updateProgress(p, 50, 'Formatting PDB...');
+            await yieldToUI();
+            const pdbLines = formatAsPDB(atoms);
+            const conectLines = formatCONECT(atoms, bonds);
+            pdbLines.push(...conectLines);
+            pdbLines.push('END');
+            const output = pdbLines.join('\n');
+
+            updateProgress(p, 100, 'Complete!');
+            showResults(p, output, fileName.replace(/\.mol2$/i, '.pdb'));
+        }
+
+        // ========================================
+        // MODULE 14: DISPLAY & DOWNLOAD
+        // ========================================
+        function displayFileStats(prefix, atoms) {
+            const atomCount = atoms.filter(a => a.recordType === 'ATOM').length;
+            const hetatmCount = atoms.filter(a => a.recordType === 'HETATM').length;
+            const hCount = atoms.filter(a => a.element === 'H').length;
+            const residues = new Set();
+            const chains = new Set();
+            for (const a of atoms) {
+                residues.add(a.chainID + ':' + a.resSeq + a.iCode);
+                if (a.chainID) chains.add(a.chainID);
+            }
+            const el = document.getElementById('fileStats-' + prefix);
+            el.innerHTML =
+                '<div class="stat-item"><span class="stat-value">' + atoms.length + '</span><span class="stat-label">Total Atoms</span></div>' +
+                '<div class="stat-item"><span class="stat-value">' + atomCount + '</span><span class="stat-label">ATOM</span></div>' +
+                '<div class="stat-item"><span class="stat-value">' + hetatmCount + '</span><span class="stat-label">HETATM</span></div>' +
+                '<div class="stat-item"><span class="stat-value">' + residues.size + '</span><span class="stat-label">Residues</span></div>' +
+                '<div class="stat-item"><span class="stat-value">' + (chains.size || 1) + '</span><span class="stat-label">Chains</span></div>' +
+                '<div class="stat-item"><span class="stat-value">' + hCount + '</span><span class="stat-label">Hydrogens</span></div>';
+            document.getElementById('fileInfo-' + prefix).classList.add('show');
+        }
+
+        function showResults(prefix, output, outputFileName) {
+            conversionOutputs[prefix] = { output, fileName: outputFileName };
+            const lines = output.split('\n').slice(0, 52);
+            document.getElementById('previewContainer-' + prefix).textContent = lines.join('\n');
+            document.getElementById('previewPanel-' + prefix).classList.add('show');
+            document.getElementById('downloadSection-' + prefix).classList.add('show');
+            document.getElementById('progressContainer-' + prefix).style.display = 'none';
+
+            const warnings = getWarnings(prefix, output);
+            if (warnings.length > 0) {
+                showStatus(prefix, 'Done with warnings: ' + warnings.join('; '), 'warning');
+            } else {
+                showStatus(prefix, 'Conversion completed successfully!', 'success');
+            }
+        }
+
+        function getWarnings(prefix, output) {
+            const warnings = [];
+            // Check for atoms with unknown typing (only for PDBQT conversions)
+            if (prefix === 'structure' || prefix === 'ligand') {
+                const data = conversionOutputs[prefix];
+                if (data && data.output.includes('_warned')) {
+                    warnings.push('Some elements used default atom typing');
+                }
+            }
+            return warnings;
+        }
+
+        function downloadOutput(prefix) {
+            const data = conversionOutputs[prefix];
+            if (!data) return;
+            const blob = new Blob([data.output], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = data.fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // ========================================
+        // MODULE 15: IMAGE CONVERSION
+        // ========================================
+        let imageCanvas = null;
+        let imageFileName = '';
+
+        async function handleImageFile(file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            imageFileName = file.name;
+
+            // Reset previous state
+            resetImageConverter();
+
+            const progressContainer = document.getElementById('progressContainer-images');
+            progressContainer.style.display = 'block';
+            updateProgress('images', 10, 'Reading image...');
+
+            try {
+                let blob = file;
+
+                // HEIC/HEIF needs special decoding via heic2any
+                if (ext === 'heic' || ext === 'heif') {
+                    updateProgress('images', 30, 'Decoding HEIC format...');
+                    if (typeof heic2any === 'undefined') {
+                        throw new Error('HEIC decoder library failed to load. Please check your internet connection and refresh.');
+                    }
+                    blob = await heic2any({ blob: file, toType: 'image/png' });
+                }
+
+                updateProgress('images', 60, 'Loading image...');
+
+                // Load into image element
+                const img = new Image();
+                const objectURL = URL.createObjectURL(blob);
+
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve;
+                    img.onerror = () => reject(new Error('Failed to load image. The file may be corrupted.'));
+                    img.src = objectURL;
+                });
+
+                updateProgress('images', 80, 'Preparing preview...');
+
+                // Draw to canvas for conversion
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                imageCanvas = canvas;
+
+                // Show preview
+                const preview = document.getElementById('imagePreview');
+                preview.src = objectURL;
+
+                // Show image info
+                const sizeKB = (file.size / 1024).toFixed(1);
+                const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                const sizeStr = file.size > 1048576 ? sizeMB + ' MB' : sizeKB + ' KB';
+                document.getElementById('imageInfo').textContent =
+                    img.naturalWidth + ' x ' + img.naturalHeight + ' px | ' + sizeStr + ' | ' + ext.toUpperCase();
+
+                document.getElementById('imagePreviewSection').classList.add('show');
+                document.getElementById('imageControls').classList.add('show');
+
+                updateProgress('images', 100, 'Ready to convert');
+                progressContainer.style.display = 'none';
+                showStatus('images', 'Image loaded successfully. Select output format and click Convert.', 'success');
+
+            } catch (err) {
+                showStatus('images', 'Error: ' + err.message, 'error');
+                progressContainer.style.display = 'none';
+            }
+        }
+
+        function convertAndDownloadImage() {
+            if (!imageCanvas) {
+                showStatus('images', 'No image loaded. Please upload an image first.', 'error');
+                return;
+            }
+
+            const format = document.getElementById('outputFormat').value;
+            const qualitySlider = document.getElementById('qualitySlider');
+            const quality = format === 'image/png' ? undefined : parseFloat(qualitySlider.value) / 100;
+
+            // Determine file extension
+            const extMap = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+            const outExt = extMap[format] || 'png';
+            const baseName = imageFileName.replace(/\.[^.]+$/, '');
+            const outFileName = baseName + '.' + outExt;
+
+            imageCanvas.toBlob(function(blob) {
+                if (!blob) {
+                    showStatus('images', 'Conversion failed. Your browser may not support this output format.', 'error');
+                    return;
+                }
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = outFileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                const sizeMB = (blob.size / (1024 * 1024)).toFixed(2);
+                const sizeKB = (blob.size / 1024).toFixed(1);
+                const sizeStr = blob.size > 1048576 ? sizeMB + ' MB' : sizeKB + ' KB';
+                showStatus('images', 'Downloaded ' + outFileName + ' (' + sizeStr + ')', 'success');
+            }, format, quality);
+        }
+
+        function resetImageConverter() {
+            imageCanvas = null;
+            document.getElementById('imagePreviewSection').classList.remove('show');
+            document.getElementById('imageControls').classList.remove('show');
+            const status = document.getElementById('statusMessage-images');
+            status.className = 'status-message';
+            document.getElementById('progressContainer-images').style.display = 'none';
+            document.getElementById('imagePreview').src = '';
+            document.getElementById('imageInfo').textContent = '';
+        }
+
+        // ========================================
+        // MODULE 16: INITIALIZATION
+        // ========================================
+        initFileUploaders();
+
+        // Quality slider live update
+        document.getElementById('qualitySlider').addEventListener('input', function() {
+            document.getElementById('qualityValue').textContent = this.value;
+        });
+
+        // Show/hide quality group based on format (PNG is lossless)
+        document.getElementById('outputFormat').addEventListener('change', function() {
+            document.getElementById('qualityGroup').style.display =
+                this.value === 'image/png' ? 'none' : 'flex';
+        });
+
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            header.style.background = window.scrollY > 50 ? 'rgba(255, 255, 255, 0.98)' : 'rgba(255, 255, 255, 0.95)';
+        });
+    </script>
+</body>
+
+</html>
