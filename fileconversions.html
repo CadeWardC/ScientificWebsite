@@ -1052,7 +1052,7 @@
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+    <script src="ffmpeg/ffmpeg.js"></script>
     <script>
         // ========================================
         // MODULE 0: STATE & UI MANAGEMENT
@@ -2435,12 +2435,51 @@
         // ========================================
         let imageCanvas = null;
         let imageFileName = '';
+        let ffmpegInstance = null;
+
+        async function loadBlobIntoImage(blob) {
+            const img = new Image();
+            const objectURL = URL.createObjectURL(blob);
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = () => { URL.revokeObjectURL(objectURL); reject(new Error('load_failed')); };
+                img.src = objectURL;
+            });
+            return { img, objectURL };
+        }
+
+        // Inline equivalents of @ffmpeg/util (no UMD build available)
+        async function toBlobURL(url, mimeType) {
+            const resp = await fetch(url);
+            const buf = await resp.arrayBuffer();
+            return URL.createObjectURL(new Blob([buf], { type: mimeType }));
+        }
+        async function fetchFile(file) {
+            if (file instanceof File || file instanceof Blob) return new Uint8Array(await file.arrayBuffer());
+            const resp = await fetch(file);
+            return new Uint8Array(await resp.arrayBuffer());
+        }
+
+        async function getFFmpeg(onStatusText) {
+            if (ffmpegInstance) return ffmpegInstance;
+            if (typeof FFmpegWASM === 'undefined') {
+                throw new Error('ffmpeg.wasm failed to load. Check that the ffmpeg/ folder is present.');
+            }
+            const { FFmpeg } = FFmpegWASM;
+            const ffmpeg = new FFmpeg();
+            if (onStatusText) onStatusText('Loading HEIC decoder...');
+            await ffmpeg.load({
+                coreURL: await toBlobURL('ffmpeg/ffmpeg-core.js', 'text/javascript'),
+                wasmURL: await toBlobURL('ffmpeg/ffmpeg-core.wasm', 'application/wasm'),
+            });
+            ffmpegInstance = ffmpeg;
+            return ffmpeg;
+        }
 
         async function handleImageFile(file) {
             const ext = file.name.split('.').pop().toLowerCase();
             imageFileName = file.name;
 
-            // Reset previous state
             resetImageConverter();
 
             const progressContainer = document.getElementById('progressContainer-images');
@@ -2449,58 +2488,74 @@
 
             try {
                 let blob = file;
+                let loadResult = null;
 
-                // HEIC/HEIF needs special decoding via heic2any
                 if (ext === 'heic' || ext === 'heif') {
-                    updateProgress('images', 30, 'Decoding HEIC format...');
-                    if (typeof heic2any === 'undefined') {
-                        throw new Error('HEIC decoder library failed to load. Please check your internet connection and refresh.');
+                    updateProgress('images', 20, 'Trying native HEIC support...');
+
+                    // Step 1: native browser decoding (Safari / macOS / iOS)
+                    try {
+                        loadResult = await loadBlobIntoImage(file);
+                    } catch (_) {
+                        loadResult = null;
                     }
-                    blob = await heic2any({ blob: file, toType: 'image/png' });
+
+                    // Step 2: ffmpeg.wasm — full HEVC codec support, works in Chrome/Firefox/Edge
+                    if (!loadResult) {
+                        try {
+                            const ffmpeg = await getFFmpeg(msg => updateProgress('images', 40, msg));
+                            updateProgress('images', 70, 'Decoding HEIC...');
+                            await ffmpeg.writeFile('input.heic', await fetchFile(file));
+                            ffmpeg.on('progress', ({ progress }) => {
+                                if (progress > 0) updateProgress('images', 70 + Math.round(progress * 20), 'Converting...');
+                            });
+                            await ffmpeg.exec(['-i', 'input.heic', '-vframes', '1', 'output.png']);
+                            const data = await ffmpeg.readFile('output.png');
+                            await ffmpeg.deleteFile('input.heic');
+                            await ffmpeg.deleteFile('output.png');
+                            blob = new Blob([data.buffer], { type: 'image/png' });
+                        } catch (ffErr) {
+                            throw new Error('HEIC conversion failed: ' + ffErr.message);
+                        }
+                    }
                 }
 
-                updateProgress('images', 60, 'Loading image...');
+                updateProgress('images', 65, 'Loading image...');
 
-                // Load into image element
-                const img = new Image();
-                const objectURL = URL.createObjectURL(blob);
+                if (!loadResult) {
+                    loadResult = await loadBlobIntoImage(blob).catch(() => {
+                        throw new Error('Failed to load image. The file may be corrupted or the format is unsupported.');
+                    });
+                }
 
-                await new Promise((resolve, reject) => {
-                    img.onload = resolve;
-                    img.onerror = () => reject(new Error('Failed to load image. The file may be corrupted.'));
-                    img.src = objectURL;
-                });
+                const { img, objectURL } = loadResult;
 
-                updateProgress('images', 80, 'Preparing preview...');
+                updateProgress('images', 85, 'Preparing preview...');
 
-                // Draw to canvas for conversion
+                // Draw to canvas for later conversion
                 const canvas = document.createElement('canvas');
                 canvas.width = img.naturalWidth;
                 canvas.height = img.naturalHeight;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
+                canvas.getContext('2d').drawImage(img, 0, 0);
                 imageCanvas = canvas;
 
-                // Show preview
-                const preview = document.getElementById('imagePreview');
-                preview.src = objectURL;
+                // Preview
+                document.getElementById('imagePreview').src = objectURL;
 
-                // Show image info
                 const sizeKB = (file.size / 1024).toFixed(1);
                 const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
                 const sizeStr = file.size > 1048576 ? sizeMB + ' MB' : sizeKB + ' KB';
                 document.getElementById('imageInfo').textContent =
-                    img.naturalWidth + ' x ' + img.naturalHeight + ' px | ' + sizeStr + ' | ' + ext.toUpperCase();
+                    img.naturalWidth + ' × ' + img.naturalHeight + ' px  |  ' + sizeStr + '  |  ' + ext.toUpperCase();
 
                 document.getElementById('imagePreviewSection').classList.add('show');
                 document.getElementById('imageControls').classList.add('show');
 
-                updateProgress('images', 100, 'Ready to convert');
                 progressContainer.style.display = 'none';
-                showStatus('images', 'Image loaded successfully. Select output format and click Convert.', 'success');
+                showStatus('images', 'Image loaded. Select an output format and click Convert & Download.', 'success');
 
             } catch (err) {
-                showStatus('images', 'Error: ' + err.message, 'error');
+                showStatus('images', err.message, 'error');
                 progressContainer.style.display = 'none';
             }
         }
