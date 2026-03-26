@@ -2447,14 +2447,26 @@
             return { img, objectURL };
         }
 
-        // Decode HEIC using libheif-js (bundled locally in libheif/libheif-bundle.js)
-        // Returns a canvas with the decoded image pixels.
-        async function decodeHEICWithLibheif(file) {
+        // libheif() returns the Emscripten module object immediately, but WASM isn't ready
+        // until mod.ready resolves. Cache the initialised module after first use.
+        let _heifLib = null;
+        async function getHeifLib() {
+            if (_heifLib) return _heifLib;
             if (typeof libheif === 'undefined') {
                 throw new Error('libheif failed to load. Check that libheif/libheif-bundle.js is present.');
             }
+            const mod = libheif();          // get module object (WASM not ready yet)
+            await mod.ready;               // wait for WASM initialisation to complete
+            _heifLib = mod;
+            return _heifLib;
+        }
+
+        // Decode HEIC using libheif-js (bundled locally in libheif/libheif-bundle.js)
+        // Returns a canvas with the decoded image pixels.
+        async function decodeHEICWithLibheif(file) {
+            const heifLib = await getHeifLib();
             const buffer = new Uint8Array(await file.arrayBuffer());
-            const decoder = new libheif.HeifDecoder();
+            const decoder = new heifLib.HeifDecoder();
             const images = decoder.decode(buffer);
             if (!images || images.length === 0) {
                 throw new Error('No images found in HEIC file. The file may be corrupted.');
