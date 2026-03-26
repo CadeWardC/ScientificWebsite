@@ -2502,20 +2502,33 @@
 
                     // Step 2: ffmpeg.wasm — full HEVC codec support, works in Chrome/Firefox/Edge
                     if (!loadResult) {
+                        // Helper: extract a readable string from whatever ffmpeg throws
+                        const ffErrMsg = e => typeof e === 'string' ? e
+                            : e instanceof Error ? e.message
+                            : (e ? JSON.stringify(e) : 'unknown error');
+
+                        let ffmpeg;
                         try {
-                            const ffmpeg = await getFFmpeg(msg => updateProgress('images', 40, msg));
+                            ffmpeg = await getFFmpeg(msg => updateProgress('images', 40, msg));
+                        } catch (loadErr) {
+                            console.error('FFmpeg load error:', loadErr);
+                            throw new Error('Failed to load HEIC decoder: ' + ffErrMsg(loadErr));
+                        }
+
+                        try {
                             updateProgress('images', 70, 'Decoding HEIC...');
                             await ffmpeg.writeFile('input.heic', await fetchFile(file));
                             ffmpeg.on('progress', ({ progress }) => {
                                 if (progress > 0) updateProgress('images', 70 + Math.round(progress * 20), 'Converting...');
                             });
-                            await ffmpeg.exec(['-i', 'input.heic', '-vframes', '1', 'output.png']);
+                            await ffmpeg.exec(['-i', 'input.heic', 'output.png']);
                             const data = await ffmpeg.readFile('output.png');
                             await ffmpeg.deleteFile('input.heic');
                             await ffmpeg.deleteFile('output.png');
                             blob = new Blob([data.buffer], { type: 'image/png' });
-                        } catch (ffErr) {
-                            throw new Error('HEIC conversion failed: ' + ffErr.message);
+                        } catch (execErr) {
+                            console.error('FFmpeg exec error:', execErr);
+                            throw new Error('HEIC decode failed: ' + ffErrMsg(execErr));
                         }
                     }
                 }
