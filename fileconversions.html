@@ -897,6 +897,7 @@
             <div class="options-panel">
                 <label><input type="checkbox" id="opt-addH-structure" checked> Add polar hydrogens</label>
                 <label><input type="checkbox" id="opt-keepHETATM" checked> Keep HETATM (heme, ligands, cofactors)</label>
+                <label><input type="checkbox" id="opt-rigid-structure"> Rigid conversion (remove torsion tree)</label>
             </div>
             <div class="file-uploader-section">
                 <div id="dropZone-structure" class="drop-zone" data-conv="structure">
@@ -927,6 +928,7 @@
             </div>
             <div class="options-panel">
                 <label><input type="checkbox" id="opt-addH-ligand" checked> Add hydrogens</label>
+                <label><input type="checkbox" id="opt-rigid-ligand"> Rigid conversion (remove torsion tree)</label>
             </div>
             <div class="file-uploader-section">
                 <div id="dropZone-ligand" class="drop-zone" data-conv="ligand">
@@ -2158,6 +2160,19 @@
             return lines.join('\n');
         }
 
+        // Strip ROOT, ENDROOT, BRANCH, ENDBRANCH, TORSDOF lines for rigid PDBQT
+        function stripTorsionTree(pdbqtText) {
+            return pdbqtText
+                .split('\n')
+                .filter(line => {
+                    const tag = line.trim().split(/\s+/)[0];
+                    return tag !== 'ROOT' && tag !== 'ENDROOT' &&
+                           tag !== 'BRANCH' && tag !== 'ENDBRANCH' &&
+                           tag !== 'TORSDOF';
+                })
+                .join('\n');
+        }
+
         // ========================================
         // MODULE 12: FORMAT CONVERTERS
         // ========================================
@@ -2248,10 +2263,18 @@
 
             updateProgress(p, 90, 'Formatting PDBQT...');
             await yieldToUI();
-            const output = formatPDBQT(atoms);
+            let output = formatPDBQT(atoms);
+
+            const isRigid = document.getElementById('opt-rigid-structure').checked;
+            if (isRigid) {
+                output = stripTorsionTree(output);
+            }
 
             updateProgress(p, 100, 'Complete!');
-            showResults(p, output, fileName.replace(/\.(pdb|cif)$/i, '.pdbqt'));
+            const outName = isRigid
+                ? fileName.replace(/\.(pdb|cif)$/i, '_rigid.pdbqt')
+                : fileName.replace(/\.(pdb|cif)$/i, '.pdbqt');
+            showResults(p, output, outName);
         }
 
         // --- Ligand -> PDBQT ---
@@ -2297,10 +2320,18 @@
 
             updateProgress(p, 95, 'Formatting ligand PDBQT...');
             await yieldToUI();
-            const output = formatLigandPDBQT(atoms, tree);
+            let output = formatLigandPDBQT(atoms, tree);
+
+            const isRigid = document.getElementById('opt-rigid-ligand').checked;
+            if (isRigid) {
+                output = stripTorsionTree(output);
+            }
 
             updateProgress(p, 100, 'Complete!');
-            showResults(p, output, fileName.replace(/\.\w+$/i, '.pdbqt'));
+            const outName = isRigid
+                ? fileName.replace(/\.\w+$/i, '_rigid.pdbqt')
+                : fileName.replace(/\.\w+$/i, '.pdbqt');
+            showResults(p, output, outName);
         }
 
         // --- SDF -> PDB ---
