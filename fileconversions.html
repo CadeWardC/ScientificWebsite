@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>File Conversions - Scientific Tools</title>
+    <script src="https://3Dmol.csb.pitt.edu/build/3Dmol-min.js"></script>
     <style>
         * {
             margin: 0;
@@ -732,6 +733,108 @@
                 width: 100%;
             }
         }
+        /* === 3D DOCKING VIEWER === */
+        #docking-viewer-container {
+            display: none;
+            margin-top: 2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            background: var(--off-white);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .viewer-layout {
+            display: flex;
+            flex-direction: row;
+            height: 500px;
+        }
+
+        .viewer-canvas {
+            flex: 1;
+            position: relative;
+            background: #ffffff;
+        }
+
+        .viewer-controls {
+            width: 300px;
+            padding: 1.5rem;
+            background: var(--pure-white);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .control-section h4 {
+            margin-bottom: 0.75rem;
+            color: var(--muted-blue);
+            font-size: 0.95rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.25rem;
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .slider-group label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .slider-group input[type="range"] {
+            width: 100%;
+            accent-color: var(--muted-blue);
+        }
+
+        .slider-group input[type="number"] {
+            width: 60px;
+            padding: 0.2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.85rem;
+            text-align: right;
+        }
+
+        .btn-export {
+            margin-top: auto;
+            background: var(--primary-black);
+            color: var(--pure-white);
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            background: var(--soft-black);
+        }
+
+        @media (max-width: 768px) {
+            .viewer-layout {
+                flex-direction: column;
+                height: 800px;
+            }
+            .viewer-controls {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid var(--border-color);
+            }
+        }
     </style>
 </head>
 
@@ -812,7 +915,8 @@
                     <div class="card-icon">&#128138;</div>
                     <h3>Ligand Preparation</h3>
                     <div class="card-format">PDB / SDF / MOL2 &rarr; PDBQT</div>
-                    <p>Prepare small molecule ligands with torsion tree, charges, and AutoDock atom types for docking</p>
+                    <p>Prepare small molecule ligands with torsion tree, charges, and AutoDock atom types for docking
+                    </p>
                     <div class="card-badge">Ligand</div>
                 </div>
                 <div class="conversion-card" onclick="selectConversion('sdf2pdb')">
@@ -854,9 +958,12 @@
                     <span>Supports HEIC, JPG, PNG, WebP, BMP, GIF, TIFF</span>
                     <button class="choose-file-btn">Choose File</button>
                 </div>
-                <input type="file" id="fileInput-images" accept=".heic,.heif,.jpg,.jpeg,.png,.webp,.bmp,.gif,.tiff,.tif" style="display: none;">
+                <input type="file" id="fileInput-images" accept=".heic,.heif,.jpg,.jpeg,.png,.webp,.bmp,.gif,.tiff,.tif"
+                    style="display: none;">
                 <div id="progressContainer-images" class="progress-container">
-                    <div class="progress-bar"><div id="progressFill-images" class="progress-fill"></div></div>
+                    <div class="progress-bar">
+                        <div id="progressFill-images" class="progress-fill"></div>
+                    </div>
                     <div id="progressText-images" class="progress-text">Processing...</div>
                 </div>
             </div>
@@ -880,7 +987,8 @@
                     <label for="qualitySlider">Quality: <span id="qualityValue">92</span>%</label>
                     <input type="range" id="qualitySlider" min="10" max="100" value="92" step="1">
                 </div>
-                <button class="download-btn" id="convertImageBtn" onclick="convertAndDownloadImage()">Convert &amp; Download</button>
+                <button class="download-btn" id="convertImageBtn" onclick="convertAndDownloadImage()">Convert &amp;
+                    Download</button>
             </div>
             <div id="statusMessage-images" class="status-message"></div>
         </div>
@@ -896,8 +1004,9 @@
             </div>
             <div class="options-panel">
                 <label><input type="checkbox" id="opt-addH-structure" checked> Add polar hydrogens</label>
-                <label><input type="checkbox" id="opt-keepHETATM" checked> Keep HETATM (heme, ligands, cofactors)</label>
-                <label><input type="checkbox" id="opt-rigid-structure"> Rigid conversion (remove torsion tree)</label>
+                <label><input type="checkbox" id="opt-keepHETATM" checked> Keep HETATM (heme, ligands,
+                    cofactors)</label>
+                <label><input type="checkbox" id="opt-rigid-structure" checked> Rigid conversion (remove torsion tree)</label>
             </div>
             <div class="file-uploader-section">
                 <div id="dropZone-structure" class="drop-zone" data-conv="structure">
@@ -907,14 +1016,77 @@
                 </div>
                 <input type="file" id="fileInput-structure" accept=".pdb,.cif" style="display: none;">
                 <div id="progressContainer-structure" class="progress-container">
-                    <div class="progress-bar"><div id="progressFill-structure" class="progress-fill"></div></div>
+                    <div class="progress-bar">
+                        <div id="progressFill-structure" class="progress-fill"></div>
+                    </div>
                     <div id="progressText-structure" class="progress-text">Processing...</div>
                 </div>
             </div>
-            <div id="fileInfo-structure" class="file-info"><h3>File Summary</h3><div id="fileStats-structure" class="file-stats"></div></div>
+            <div id="fileInfo-structure" class="file-info">
+                <h3>File Summary</h3>
+                <div id="fileStats-structure" class="file-stats"></div>
+            </div>
             <div id="statusMessage-structure" class="status-message"></div>
-            <div id="previewPanel-structure" class="preview-panel"><h3>PDBQT Preview (first 50 lines)</h3><div id="previewContainer-structure" class="preview-container"></div></div>
-            <div id="downloadSection-structure" class="download-section"><button class="download-btn" onclick="downloadOutput('structure')">Download PDBQT File</button></div>
+            <div id="previewPanel-structure" class="preview-panel">
+                <h3>PDBQT Preview (first 50 lines)</h3>
+                <div id="previewContainer-structure" class="preview-container"></div>
+            </div>
+            <div id="downloadSection-structure" class="download-section">
+                <button class="download-btn" onclick="downloadOutput('structure')">Download PDBQT File</button>
+                <button class="download-btn" id="btn-open-viewer" onclick="openDockingViewer('structure')" style="background:var(--muted-blue); margin-left:1rem; display:none;">Open 3D Docking Configurator</button>
+            </div>
+
+            <!-- 3D DOCKING VIEWER UI -->
+            <div id="docking-viewer-container">
+                <div class="viewer-layout">
+                    <div id="mol-canvas" class="viewer-canvas"></div>
+                    <div class="viewer-controls">
+                        <div class="control-section">
+                            <h4>Grid Center (Å)</h4>
+                            <div class="slider-group">
+                                <label>X: <input type="number" id="box-center-x-val" step="0.1" onchange="updateBoxFromInput()"></label>
+                                <input type="range" id="box-center-x" min="-100" max="100" step="0.5" oninput="updateBoxFromSlider()">
+                            </div>
+                            <div class="slider-group">
+                                <label>Y: <input type="number" id="box-center-y-val" step="0.1" onchange="updateBoxFromInput()"></label>
+                                <input type="range" id="box-center-y" min="-100" max="100" step="0.5" oninput="updateBoxFromSlider()">
+                            </div>
+                            <div class="slider-group">
+                                <label>Z: <input type="number" id="box-center-z-val" step="0.1" onchange="updateBoxFromInput()"></label>
+                                <input type="range" id="box-center-z" min="-100" max="100" step="0.5" oninput="updateBoxFromSlider()">
+                            </div>
+                        </div>
+                        <div class="control-section">
+                            <h4>Grid Size (Å)</h4>
+                            <div class="slider-group">
+                                <label>X: <input type="number" id="box-size-x-val" step="1" onchange="updateBoxFromInput()"></label>
+                                <input type="range" id="box-size-x" min="2" max="126" step="1" oninput="updateBoxFromSlider()">
+                            </div>
+                            <div class="slider-group">
+                                <label>Y: <input type="number" id="box-size-y-val" step="1" onchange="updateBoxFromInput()"></label>
+                                <input type="range" id="box-size-y" min="2" max="126" step="1" oninput="updateBoxFromSlider()">
+                            </div>
+                            <div class="slider-group">
+                                <label>Z: <input type="number" id="box-size-z-val" step="1" onchange="updateBoxFromInput()"></label>
+                                <input type="range" id="box-size-z" min="2" max="126" step="1" oninput="updateBoxFromSlider()">
+                            </div>
+                        </div>
+                        <div class="control-section">
+                            <h4>Search Parameters</h4>
+                            <div class="slider-group">
+                                <label>Exhaustiveness: <input type="number" id="vina-exhaustiveness" value="8" min="1" step="1"></label>
+                            </div>
+                            <div class="slider-group">
+                                <label>Number of Modes: <input type="number" id="vina-num-modes" value="9" min="1" step="1"></label>
+                            </div>
+                            <div class="slider-group">
+                                <label>Energy Range: <input type="number" id="vina-energy-range" value="3" min="1" step="1"></label>
+                            </div>
+                        </div>
+                        <button class="btn-export" onclick="exportVinaConfig()">Download config.txt</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -938,14 +1110,23 @@
                 </div>
                 <input type="file" id="fileInput-ligand" accept=".pdb,.sdf,.mol,.mol2" style="display: none;">
                 <div id="progressContainer-ligand" class="progress-container">
-                    <div class="progress-bar"><div id="progressFill-ligand" class="progress-fill"></div></div>
+                    <div class="progress-bar">
+                        <div id="progressFill-ligand" class="progress-fill"></div>
+                    </div>
                     <div id="progressText-ligand" class="progress-text">Processing...</div>
                 </div>
             </div>
-            <div id="fileInfo-ligand" class="file-info"><h3>File Summary</h3><div id="fileStats-ligand" class="file-stats"></div></div>
+            <div id="fileInfo-ligand" class="file-info">
+                <h3>File Summary</h3>
+                <div id="fileStats-ligand" class="file-stats"></div>
+            </div>
             <div id="statusMessage-ligand" class="status-message"></div>
-            <div id="previewPanel-ligand" class="preview-panel"><h3>PDBQT Preview (first 50 lines)</h3><div id="previewContainer-ligand" class="preview-container"></div></div>
-            <div id="downloadSection-ligand" class="download-section"><button class="download-btn" onclick="downloadOutput('ligand')">Download PDBQT File</button></div>
+            <div id="previewPanel-ligand" class="preview-panel">
+                <h3>PDBQT Preview (first 50 lines)</h3>
+                <div id="previewContainer-ligand" class="preview-container"></div>
+            </div>
+            <div id="downloadSection-ligand" class="download-section"><button class="download-btn"
+                    onclick="downloadOutput('ligand')">Download PDBQT File</button></div>
         </div>
     </section>
 
@@ -965,14 +1146,23 @@
                 </div>
                 <input type="file" id="fileInput-sdf2pdb" accept=".sdf,.mol" style="display: none;">
                 <div id="progressContainer-sdf2pdb" class="progress-container">
-                    <div class="progress-bar"><div id="progressFill-sdf2pdb" class="progress-fill"></div></div>
+                    <div class="progress-bar">
+                        <div id="progressFill-sdf2pdb" class="progress-fill"></div>
+                    </div>
                     <div id="progressText-sdf2pdb" class="progress-text">Processing...</div>
                 </div>
             </div>
-            <div id="fileInfo-sdf2pdb" class="file-info"><h3>File Summary</h3><div id="fileStats-sdf2pdb" class="file-stats"></div></div>
+            <div id="fileInfo-sdf2pdb" class="file-info">
+                <h3>File Summary</h3>
+                <div id="fileStats-sdf2pdb" class="file-stats"></div>
+            </div>
             <div id="statusMessage-sdf2pdb" class="status-message"></div>
-            <div id="previewPanel-sdf2pdb" class="preview-panel"><h3>PDB Preview (first 50 lines)</h3><div id="previewContainer-sdf2pdb" class="preview-container"></div></div>
-            <div id="downloadSection-sdf2pdb" class="download-section"><button class="download-btn" onclick="downloadOutput('sdf2pdb')">Download PDB File</button></div>
+            <div id="previewPanel-sdf2pdb" class="preview-panel">
+                <h3>PDB Preview (first 50 lines)</h3>
+                <div id="previewContainer-sdf2pdb" class="preview-container"></div>
+            </div>
+            <div id="downloadSection-sdf2pdb" class="download-section"><button class="download-btn"
+                    onclick="downloadOutput('sdf2pdb')">Download PDB File</button></div>
         </div>
     </section>
 
@@ -992,14 +1182,23 @@
                 </div>
                 <input type="file" id="fileInput-cif2pdb" accept=".cif" style="display: none;">
                 <div id="progressContainer-cif2pdb" class="progress-container">
-                    <div class="progress-bar"><div id="progressFill-cif2pdb" class="progress-fill"></div></div>
+                    <div class="progress-bar">
+                        <div id="progressFill-cif2pdb" class="progress-fill"></div>
+                    </div>
                     <div id="progressText-cif2pdb" class="progress-text">Processing...</div>
                 </div>
             </div>
-            <div id="fileInfo-cif2pdb" class="file-info"><h3>File Summary</h3><div id="fileStats-cif2pdb" class="file-stats"></div></div>
+            <div id="fileInfo-cif2pdb" class="file-info">
+                <h3>File Summary</h3>
+                <div id="fileStats-cif2pdb" class="file-stats"></div>
+            </div>
             <div id="statusMessage-cif2pdb" class="status-message"></div>
-            <div id="previewPanel-cif2pdb" class="preview-panel"><h3>PDB Preview (first 50 lines)</h3><div id="previewContainer-cif2pdb" class="preview-container"></div></div>
-            <div id="downloadSection-cif2pdb" class="download-section"><button class="download-btn" onclick="downloadOutput('cif2pdb')">Download PDB File</button></div>
+            <div id="previewPanel-cif2pdb" class="preview-panel">
+                <h3>PDB Preview (first 50 lines)</h3>
+                <div id="previewContainer-cif2pdb" class="preview-container"></div>
+            </div>
+            <div id="downloadSection-cif2pdb" class="download-section"><button class="download-btn"
+                    onclick="downloadOutput('cif2pdb')">Download PDB File</button></div>
         </div>
     </section>
 
@@ -1019,14 +1218,23 @@
                 </div>
                 <input type="file" id="fileInput-mol2pdb" accept=".mol2" style="display: none;">
                 <div id="progressContainer-mol2pdb" class="progress-container">
-                    <div class="progress-bar"><div id="progressFill-mol2pdb" class="progress-fill"></div></div>
+                    <div class="progress-bar">
+                        <div id="progressFill-mol2pdb" class="progress-fill"></div>
+                    </div>
                     <div id="progressText-mol2pdb" class="progress-text">Processing...</div>
                 </div>
             </div>
-            <div id="fileInfo-mol2pdb" class="file-info"><h3>File Summary</h3><div id="fileStats-mol2pdb" class="file-stats"></div></div>
+            <div id="fileInfo-mol2pdb" class="file-info">
+                <h3>File Summary</h3>
+                <div id="fileStats-mol2pdb" class="file-stats"></div>
+            </div>
             <div id="statusMessage-mol2pdb" class="status-message"></div>
-            <div id="previewPanel-mol2pdb" class="preview-panel"><h3>PDB Preview (first 50 lines)</h3><div id="previewContainer-mol2pdb" class="preview-container"></div></div>
-            <div id="downloadSection-mol2pdb" class="download-section"><button class="download-btn" onclick="downloadOutput('mol2pdb')">Download PDB File</button></div>
+            <div id="previewPanel-mol2pdb" class="preview-panel">
+                <h3>PDB Preview (first 50 lines)</h3>
+                <div id="previewContainer-mol2pdb" class="preview-container"></div>
+            </div>
+            <div id="downloadSection-mol2pdb" class="download-section"><button class="download-btn"
+                    onclick="downloadOutput('mol2pdb')">Download PDB File</button></div>
         </div>
     </section>
 
@@ -1879,6 +2087,68 @@
             'NA', 'NB', 'NC', 'ND', 'N A', 'N B', 'N C', 'N D'
         ]);
 
+        // Helper: Check if sulfur is in a disulfide bond (S-S)
+        function isDisulfideBond(atoms, idx) {
+            const atom = atoms[idx];
+            if (atom.element !== 'S') return false;
+            // Check if bonded to another sulfur
+            for (const j of atom.bonds) {
+                if (atoms[j].element === 'S') return true;
+            }
+            return false;
+        }
+
+        // Helper: Check if oxygen is bonded to phosphorus (phosphate type)
+        function isPhosphateOxygen(atoms, idx) {
+            const atom = atoms[idx];
+            if (atom.element !== 'O') return false;
+            for (const j of atom.bonds) {
+                if (atoms[j].element === 'P') return true;
+            }
+            return false;
+        }
+
+        // Helper: Check if oxygen is in a sulfoxide/sulfone (O=S double bond)
+        function isSulfoxideOxygen(atoms, idx) {
+            const atom = atoms[idx];
+            if (atom.element !== 'O') return false;
+            for (const j of atom.bonds) {
+                const neighbor = atoms[j];
+                if (neighbor.element === 'S') {
+                    // Count oxygens bonded to this sulfur
+                    const oCount = neighbor.bonds.filter(k => atoms[k].element === 'O').length;
+                    if (oCount >= 1) return true; // Sulfoxide (S=O) or sulfone (O=S=O)
+                }
+            }
+            return false;
+        }
+
+        // Helper: Check if nitrogen is in a nitro group (N+O2)
+        function isNitroNitrogen(atoms, idx) {
+            const atom = atoms[idx];
+            if (atom.element !== 'N') return false;
+            // Nitro nitrogen is bonded to exactly 2 oxygens and 1 carbon (no H)
+            const bondedO = atom.bonds.filter(j => atoms[j].element === 'O').length;
+            const bondedH = atom.bonds.filter(j => atoms[j].element === 'H').length;
+            return bondedO === 2 && bondedH === 0;
+        }
+
+        // Helper: Check if nitrogen is in a sulfonamide
+        function isSulfonamideNitrogen(atoms, idx) {
+            const atom = atoms[idx];
+            if (atom.element !== 'N') return false;
+            // Sulfonamide N is bonded to sulfur (S-N bond)
+            for (const j of atom.bonds) {
+                const neighbor = atoms[j];
+                if (neighbor.element === 'S') {
+                    // Check if sulfur is sulfonated (bonded to multiple oxygens)
+                    const oCount = neighbor.bonds.filter(k => atoms[k].element === 'O').length;
+                    if (oCount >= 2) return true;
+                }
+            }
+            return false;
+        }
+
         function assignAtomTypes(atoms, bonds) {
             for (let i = 0; i < atoms.length; i++) {
                 const atom = atoms[i];
@@ -1912,22 +2182,48 @@
                     }
                     atom.adType = isAromatic ? 'A' : 'C';
                 } else if (el === 'N') {
-                    if (isHeme) {
+                    // Check for sulfonamide first (NS type)
+                    if (isSulfonamideNitrogen(atoms, i)) {
+                        atom.adType = 'NS';
+                    } else if (isHeme) {
                         // Heme nitrogens coordinated to Fe are NA
                         const coordFe = atom.bonds.some(j => atoms[j].element === 'FE');
                         atom.adType = coordFe ? 'NA' : 'N';
                     } else if (isStandard) {
+                        // Backbone amide N is N, not NA
+                        const isBackbone = (atomName === 'N');
                         const naAtoms = SIDECHAIN_NA_MAP[resName] || [];
-                        atom.adType = naAtoms.includes(atomName) ? 'NA' : 'N';
+                        // Special handling: ARG NH1/NH2 are not NA (they're protonated)
+                        const isArgGuanidinium = (resName === 'ARG' && (atomName === 'NH1' || atomName === 'NH2' || atomName === 'NE'));
+                        if (isBackbone || isArgGuanidinium) {
+                            atom.adType = 'N';
+                        } else {
+                            atom.adType = naAtoms.includes(atomName) ? 'NA' : 'N';
+                        }
                     } else {
                         const hCount = atom.bonds.filter(j => atoms[j].element === 'H').length;
                         const heavyBonds = atom.bonds.length - hCount;
+                        // NA for sp2 nitrogens in aromatic systems, N for amines
                         atom.adType = (heavyBonds <= 2 && hCount === 0) ? 'NA' : 'N';
                     }
                 } else if (el === 'O') {
-                    atom.adType = 'OA'; // Almost all oxygens are H-bond acceptors
+                    // Check for phosphate/sulfate oxygens (OS type)
+                    if (isPhosphateOxygen(atoms, i) || isSulfoxideOxygen(atoms, i)) {
+                        atom.adType = 'OS';
+                    } else {
+                        atom.adType = 'OA'; // Most oxygens are H-bond acceptors
+                    }
                 } else if (el === 'S') {
-                    atom.adType = 'SA';
+                    // Check for disulfide bond (S type vs SA type)
+                    // In Open Babel: S for disulfide (CYX), SA for thiol (CYS) and thioether (MET)
+                    if (isDisulfideBond(atoms, i)) {
+                        atom.adType = 'S'; // Disulfide sulfur
+                    } else if (resName === 'CYS' || resName === 'CYX' || resName === 'MET') {
+                        atom.adType = 'SA'; // Thiol/thioether sulfur can accept H-bonds
+                    } else {
+                        // For non-standard residues, check if bonded to another sulfur
+                        atom.adType = isDisulfideBond(atoms, i) ? 'S' : 'SA';
+                    }
                 } else if (el === 'F') {
                     atom.adType = 'F';
                 } else if (el === 'CL') {
@@ -1956,35 +2252,47 @@
         }
 
         // ========================================
-        // MODULE 10: PDBQT FORMATTER - RECEPTOR
+        // MODULE 10: PDBQT FORMATTER
         // ========================================
-        function formatPDBQT(atoms) {
-            const lines = [];
-            lines.push('REMARK  PDBQT file generated by Scientific Tools - File Conversions');
-            lines.push('REMARK  Gasteiger charges calculated in-browser');
-            for (const atom of atoms) lines.push(formatPDBQTLine(atom));
-            lines.push('END');
-            return lines.join('\n');
-        }
-
         function formatPDBQTLine(atom) {
+            // PDBQT format specification:
+            // COLUMNS        DATA TYPE         FIELD        DEFINITION
+            // 1-6            Record name      ATOM         /
+            // 7-11           Integer           serial       Atom serial number
+            // 13-16          Atom              name         Atom name
+            // 17             Character         altLoc       Alternate location indicator
+            // 18-20          Residue name      resName      Residue name
+            // 22             Character         chainID      Chain identifier
+            // 23-26          Integer           resSeq       Residue sequence number
+            // 27             Character         iCode        Code for insertions
+            // 31-38          Float(8.3)        x            Orthogonal X coordinate
+            // 39-46          Float(8.3)        y            Orthogonal Y coordinate
+            // 47-54          Float(8.3)        z            Orthogonal Z coordinate
+            // 55-60          Float(6.2)        occupancy    Occupancy (ignored by AutoDock)
+            // 61-66          Float(6.2)        tempFactor   Temperature factor (ignored)
+            // 67-76          Float(10.3)       charge       Partial charge (with sign)
+            // 77-79          String            adType       AutoDock atom type
             const record = atom.recordType.padEnd(6);
             const serial = String(atom.serial).padStart(5);
-            const name = atom.name;
-            const altLoc = atom.altLoc || ' ';
-            const resName = atom.resName.padStart(3);
-            const chainID = atom.chainID || ' ';
-            const resSeq = String(atom.resSeq).padStart(4);
-            const iCode = atom.iCode || ' ';
+            const name = atom.name;                          // 4 chars (cols 13-16)
+            const altLoc = atom.altLoc || ' ';               // 1 char  (col 17)
+            const resName = atom.resName.padEnd(3).substring(0, 3); // 3 chars left-justified (cols 18-20)
+            const chainID = atom.chainID || ' ';             // 1 char  (col 22)
+            const resSeq = String(atom.resSeq).padStart(4);  // 4 chars (cols 23-26)
+            const iCode = atom.iCode || ' ';                 // 1 char  (col 27)
             const x = atom.x.toFixed(3).padStart(8);
             const y = atom.y.toFixed(3).padStart(8);
             const z = atom.z.toFixed(3).padStart(8);
-            const occ = atom.occupancy.toFixed(2).padStart(6);
-            const tf = atom.tempFactor.toFixed(2).padStart(6);
-            const charge = atom.charge.toFixed(3).padStart(8);
-            const adType = (atom.adType || atom.element).padEnd(2);
+            const occ = (0).toFixed(2).padStart(6);
+            const tf = (0).toFixed(2).padStart(6);
+            // Charge: 10 characters with explicit +/- sign (required by AutoDock)
+            const chargeVal = atom.charge;
+            const sign = chargeVal >= 0 ? '+' : '-';
+            const chargeStr = (sign + Math.abs(chargeVal).toFixed(3)).padStart(10);
+            // AutoDock atom type: 2 chars, left-justified in cols 78-79
+            const adType = (atom.adType || atom.element).padEnd(2).substring(0, 2);
             return record + serial + ' ' + name + altLoc + resName + ' ' +
-                chainID + resSeq + iCode + '   ' + x + y + z + occ + tf + '    ' + charge + ' ' + adType;
+                chainID + resSeq + iCode + '   ' + x + y + z + occ + tf + chargeStr + ' ' + adType;
         }
 
         // ========================================
@@ -2136,10 +2444,33 @@
             return treeRoot;
         }
 
-        function formatLigandPDBQT(atoms, tree) {
+        function formatLigandPDBQT(atoms, tree, fileName) {
             const lines = [];
-            lines.push('REMARK  PDBQT file generated by Scientific Tools - File Conversions');
-            lines.push('REMARK  ' + tree.rotatableBondCount + ' active torsions');
+
+            // Collect all torsion bonds from the tree
+            const torsions = [];
+            function collectTorsions(node) {
+                for (const child of node.children) {
+                    torsions.push({ parentAtom: child.parentAtom, childAtom: child.childAtom });
+                    collectTorsions(child);
+                }
+            }
+            collectTorsions(tree);
+
+            // Open Babel-style REMARK block
+            const baseName = fileName || 'molecule';
+            lines.push('REMARK  Name = ' + baseName);
+            lines.push('REMARK  ' + torsions.length + ' active torsions:');
+            lines.push('REMARK  status: (\'A\' for Active; \'I\' for Inactive)');
+            for (let i = 0; i < torsions.length; i++) {
+                const t = torsions[i];
+                const aName = atoms[t.parentAtom].name.trim() + '_' + atoms[t.parentAtom].serial;
+                const bName = atoms[t.childAtom].name.trim() + '_' + atoms[t.childAtom].serial;
+                const num = String(i + 1).padStart(4);
+                lines.push('REMARK' + num + '  A    between atoms: ' + aName + '  and  ' + bName);
+            }
+            lines.push('REMARK                            x       y       z     vdW  Elec       q    Type');
+            lines.push('REMARK                         _______ _______ _______ _____ _____    ______ ____');
             lines.push('ROOT');
             for (const idx of tree.fragment.atomIndices) lines.push(formatPDBQTLine(atoms[idx]));
             lines.push('ENDROOT');
@@ -2167,10 +2498,21 @@
                 .filter(line => {
                     const tag = line.trim().split(/\s+/)[0];
                     return tag !== 'ROOT' && tag !== 'ENDROOT' &&
-                           tag !== 'BRANCH' && tag !== 'ENDBRANCH' &&
-                           tag !== 'TORSDOF';
+                        tag !== 'BRANCH' && tag !== 'ENDBRANCH' &&
+                        tag !== 'TORSDOF';
                 })
                 .join('\n');
+        }
+
+        function formatRigidPDBQT(atoms, fileName) {
+            const lines = [];
+            const baseName = fileName || 'molecule';
+            lines.push('REMARK  Name = ' + baseName);
+            lines.push('REMARK  Rigid Receptor generated by Scientific Tools');
+            for (const atom of atoms) {
+                lines.push(formatPDBQTLine(atom));
+            }
+            return lines.join('\n');
         }
 
         // ========================================
@@ -2243,31 +2585,40 @@
             }
             displayFileStats(p, atoms);
 
-            updateProgress(p, 25, 'Inferring bonds...');
+            updateProgress(p, 20, 'Inferring bonds...');
             await yieldToUI();
-            const bonds = inferBonds(atoms);
+            const rawBonds = inferBonds(atoms);
+            const bonds = rawBonds.map(b => [b[0], b[1], 1]);
 
             if (document.getElementById('opt-addH-' + p).checked) {
-                updateProgress(p, 35, 'Adding polar hydrogens...');
+                updateProgress(p, 30, 'Adding polar hydrogens...');
                 await yieldToUI();
                 addPolarHydrogens(atoms, bonds);
             }
 
-            updateProgress(p, 50, 'Calculating Gasteiger charges...');
+            updateProgress(p, 45, 'Calculating Gasteiger charges...');
             await yieldToUI();
             calculateGasteigerCharges(atoms, bonds);
 
-            updateProgress(p, 70, 'Assigning AutoDock atom types...');
+            updateProgress(p, 60, 'Assigning AutoDock atom types...');
             await yieldToUI();
             assignAtomTypes(atoms, bonds);
 
-            updateProgress(p, 90, 'Formatting PDBQT...');
-            await yieldToUI();
-            let output = formatPDBQT(atoms);
-
             const isRigid = document.getElementById('opt-rigid-structure').checked;
+            let output;
+            
             if (isRigid) {
-                output = stripTorsionTree(output);
+                updateProgress(p, 90, 'Formatting rigid PDBQT...');
+                await yieldToUI();
+                output = formatRigidPDBQT(atoms, fileName);
+            } else {
+                updateProgress(p, 75, 'Building torsion tree...');
+                await yieldToUI();
+                const tree = buildTorsionTree(atoms, bonds);
+
+                updateProgress(p, 90, 'Formatting flexible PDBQT...');
+                await yieldToUI();
+                output = formatLigandPDBQT(atoms, tree, fileName);
             }
 
             updateProgress(p, 100, 'Complete!');
@@ -2314,17 +2665,20 @@
             await yieldToUI();
             assignAtomTypes(atoms, bonds);
 
-            updateProgress(p, 80, 'Building torsion tree...');
-            await yieldToUI();
-            const tree = buildTorsionTree(atoms, bonds);
-
-            updateProgress(p, 95, 'Formatting ligand PDBQT...');
-            await yieldToUI();
-            let output = formatLigandPDBQT(atoms, tree);
-
             const isRigid = document.getElementById('opt-rigid-ligand').checked;
+            let output;
             if (isRigid) {
-                output = stripTorsionTree(output);
+                updateProgress(p, 90, 'Formatting rigid PDBQT...');
+                await yieldToUI();
+                output = formatRigidPDBQT(atoms, fileName);
+            } else {
+                updateProgress(p, 80, 'Building torsion tree...');
+                await yieldToUI();
+                const tree = buildTorsionTree(atoms, bonds);
+
+                updateProgress(p, 95, 'Formatting ligand PDBQT...');
+                await yieldToUI();
+                output = formatLigandPDBQT(atoms, tree, fileName);
             }
 
             updateProgress(p, 100, 'Complete!');
@@ -2426,6 +2780,9 @@
             document.getElementById('previewPanel-' + prefix).classList.add('show');
             document.getElementById('downloadSection-' + prefix).classList.add('show');
             document.getElementById('progressContainer-' + prefix).style.display = 'none';
+            if (prefix === 'structure') {
+                document.getElementById('btn-open-viewer').style.display = 'inline-block';
+            }
 
             const warnings = getWarnings(prefix, output);
             if (warnings.length > 0) {
@@ -2547,7 +2904,7 @@
                         imageCanvas = canvas;
                         previewURL = result.objectURL;
                         nativeWorked = true;
-                    } catch (_) {}
+                    } catch (_) { }
 
                     // Step 2: libheif — the reference HEIC WASM decoder
                     if (!nativeWorked) {
@@ -2608,7 +2965,7 @@
             const baseName = imageFileName.replace(/\.[^.]+$/, '');
             const outFileName = baseName + '.' + outExt;
 
-            imageCanvas.toBlob(function(blob) {
+            imageCanvas.toBlob(function (blob) {
                 if (!blob) {
                     showStatus('images', 'Conversion failed. Your browser may not support this output format.', 'error');
                     return;
@@ -2641,17 +2998,172 @@
         }
 
         // ========================================
+        // MODULE 15: 3D DOCKING BOX VIEWER
+        // ========================================
+        let viewer3D = null;
+        let dockingBoxSolid = null;
+        let dockingBoxWireframe = null;
+        let boxCenter = {x: 0, y: 0, z: 0};
+        let boxSize = {x: 20, y: 20, z: 20};
+
+        function openDockingViewer(prefix) {
+            const data = conversionOutputs[prefix];
+            if (!data || !data.output) return;
+            
+            document.getElementById('docking-viewer-container').style.display = 'block';
+            
+            if (!viewer3D) {
+                viewer3D = $3Dmol.createViewer("mol-canvas", { backgroundColor: "white" });
+            }
+            viewer3D.clear();
+            viewer3D.addModel(data.output, "pdbqt");
+            viewer3D.setStyle({}, { cartoon: { color: "spectrum" }, stick: { radius: 0.1, colorscheme: "Jmol" } });
+            viewer3D.zoomTo();
+            
+            // Calculate center of mass for default box
+            const atoms = viewer3D.getModel().selectedAtoms({});
+            if (atoms.length) {
+                let minX = Infinity, maxX = -Infinity;
+                let minY = Infinity, maxY = -Infinity;
+                let minZ = Infinity, maxZ = -Infinity;
+                
+                atoms.forEach(a => {
+                    if (a.x < minX) minX = a.x; if (a.x > maxX) maxX = a.x;
+                    if (a.y < minY) minY = a.y; if (a.y > maxY) maxY = a.y;
+                    if (a.z < minZ) minZ = a.z; if (a.z > maxZ) maxZ = a.z;
+                });
+                
+                boxCenter.x = Number(((maxX + minX) / 2).toFixed(2));
+                boxCenter.y = Number(((maxY + minY) / 2).toFixed(2));
+                boxCenter.z = Number(((maxZ + minZ) / 2).toFixed(2));
+                
+                boxSize.x = Math.max(Math.ceil((maxX - minX) + 10), 20);
+                boxSize.y = Math.max(Math.ceil((maxY - minY) + 10), 20);
+                boxSize.z = Math.max(Math.ceil((maxZ - minZ) + 10), 20);
+            }
+            
+            // Update UI
+            updateBoxUI();
+            drawBox();
+            
+            // Scroll to the viewer
+            document.getElementById('docking-viewer-container').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function drawBox() {
+            if (!viewer3D) return;
+            if (dockingBoxSolid) viewer3D.removeShape(dockingBoxSolid);
+            if (dockingBoxWireframe) viewer3D.removeShape(dockingBoxWireframe);
+            
+            dockingBoxSolid = viewer3D.addBox({
+                center: boxCenter,
+                dimensions: { w: boxSize.x, h: boxSize.y, d: boxSize.z },
+                color: 'yellow',
+                wireframe: false,
+                alpha: 0.4
+            });
+            
+            dockingBoxWireframe = viewer3D.addBox({
+                center: boxCenter,
+                dimensions: { w: boxSize.x, h: boxSize.y, d: boxSize.z },
+                color: 'black',
+                wireframe: true
+            });
+            viewer3D.render();
+        }
+
+        function updateBoxUI() {
+            document.getElementById('box-center-x').value = boxCenter.x;
+            document.getElementById('box-center-x-val').value = boxCenter.x;
+            document.getElementById('box-center-y').value = boxCenter.y;
+            document.getElementById('box-center-y-val').value = boxCenter.y;
+            document.getElementById('box-center-z').value = boxCenter.z;
+            document.getElementById('box-center-z-val').value = boxCenter.z;
+
+            document.getElementById('box-size-x').value = boxSize.x;
+            document.getElementById('box-size-x-val').value = boxSize.x;
+            document.getElementById('box-size-y').value = boxSize.y;
+            document.getElementById('box-size-y-val').value = boxSize.y;
+            document.getElementById('box-size-z').value = boxSize.z;
+            document.getElementById('box-size-z-val').value = boxSize.z;
+        }
+
+        function updateBoxFromSlider() {
+            boxCenter.x = parseFloat(document.getElementById('box-center-x').value);
+            boxCenter.y = parseFloat(document.getElementById('box-center-y').value);
+            boxCenter.z = parseFloat(document.getElementById('box-center-z').value);
+            
+            boxSize.x = parseFloat(document.getElementById('box-size-x').value);
+            boxSize.y = parseFloat(document.getElementById('box-size-y').value);
+            boxSize.z = parseFloat(document.getElementById('box-size-z').value);
+            
+            updateBoxUI();
+            drawBox();
+        }
+
+        function updateBoxFromInput() {
+            boxCenter.x = parseFloat(document.getElementById('box-center-x-val').value);
+            boxCenter.y = parseFloat(document.getElementById('box-center-y-val').value);
+            boxCenter.z = parseFloat(document.getElementById('box-center-z-val').value);
+            
+            boxSize.x = parseFloat(document.getElementById('box-size-x-val').value);
+            boxSize.y = parseFloat(document.getElementById('box-size-y-val').value);
+            boxSize.z = parseFloat(document.getElementById('box-size-z-val').value);
+            
+            updateBoxUI();
+            drawBox();
+        }
+
+        function exportVinaConfig() {
+            const data = conversionOutputs['structure'];
+            let recName = 'receptor.pdbqt';
+            if (data && data.fileName) recName = data.fileName;
+
+            const exhaustiveness = document.getElementById('vina-exhaustiveness').value;
+            const numModes = document.getElementById('vina-num-modes').value;
+            const energyRange = document.getElementById('vina-energy-range').value;
+
+            const configContent = `# Receptor
+receptor = ${recName}
+
+# Grid box center coordinates (the center of your binding pocket)
+center_x = ${boxCenter.x}
+center_y = ${boxCenter.y}
+center_z = ${boxCenter.z}
+
+# Grid box size in Angstroms (how big the search space is)
+size_x = ${boxSize.x}
+size_y = ${boxSize.y}
+size_z = ${boxSize.z}
+
+# Search parameters (Optional but recommended)
+exhaustiveness = ${exhaustiveness}
+num_modes = ${numModes}
+energy_range = ${energyRange}
+`;
+            const blob = new Blob([configContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'config.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // ========================================
         // MODULE 16: INITIALIZATION
         // ========================================
         initFileUploaders();
 
         // Quality slider live update
-        document.getElementById('qualitySlider').addEventListener('input', function() {
+        document.getElementById('qualitySlider').addEventListener('input', function () {
             document.getElementById('qualityValue').textContent = this.value;
         });
 
         // Show/hide quality group based on format (PNG is lossless)
-        document.getElementById('outputFormat').addEventListener('change', function() {
+        document.getElementById('outputFormat').addEventListener('change', function () {
             document.getElementById('qualityGroup').style.display =
                 this.value === 'image/png' ? 'none' : 'flex';
         });
