@@ -835,6 +835,41 @@
                 border-top: 1px solid var(--border-color);
             }
         }
+
+        /* === FILE QUEUE === */
+        .queue-container {
+            display: none;
+            margin-top: 1rem;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .queue-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .queue-item.active {
+            border-color: var(--muted-blue);
+            background: var(--light-blue);
+            font-weight: 500;
+        }
+
+        .queue-status {
+            font-size: 0.8rem;
+            color: var(--muted-blue);
+            background: rgba(255, 255, 255, 0.7);
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+        }
     </style>
 </head>
 
@@ -959,7 +994,7 @@
                     <button class="choose-file-btn">Choose File</button>
                 </div>
                 <input type="file" id="fileInput-images" accept=".heic,.heif,.jpg,.jpeg,.png,.webp,.bmp,.gif,.tiff,.tif"
-                    style="display: none;">
+                    style="display: none;" multiple>
                 <div id="progressContainer-images" class="progress-container">
                     <div class="progress-bar">
                         <div id="progressFill-images" class="progress-fill"></div>
@@ -1007,6 +1042,7 @@
                 <label><input type="checkbox" id="opt-keepHETATM" checked> Keep HETATM (heme, ligands,
                     cofactors)</label>
                 <label><input type="checkbox" id="opt-rigid-structure" checked> Rigid conversion (remove torsion tree)</label>
+                <label><input type="checkbox" id="opt-bulk-structure"> Auto-bulk to ZIP</label>
             </div>
             <div class="file-uploader-section">
                 <div id="dropZone-structure" class="drop-zone" data-conv="structure">
@@ -1014,7 +1050,8 @@
                     <span>Supports .pdb and .cif files</span>
                     <button class="choose-file-btn">Choose File</button>
                 </div>
-                <input type="file" id="fileInput-structure" accept=".pdb,.cif" style="display: none;">
+                <input type="file" id="fileInput-structure" accept=".pdb,.cif" style="display: none;" multiple>
+                <div id="queueContainer-structure" class="queue-container"></div>
                 <div id="progressContainer-structure" class="progress-container">
                     <div class="progress-bar">
                         <div id="progressFill-structure" class="progress-fill"></div>
@@ -1032,8 +1069,9 @@
                 <div id="previewContainer-structure" class="preview-container"></div>
             </div>
             <div id="downloadSection-structure" class="download-section">
-                <button class="download-btn" onclick="downloadOutput('structure')">Download PDBQT File</button>
+                <button class="download-btn" id="btn-download-structure" onclick="downloadOutput('structure')">Download PDBQT File</button>
                 <button class="download-btn" id="btn-open-viewer" onclick="openDockingViewer('structure')" style="background:var(--muted-blue); margin-left:1rem; display:none;">Open 3D Docking Configurator</button>
+                <button class="download-btn" id="btn-next-structure" onclick="processNextInQueue('structure')" style="background:var(--warning-orange); margin-left:1rem; display:none;">Next File</button>
             </div>
 
             <!-- 3D DOCKING VIEWER UI -->
@@ -1101,6 +1139,7 @@
             <div class="options-panel">
                 <label><input type="checkbox" id="opt-addH-ligand" checked> Add hydrogens</label>
                 <label><input type="checkbox" id="opt-rigid-ligand"> Rigid conversion (remove torsion tree)</label>
+                <label><input type="checkbox" id="opt-bulk-ligand"> Auto-bulk to ZIP</label>
             </div>
             <div class="file-uploader-section">
                 <div id="dropZone-ligand" class="drop-zone" data-conv="ligand">
@@ -1108,7 +1147,8 @@
                     <span>Supports .pdb, .sdf, .mol, .mol2 files</span>
                     <button class="choose-file-btn">Choose File</button>
                 </div>
-                <input type="file" id="fileInput-ligand" accept=".pdb,.sdf,.mol,.mol2" style="display: none;">
+                <input type="file" id="fileInput-ligand" accept=".pdb,.sdf,.mol,.mol2" style="display: none;" multiple>
+                <div id="queueContainer-ligand" class="queue-container"></div>
                 <div id="progressContainer-ligand" class="progress-container">
                     <div class="progress-bar">
                         <div id="progressFill-ligand" class="progress-fill"></div>
@@ -1125,8 +1165,10 @@
                 <h3>PDBQT Preview (first 50 lines)</h3>
                 <div id="previewContainer-ligand" class="preview-container"></div>
             </div>
-            <div id="downloadSection-ligand" class="download-section"><button class="download-btn"
-                    onclick="downloadOutput('ligand')">Download PDBQT File</button></div>
+            <div id="downloadSection-ligand" class="download-section">
+                <button class="download-btn" id="btn-download-ligand" onclick="downloadOutput('ligand')">Download PDBQT File</button>
+                <button class="download-btn" id="btn-next-ligand" onclick="processNextInQueue('ligand')" style="background:var(--warning-orange); margin-left:1rem; display:none;">Next File</button>
+            </div>
         </div>
     </section>
 
@@ -1138,13 +1180,17 @@
                 <h2>SDF to PDB</h2>
                 <p>Convert Structure Data Files to PDB format with CONECT records</p>
             </div>
+            <div class="options-panel">
+                <label><input type="checkbox" id="opt-bulk-sdf2pdb"> Auto-bulk to ZIP</label>
+            </div>
             <div class="file-uploader-section">
                 <div id="dropZone-sdf2pdb" class="drop-zone" data-conv="sdf2pdb">
                     <p>Drop SDF or MOL file here</p>
                     <span>Supports .sdf and .mol files</span>
                     <button class="choose-file-btn">Choose File</button>
                 </div>
-                <input type="file" id="fileInput-sdf2pdb" accept=".sdf,.mol" style="display: none;">
+                <input type="file" id="fileInput-sdf2pdb" accept=".sdf,.mol" style="display: none;" multiple>
+                <div id="queueContainer-sdf2pdb" class="queue-container"></div>
                 <div id="progressContainer-sdf2pdb" class="progress-container">
                     <div class="progress-bar">
                         <div id="progressFill-sdf2pdb" class="progress-fill"></div>
@@ -1161,8 +1207,10 @@
                 <h3>PDB Preview (first 50 lines)</h3>
                 <div id="previewContainer-sdf2pdb" class="preview-container"></div>
             </div>
-            <div id="downloadSection-sdf2pdb" class="download-section"><button class="download-btn"
-                    onclick="downloadOutput('sdf2pdb')">Download PDB File</button></div>
+            <div id="downloadSection-sdf2pdb" class="download-section">
+                <button class="download-btn" id="btn-download-sdf2pdb" onclick="downloadOutput('sdf2pdb')">Download PDB File</button>
+                <button class="download-btn" id="btn-next-sdf2pdb" onclick="processNextInQueue('sdf2pdb')" style="background:var(--warning-orange); margin-left:1rem; display:none;">Next File</button>
+            </div>
         </div>
     </section>
 
@@ -1174,13 +1222,17 @@
                 <h2>CIF to PDB</h2>
                 <p>Convert macromolecular CIF files to legacy PDB format</p>
             </div>
+            <div class="options-panel">
+                <label><input type="checkbox" id="opt-bulk-cif2pdb"> Auto-bulk to ZIP</label>
+            </div>
             <div class="file-uploader-section">
                 <div id="dropZone-cif2pdb" class="drop-zone" data-conv="cif2pdb">
                     <p>Drop CIF file here</p>
                     <span>Supports .cif files</span>
                     <button class="choose-file-btn">Choose File</button>
                 </div>
-                <input type="file" id="fileInput-cif2pdb" accept=".cif" style="display: none;">
+                <input type="file" id="fileInput-cif2pdb" accept=".cif" style="display: none;" multiple>
+                <div id="queueContainer-cif2pdb" class="queue-container"></div>
                 <div id="progressContainer-cif2pdb" class="progress-container">
                     <div class="progress-bar">
                         <div id="progressFill-cif2pdb" class="progress-fill"></div>
@@ -1197,8 +1249,10 @@
                 <h3>PDB Preview (first 50 lines)</h3>
                 <div id="previewContainer-cif2pdb" class="preview-container"></div>
             </div>
-            <div id="downloadSection-cif2pdb" class="download-section"><button class="download-btn"
-                    onclick="downloadOutput('cif2pdb')">Download PDB File</button></div>
+            <div id="downloadSection-cif2pdb" class="download-section">
+                <button class="download-btn" id="btn-download-cif2pdb" onclick="downloadOutput('cif2pdb')">Download PDB File</button>
+                <button class="download-btn" id="btn-next-cif2pdb" onclick="processNextInQueue('cif2pdb')" style="background:var(--warning-orange); margin-left:1rem; display:none;">Next File</button>
+            </div>
         </div>
     </section>
 
@@ -1210,13 +1264,17 @@
                 <h2>MOL2 to PDB</h2>
                 <p>Convert Tripos MOL2 files to standard PDB format</p>
             </div>
+            <div class="options-panel">
+                <label><input type="checkbox" id="opt-bulk-mol2pdb"> Auto-bulk to ZIP</label>
+            </div>
             <div class="file-uploader-section">
                 <div id="dropZone-mol2pdb" class="drop-zone" data-conv="mol2pdb">
                     <p>Drop MOL2 file here</p>
                     <span>Supports .mol2 files</span>
                     <button class="choose-file-btn">Choose File</button>
                 </div>
-                <input type="file" id="fileInput-mol2pdb" accept=".mol2" style="display: none;">
+                <input type="file" id="fileInput-mol2pdb" accept=".mol2" style="display: none;" multiple>
+                <div id="queueContainer-mol2pdb" class="queue-container"></div>
                 <div id="progressContainer-mol2pdb" class="progress-container">
                     <div class="progress-bar">
                         <div id="progressFill-mol2pdb" class="progress-fill"></div>
@@ -1233,8 +1291,10 @@
                 <h3>PDB Preview (first 50 lines)</h3>
                 <div id="previewContainer-mol2pdb" class="preview-container"></div>
             </div>
-            <div id="downloadSection-mol2pdb" class="download-section"><button class="download-btn"
-                    onclick="downloadOutput('mol2pdb')">Download PDB File</button></div>
+            <div id="downloadSection-mol2pdb" class="download-section">
+                <button class="download-btn" id="btn-download-mol2pdb" onclick="downloadOutput('mol2pdb')">Download PDB File</button>
+                <button class="download-btn" id="btn-next-mol2pdb" onclick="processNextInQueue('mol2pdb')" style="background:var(--warning-orange); margin-left:1rem; display:none;">Next File</button>
+            </div>
         </div>
     </section>
 
@@ -1263,6 +1323,7 @@
     </footer>
 
     <script src="libheif/libheif-bundle.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script>
         // ========================================
         // MODULE 0: STATE & UI MANAGEMENT
@@ -1270,7 +1331,52 @@
         let activeCategory = null;
         let activeConversion = null;
         const conversionOutputs = {};
+        const conversionQueues = {};
+        const conversionZips = {};
+        const activeFile = {}; // activeFile[convType] tracks current file
+        const completedFiles = {}; // tracks done files
         const CONV_TYPES = ['structure', 'ligand', 'sdf2pdb', 'cif2pdb', 'mol2pdb', 'images'];
+
+        function renderQueueUI(convType) {
+            const container = document.getElementById('queueContainer-' + convType);
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            const active = activeFile[convType];
+            const queue = conversionQueues[convType] || [];
+            const completed = completedFiles[convType] || [];
+            
+            if (!active && queue.length === 0 && completed.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            container.style.display = 'flex';
+            
+            for (let i = 0; i < completed.length; i++) {
+                const item = document.createElement('div');
+                item.className = 'queue-item';
+                item.innerHTML = `<span><span style="margin-right:8px;color:var(--success-green);">✓</span> ${completed[i].name}</span> <span class="queue-status" style="color:var(--success-green); background:rgba(40,167,69,0.1);">Done</span>`;
+                container.appendChild(item);
+            }
+            
+            if (active) {
+                const item = document.createElement('div');
+                item.className = 'queue-item active';
+                item.innerHTML = `<span><span style="margin-right:8px;">▶</span> ${active.name}</span> <span class="queue-status">Editing</span>`;
+                container.appendChild(item);
+            }
+            
+            for (let i = 0; i < queue.length; i++) {
+                const item = document.createElement('div');
+                item.className = 'queue-item';
+                item.style.cursor = 'pointer';
+                item.onclick = function() { loadSpecificFile(convType, i); };
+                item.title = "Click to process this file";
+                item.innerHTML = `<span>${queue[i].name}</span> <span class="queue-status" style="color:rgba(10,10,10,0.5); background: #eee;">Pending</span>`;
+                container.appendChild(item);
+            }
+        }
 
         function selectCategory(cat) {
             activeCategory = cat;
@@ -1386,32 +1492,124 @@
                     dropZone.addEventListener('drop', (e) => {
                         e.preventDefault();
                         dropZone.classList.remove('drag-over');
-                        if (e.dataTransfer.files.length > 0) handleConversionFile(t, e.dataTransfer.files[0]);
+                        if (e.dataTransfer.files.length > 0) enqueueFiles(t, Array.from(e.dataTransfer.files));
                     });
                     fileInput.addEventListener('change', () => {
-                        if (fileInput.files.length > 0) handleConversionFile(t, fileInput.files[0]);
+                        if (fileInput.files.length > 0) enqueueFiles(t, Array.from(fileInput.files));
+                        fileInput.value = '';
                     });
                 })(type);
             }
         }
 
-        async function handleConversionFile(convType, file) {
-            const ext = file.name.split('.').pop().toLowerCase();
-            if (!ACCEPTED_EXTENSIONS[convType].includes(ext)) {
-                showStatus(convType, 'Unsupported file format: .' + ext + '. Expected: ' + ACCEPTED_EXTENSIONS[convType].map(e => '.' + e).join(', '), 'error');
+        function enqueueFiles(convType, filesList) {
+            if (!conversionQueues[convType]) conversionQueues[convType] = [];
+
+            let validCount = 0;
+            const toEnqueue = [];
+            for (const file of filesList) {
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (ACCEPTED_EXTENSIONS[convType].includes(ext)) {
+                    toEnqueue.push(file);
+                    validCount++;
+                }
+            }
+
+            if (validCount === 0) {
+                showStatus(convType, 'Unsupported file format.', 'error');
                 return;
             }
 
-            // Image files are handled separately (binary, not text)
             if (convType === 'images') {
-                await handleImageFile(file);
+                conversionQueues['images'].push(...toEnqueue);
+                handleImageFileQueue();
                 return;
             }
+
+            conversionQueues[convType].push(...toEnqueue);
+            
+            const isBulk = document.getElementById('opt-bulk-' + convType) && document.getElementById('opt-bulk-' + convType).checked;
+            
+            if (isBulk) {
+                if (!conversionZips[convType]) conversionZips[convType] = new JSZip();
+                
+                if (!activeFile[convType]) {
+                    processNextInQueue(convType, true);
+                } else {
+                    renderQueueUI(convType);
+                }
+            } else {
+                if (!activeFile[convType]) {
+                    processNextInQueue(convType, false);
+                } else {
+                    renderQueueUI(convType);
+                    const btnNext = document.getElementById('btn-next-' + convType);
+                    if (btnNext && conversionQueues[convType].length > 0) {
+                        btnNext.textContent = `Next File (${conversionQueues[convType].length} remaining)`;
+                    }
+                }
+            }
+        }
+
+        function loadSpecificFile(convType, index) {
+            const isBulk = document.getElementById('opt-bulk-' + convType) && document.getElementById('opt-bulk-' + convType).checked;
+            processNextInQueue(convType, isBulk, index);
+        }
+
+        async function processNextInQueue(convType, isBulk = false, index = 0) {
+            if (activeFile[convType]) {
+                if (!completedFiles[convType]) completedFiles[convType] = [];
+                completedFiles[convType].push(activeFile[convType]);
+            }
+            
+            const queue = conversionQueues[convType];
+            if (!queue || queue.length === 0 || index >= queue.length) {
+                activeFile[convType] = null;
+                renderQueueUI(convType);
+                
+                if (isBulk && conversionZips[convType]) {
+                    document.getElementById('progressText-' + convType).textContent = 'Generating ZIP...';
+                    const zipBlob = await conversionZips[convType].generateAsync({type: "blob"});
+                    const url = URL.createObjectURL(zipBlob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = convType + '_converted.zip';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    
+                    showStatus(convType, 'Bulk conversion complete!', 'success');
+                    document.getElementById('progressContainer-' + convType).style.display = 'none';
+                    conversionZips[convType] = null;
+                } else {
+                    const btnNext = document.getElementById('btn-next-' + convType);
+                    if (btnNext) btnNext.style.display = 'none';
+                }
+                return;
+            }
+
+            // Clean up 3D viewer if present
+            document.getElementById('docking-viewer-container').style.display = 'none';
+            if (typeof viewer3D !== 'undefined' && viewer3D !== null) viewer3D.clear();
+
+            const fileList = queue.splice(index, 1);
+            const file = fileList[0];
+            activeFile[convType] = file;
+            renderQueueUI(convType);
+            
+            // Re-evaluate Next button counter
+            const btnNext = document.getElementById('btn-next-' + convType);
+            if (btnNext && queue.length > 0 && !isBulk) {
+                btnNext.textContent = `Next File (${queue.length} remaining)`;
+            }
+            
+            const ext = file.name.split('.').pop().toLowerCase();
 
             resetConversionUI(convType);
             const progressContainer = document.getElementById('progressContainer-' + convType);
             progressContainer.style.display = 'block';
-            updateProgress(convType, 5, 'Reading file...');
+            updateProgress(convType, 5, 'Reading ' + file.name + '...');
+
+            conversionOutputs[convType + '_isBulk'] = isBulk;
 
             try {
                 const text = await file.text();
@@ -1424,7 +1622,9 @@
                 }
             } catch (err) {
                 showStatus(convType, 'Error: ' + err.message, 'error');
-                progressContainer.style.display = 'none';
+                if (isBulk) {
+                    processNextInQueue(convType, isBulk);
+                }
             }
         }
 
@@ -2774,6 +2974,21 @@
         }
 
         function showResults(prefix, output, outputFileName) {
+            const isBulk = conversionOutputs[prefix + '_isBulk'];
+            
+            if (isBulk && conversionZips[prefix]) {
+                conversionZips[prefix].file(outputFileName, output);
+                
+                // If it's a structure with a config, let's output a default config too so they have it
+                if (prefix === 'structure') {
+                    const cfg = `# Auto-generated config for ${outputFileName}\nreceptor = ${outputFileName}\ncenter_x = 0\ncenter_y = 0\ncenter_z = 0\nsize_x = 20\nsize_y = 20\nsize_z = 20\nexhaustiveness = 8\n`;
+                    conversionZips[prefix].file(outputFileName.replace('.pdbqt', '_config.txt'), cfg);
+                }
+                
+                processNextInQueue(prefix, true);
+                return;
+            }
+            
             conversionOutputs[prefix] = { output, fileName: outputFileName };
             const lines = output.split('\n').slice(0, 52);
             document.getElementById('previewContainer-' + prefix).textContent = lines.join('\n');
@@ -2782,6 +2997,16 @@
             document.getElementById('progressContainer-' + prefix).style.display = 'none';
             if (prefix === 'structure') {
                 document.getElementById('btn-open-viewer').style.display = 'inline-block';
+            }
+
+            const btnNext = document.getElementById('btn-next-' + prefix);
+            if (btnNext) {
+                if (conversionQueues[prefix] && conversionQueues[prefix].length > 0) {
+                    btnNext.textContent = `Next File (${conversionQueues[prefix].length} remaining)`;
+                    btnNext.style.display = 'inline-block';
+                } else {
+                    btnNext.style.display = 'none';
+                }
             }
 
             const warnings = getWarnings(prefix, output);
@@ -2794,10 +3019,9 @@
 
         function getWarnings(prefix, output) {
             const warnings = [];
-            // Check for atoms with unknown typing (only for PDBQT conversions)
             if (prefix === 'structure' || prefix === 'ligand') {
                 const data = conversionOutputs[prefix];
-                if (data && data.output.includes('_warned')) {
+                if (data && data.output && data.output.includes('_warned')) {
                     warnings.push('Some elements used default atom typing');
                 }
             }
@@ -2877,25 +3101,42 @@
             return canvas;
         }
 
-        async function handleImageFile(file) {
-            const ext = file.name.split('.').pop().toLowerCase();
-            imageFileName = file.name;
+        async function handleImageFileQueue() {
+            const queue = conversionQueues['images'];
+            if (!queue || queue.length === 0) return;
 
             resetImageConverter();
 
-            const progressContainer = document.getElementById('progressContainer-images');
-            progressContainer.style.display = 'block';
-            updateProgress('images', 10, 'Reading image...');
+            if (queue.length === 1) {
+                // Normal Preview mode for a single file
+                const file = queue[0];
+                imageFileName = file.name;
+                const progressContainer = document.getElementById('progressContainer-images');
+                progressContainer.style.display = 'block';
+                updateProgress('images', 10, 'Reading image...');
 
-            try {
-                let previewURL = null;
+                try {
+                    let previewURL = null;
+                    const ext = file.name.split('.').pop().toLowerCase();
+                    if (ext === 'heic' || ext === 'heif') {
+                        let nativeWorked = false;
+                        try {
+                            const result = await loadBlobIntoImage(file);
+                            const canvas = document.createElement('canvas');
+                            canvas.width = result.img.naturalWidth;
+                            canvas.height = result.img.naturalHeight;
+                            canvas.getContext('2d').drawImage(result.img, 0, 0);
+                            imageCanvas = canvas;
+                            previewURL = result.objectURL;
+                            nativeWorked = true;
+                        } catch (_) { }
 
-                if (ext === 'heic' || ext === 'heif') {
-                    updateProgress('images', 25, 'Trying native HEIC support...');
-
-                    // Step 1: native browser decoding (Safari / macOS / iOS)
-                    let nativeWorked = false;
-                    try {
+                        if (!nativeWorked) {
+                            updateProgress('images', 50, 'Decoding HEIC...');
+                            imageCanvas = await decodeHEICWithLibheif(file);
+                            previewURL = imageCanvas.toDataURL('image/png');
+                        }
+                    } else {
                         const result = await loadBlobIntoImage(file);
                         const canvas = document.createElement('canvas');
                         canvas.width = result.img.naturalWidth;
@@ -2903,87 +3144,120 @@
                         canvas.getContext('2d').drawImage(result.img, 0, 0);
                         imageCanvas = canvas;
                         previewURL = result.objectURL;
-                        nativeWorked = true;
-                    } catch (_) { }
-
-                    // Step 2: libheif — the reference HEIC WASM decoder
-                    if (!nativeWorked) {
-                        updateProgress('images', 50, 'Decoding HEIC...');
-                        imageCanvas = await decodeHEICWithLibheif(file);
-                        previewURL = imageCanvas.toDataURL('image/png');
                     }
 
-                } else {
-                    // All other formats: let the browser decode natively
-                    updateProgress('images', 40, 'Loading image...');
-                    const result = await loadBlobIntoImage(file).catch(() => {
-                        throw new Error('Failed to load image. The file may be corrupted or the format is unsupported.');
-                    });
-                    const canvas = document.createElement('canvas');
-                    canvas.width = result.img.naturalWidth;
-                    canvas.height = result.img.naturalHeight;
-                    canvas.getContext('2d').drawImage(result.img, 0, 0);
-                    imageCanvas = canvas;
-                    previewURL = result.objectURL;
+                    document.getElementById('imagePreview').src = previewURL;
+                    document.getElementById('imageInfo').textContent =
+                        imageCanvas.width + ' × ' + imageCanvas.height + ' px  |  ' + (file.size / 1024).toFixed(1) + ' KB';
+
+                    document.getElementById('imagePreviewSection').classList.add('show');
+                    document.getElementById('imageControls').classList.add('show');
+                    progressContainer.style.display = 'none';
+                    showStatus('images', 'Image loaded. Select output format and click Convert & Download.', 'success');
+                    document.getElementById('convertImageBtn').textContent = 'Convert & Download';
+                } catch (err) {
+                    showStatus('images', err.message, 'error');
+                    progressContainer.style.display = 'none';
                 }
-
-                updateProgress('images', 90, 'Preparing preview...');
-
-                document.getElementById('imagePreview').src = previewURL;
-
-                const sizeKB = (file.size / 1024).toFixed(1);
-                const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                const sizeStr = file.size > 1048576 ? sizeMB + ' MB' : sizeKB + ' KB';
-                document.getElementById('imageInfo').textContent =
-                    imageCanvas.width + ' × ' + imageCanvas.height + ' px  |  ' + sizeStr + '  |  ' + ext.toUpperCase();
-
-                document.getElementById('imagePreviewSection').classList.add('show');
+            } else {
+                // Bulk Mode (Multiple files)
                 document.getElementById('imageControls').classList.add('show');
-
-                progressContainer.style.display = 'none';
-                showStatus('images', 'Image loaded. Select an output format and click Convert & Download.', 'success');
-
-            } catch (err) {
-                showStatus('images', err.message, 'error');
-                progressContainer.style.display = 'none';
+                showStatus('images', `Loaded ${queue.length} images. Configure options, then click Convert & Download ZIP.`, 'success');
+                document.getElementById('convertImageBtn').textContent = 'Convert & Download ZIP';
             }
         }
 
-        function convertAndDownloadImage() {
-            if (!imageCanvas) {
-                showStatus('images', 'No image loaded. Please upload an image first.', 'error');
+        async function convertAndDownloadImage() {
+            const queue = conversionQueues['images'];
+            if (!queue || queue.length === 0) {
+                showStatus('images', 'No image loaded.', 'error');
                 return;
             }
 
             const format = document.getElementById('outputFormat').value;
             const qualitySlider = document.getElementById('qualitySlider');
             const quality = format === 'image/png' ? undefined : parseFloat(qualitySlider.value) / 100;
-
-            // Determine file extension
             const extMap = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
             const outExt = extMap[format] || 'png';
-            const baseName = imageFileName.replace(/\.[^.]+$/, '');
-            const outFileName = baseName + '.' + outExt;
 
-            imageCanvas.toBlob(function (blob) {
-                if (!blob) {
-                    showStatus('images', 'Conversion failed. Your browser may not support this output format.', 'error');
-                    return;
+            if (queue.length === 1) {
+                // Single Image Download
+                if (!imageCanvas) return;
+                const baseName = imageFileName.replace(/\.[^.]+$/, '');
+                imageCanvas.toBlob(function (blob) {
+                    if (!blob) {
+                        showStatus('images', 'Conversion failed.', 'error');
+                        return;
+                    }
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = baseName + '.' + outExt;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    showStatus('images', `Downloaded ${a.download}`, 'success');
+                    // Remove from queue after success
+                    conversionQueues['images'] = [];
+                }, format, quality);
+
+            } else {
+                // Bulk Image Convert to ZIP
+                const zip = new JSZip();
+                const progressContainer = document.getElementById('progressContainer-images');
+                progressContainer.style.display = 'block';
+
+                for (let i = 0; i < queue.length; i++) {
+                    const file = queue[i];
+                    updateProgress('images', (i / queue.length) * 100, `Processing ${i + 1}/${queue.length}: ${file.name}`);
+
+                    try {
+                        let canvas;
+                        const ext = file.name.split('.').pop().toLowerCase();
+                        if (ext === 'heic' || ext === 'heif') {
+                            let nativeWorked = false;
+                            try {
+                                const result = await loadBlobIntoImage(file);
+                                canvas = document.createElement('canvas');
+                                canvas.width = result.img.naturalWidth;
+                                canvas.height = result.img.naturalHeight;
+                                canvas.getContext('2d').drawImage(result.img, 0, 0);
+                                nativeWorked = true;
+                            } catch (e) { }
+                            if (!nativeWorked) {
+                                canvas = await decodeHEICWithLibheif(file);
+                            }
+                        } else {
+                            const result = await loadBlobIntoImage(file);
+                            canvas = document.createElement('canvas');
+                            canvas.width = result.img.naturalWidth;
+                            canvas.height = result.img.naturalHeight;
+                            canvas.getContext('2d').drawImage(result.img, 0, 0);
+                        }
+
+                        const blob = await new Promise(res => canvas.toBlob(res, format, quality));
+                        if (blob) {
+                            const baseName = file.name.replace(/\.[^.]+$/, '');
+                            zip.file(`${baseName}.${outExt}`, blob);
+                        }
+                    } catch (e) {
+                        console.error('Failed to encode ' + file.name, e);
+                    }
                 }
-                const url = URL.createObjectURL(blob);
+
+                updateProgress('images', 100, 'Generating ZIP...');
+                const zipBlob = await zip.generateAsync({ type: "blob" });
+                const url = URL.createObjectURL(zipBlob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = outFileName;
-                document.body.appendChild(a);
+                a.download = 'converted_images.zip';
                 a.click();
-                document.body.removeChild(a);
                 URL.revokeObjectURL(url);
 
-                const sizeMB = (blob.size / (1024 * 1024)).toFixed(2);
-                const sizeKB = (blob.size / 1024).toFixed(1);
-                const sizeStr = blob.size > 1048576 ? sizeMB + ' MB' : sizeKB + ' KB';
-                showStatus('images', 'Downloaded ' + outFileName + ' (' + sizeStr + ')', 'success');
-            }, format, quality);
+                progressContainer.style.display = 'none';
+                showStatus('images', `Processed & Zipped ${queue.length} images.`, 'success');
+                // Clear the queue once done
+                conversionQueues['images'] = [];
+            }
         }
 
         function resetImageConverter() {
