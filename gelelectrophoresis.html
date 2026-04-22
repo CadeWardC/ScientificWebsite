@@ -1506,6 +1506,238 @@
         input:checked+.date-slider:before {
             transform: translateX(22px);
         }
+
+        /* Multi-Gel Mode Styles */
+        .hero h1 {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        .hero h1:hover {
+            opacity: 0.85;
+        }
+
+        .mode-indicator {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 400;
+            color: var(--muted-blue);
+            margin-top: 0.25rem;
+            -webkit-text-fill-color: var(--muted-blue);
+            transition: all 0.3s ease;
+        }
+
+        .multi-gel-section {
+            display: none;
+            margin-top: 2rem;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .multi-gel-section.show {
+            display: block;
+        }
+
+        .multi-gel-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            background: var(--light-blue);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 2rem auto;
+        }
+
+        .multi-gel-upload-area:hover,
+        .multi-gel-upload-area.drag-over {
+            border-color: var(--muted-blue);
+            background: rgba(74, 144, 164, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(74, 144, 164, 0.2);
+        }
+
+        .multi-gel-upload-area p {
+            font-size: 1.1rem;
+            color: var(--primary-black);
+            margin-bottom: 0.5rem;
+            pointer-events: none;
+        }
+
+        .multi-gel-upload-area span {
+            display: block;
+            color: rgba(10, 10, 10, 0.5);
+            font-size: 0.9rem;
+            pointer-events: none;
+        }
+
+        .multi-gel-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            max-width: 1000px;
+            margin: 0 auto 2rem auto;
+        }
+
+        .multi-gel-card {
+            position: relative;
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.4s ease forwards;
+        }
+
+        .multi-gel-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .multi-gel-card img {
+            width: 100%;
+            aspect-ratio: 16/10;
+            object-fit: contain;
+            background: #f0f2f5;
+            display: block;
+        }
+
+        .multi-gel-thumb {
+            position: relative;
+            display: block;
+        }
+
+        .multi-gel-thumb .well-ticks {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .multi-gel-thumb .well-tick {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: rgba(74, 144, 164, 0.7);
+        }
+
+        .multi-gel-thumb .well-num {
+            position: absolute;
+            top: 2px;
+            transform: translateX(-50%);
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--muted-blue);
+            background: rgba(255,255,255,0.8);
+            padding: 0 3px;
+            border-radius: 2px;
+        }
+
+        .multi-gel-analyze-banner {
+            background: var(--light-blue);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin: 1rem auto;
+            max-width: 900px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .multi-gel-analyze-banner .banner-text {
+            font-weight: 600;
+            color: var(--primary-black);
+        }
+
+        .multi-gel-analyze-banner a {
+            color: var(--muted-blue);
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .multi-gel-card-info {
+            padding: 0.75rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .multi-gel-card-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .multi-gel-card-label {
+            flex: 1;
+            padding: 0.4rem 0.6rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        .multi-gel-card-label:focus {
+            outline: none;
+            border-color: var(--muted-blue);
+        }
+
+        .multi-gel-wells-select {
+            padding: 0.4rem 0.6rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-family: inherit;
+            background: var(--pure-white);
+            color: var(--primary-black);
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+            width: 100%;
+        }
+
+        .multi-gel-wells-select:focus {
+            outline: none;
+            border-color: var(--muted-blue);
+        }
+
+        .multi-gel-card-remove {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            line-height: 1;
+        }
+
+        .multi-gel-card-remove:hover {
+            color: #ff4444;
+            background: rgba(255, 68, 68, 0.1);
+        }
+
+        .multi-gel-export-container {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .multi-gel-count {
+            text-align: center;
+            color: rgba(10, 10, 10, 0.6);
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
     </style>
 </head>
 
@@ -1533,8 +1765,8 @@
     <section id="home" class="hero">
         <div class="container">
             <div class="hero-content fade-in">
-                <h1>Size Selection</h1>
-                <p>Choose your preferred option from the selections below. Each choice offers different capabilities
+                <h1 id="heroH1" style="cursor:pointer" title="Click to toggle Multiple Gels mode"><span id="heroTitle">Size Selection</span><span class="mode-indicator" id="modeIndicator">▼ Click to switch to Multiple Gels</span></h1>
+                <p id="heroDescription">Choose your preferred option from the selections below. Each choice offers different capabilities
                     tailored to your specific needs.</p>
 
                 <div class="button-container" id="selection">
@@ -1560,9 +1792,44 @@
                     </div>
                 </div>
 
+                <!-- Multi-Gel Mode -->
+                <div id="multiGelSection" class="multi-gel-section">
+                    <div id="multiGelDropZone" class="multi-gel-upload-area">
+                        <p>📷 Drop gel images here or click to browse</p>
+                        <span>Supports JPG, PNG, GIF • Add as many as you need</span>
+                    </div>
+                    <input type="file" id="multiGelFileInput" accept="image/*" multiple style="display: none;">
+                    <div id="multiGelCount" class="multi-gel-count" style="display: none;"></div>
+                    <div id="multiGelGallery" class="multi-gel-gallery"></div>
+                    <div id="multiGelExportContainer" class="multi-gel-export-container" style="display: none;">
+                        <button id="multiGelTopActionBtn" class="selection-button big-button" onclick="startMultiGelAnalysis()">Analyze</button>
+                    </div>
+                </div>
+
             </div>
         </div>
     </section>
+
+    <!-- Multi-gel toggle script - self contained to guarantee binding -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var h1El = document.getElementById('heroH1');
+            if (h1El) {
+                h1El.addEventListener('click', function() {
+                    if (typeof toggleMultiGelMode === 'function') {
+                        toggleMultiGelMode();
+                    } else {
+                        alert('Toggle function not loaded yet. Please wait for page to fully load.');
+                    }
+                });
+            }
+        });
+    </script>
+
+    <div id="multiGelAnalyzeBanner" class="multi-gel-analyze-banner" style="display:none;">
+        <span class="banner-text" id="multiGelBannerText"></span>
+        <a onclick="exitMultiGelAnalysisToGallery()">Back to Gallery</a>
+    </div>
 
     <section id="results" class="results-section">
         <div class="container">
@@ -1635,7 +1902,7 @@
                         style="display: none; margin-bottom: 1rem; flex-direction: row; justify-content: center; gap: 2rem;">
                         <div class="date-toggle-wrapper"
                             style="justify-content: center; gap: 1rem; border-top: none; padding-top: 0;">
-                            <span class="date-toggle-label">Split Image</span>
+                            <span class="date-toggle-label">Adjust Wells</span>
                             <label class="date-switch">
                                 <input type="checkbox" id="splitImageToggle" onchange="toggleSplitImage()">
                                 <span class="date-slider"></span>
@@ -1682,6 +1949,8 @@
             </div>
             <div id="exportSection" class="export-section">
                 <button id="exportBtn" class="choose-file-btn">Export as Image</button>
+                <button id="multiGelNextBtn" class="choose-file-btn" style="display:none;" onclick="saveAndAdvanceMultiGel()">Save &amp; Next Gel</button>
+                <button id="multiGelExportOneBtn" class="choose-file-btn" style="display:none;" onclick="exportImage()">Export This Gel</button>
             </div>
         </div>
     </section>
@@ -1704,7 +1973,7 @@
     <!-- Splitter Modal -->
     <div id="splitterModal" class="modal-overlay">
         <div class="modal-content">
-            <h2>Separate Wells</h2>
+            <h2>Adjust Wells</h2>
             <p>Adjust the vertical lines to separate your wells.</p>
             <div class="splitter-container" id="splitterContainer">
                 <div style="position: relative; display: inline-block;">
@@ -1712,8 +1981,15 @@
                     <div id="splitterLinesOverlay"></div>
                 </div>
             </div>
+            <div class="date-toggle-wrapper" style="justify-content: center; gap: 1rem; border-top: none; padding-top: 0; margin-bottom: 1rem;">
+                <span class="date-toggle-label">Whitespace between wells</span>
+                <label class="date-switch">
+                    <input type="checkbox" id="splitAddGapsToggle" checked>
+                    <span class="date-slider"></span>
+                </label>
+            </div>
             <div class="modal-actions">
-                <button id="applySplitBtn" class="choose-file-btn">Apply Split</button>
+                <button id="applySplitBtn" class="choose-file-btn">Apply</button>
                 <button id="cancelSplitBtn" class="choose-file-btn secondary">Cancel</button>
             </div>
         </div>
@@ -1778,6 +2054,13 @@
         let cropper = null;
         let originalCroppedImageSrc = null;
         let currentWellCount = 0; // Track the number of wells
+        var isMultiGelMode = false;
+        var multiGelImages = []; // Array of { id, dataUrl, label, wells, analysis }
+        var multiGelUploaderSetup = false;
+        var multiGelAnalyzeIndex = -1;
+        var multiGelCropQueue = [];
+        var multiGelCropIndex = 0;
+        var isMultiGelCropping = false;
 
         // ===== UI HANDLERS =====
         // Handle button selection
@@ -2219,9 +2502,8 @@
                 }
 
                 // --- Adjust Top Labels ---
-                // --- Adjust Top Labels ---
-                // If split mode is active (activeWellPositions is set), use 0 padding to align with exact segments
-                const horizontalPadding = activeWellPositions ? 0 : 0.15; // Increased padding from 0.15
+                // Distribute evenly across the full image width (well-center math handles spacing).
+                const horizontalPadding = 0;
 
                 const finalWidth = renderedImageWidth * (1 - (horizontalPadding * 2));
                 const finalOffset = imageOffsetLeft + (renderedImageWidth * horizontalPadding);
@@ -2310,12 +2592,10 @@
                         if (slotContainer) slotContainer.style.display = 'none';
                     }
                 } else {
-                    // Default equal spacing
+                    // Default equal spacing — center each label on its lane
                     if (slotContainer) slotContainer.style.display = 'flex';
 
-                    if (numLabels > 1) {
-                        leftPercentage = (index / (numLabels - 1)) * 100;
-                    }
+                    leftPercentage = ((index + 0.5) / numLabels) * 100;
                 }
 
                 labelDiv.style.left = `${leftPercentage}%`;
@@ -2510,6 +2790,10 @@
         }
 
         function applyCrop() {
+            if (isMultiGelCropping) {
+                applyCropMultiGel();
+                return;
+            }
             if (!cropper) return;
 
             const croppedCanvas = cropper.getCroppedCanvas();
@@ -2556,6 +2840,11 @@
         }
 
         function cancelCrop() {
+            if (isMultiGelCropping) {
+                // "Skip This Gel" — drop the current queue entry and move on
+                advanceMultiGelCrop();
+                return;
+            }
             const modal = document.getElementById('cropModal');
             modal.style.display = 'none';
             if (cropper) {
@@ -2670,6 +2959,7 @@
         window.addEventListener('load', () => {
             setupImageUploader();
 
+
             // Add Enter key support for custom wells input
             document.getElementById('wellCount').addEventListener('keypress', function (e) {
                 if (e.key === 'Enter') {
@@ -2693,9 +2983,12 @@
         });
 
         // ===== EXPORT LOGIC =====
-        async function exportImage() {
+        async function exportImage(options) {
+            options = options || {};
+            const returnCanvas = options.returnCanvas === true;
             const imagePreview = document.getElementById('imagePreview');
             if (!imagePreview.src || imagePreview.src.endsWith('#')) {
+                if (returnCanvas) return null;
                 alert('Please upload and crop an image first.');
                 return;
             }
@@ -2979,9 +3272,8 @@
             // Only select visible labels (handles removed segments)
             const topLabels = Array.from(document.querySelectorAll('.preview-label')).filter(label => label.style.display !== 'none');
 
-            // Replicate the "scrunch" effect from the preview by applying the same padding.
-            // If split mode is active, remove padding
-            const horizontalPadding = activeWellPositions ? 0 : 0.15; // Increased padding from 0.15
+            // Match the preview: labels are placed via well-center math, no extra horizontal padding.
+            const horizontalPadding = 0;
 
             const topLabelDrawWidth = imagePreview.naturalWidth * (1 - (horizontalPadding * 2));
             const topLabelStartX = imageX + (imagePreview.naturalWidth * horizontalPadding);
@@ -3037,7 +3329,10 @@
                 }
             }
 
-            // 7. Trigger download
+            // 7. Trigger download (or return canvas for bulk export)
+            if (returnCanvas) {
+                return canvas;
+            }
             const link = document.createElement('a');
             link.download = 'gel-analysis.png';
             link.href = canvas.toDataURL('image/png');
@@ -3279,6 +3574,14 @@
             const imageToSplit = document.getElementById('imageToSplit');
             const overlay = document.getElementById('splitterLinesOverlay');
 
+            // Sync whitespace toggle with saved state (default ON)
+            const addGapsToggle = document.getElementById('splitAddGapsToggle');
+            if (addGapsToggle) {
+                addGapsToggle.checked = savedSplitState
+                    ? (savedSplitState.addGaps !== false)
+                    : true;
+            }
+
             imageToSplit.src = originalCroppedImageSrc;
             overlay.innerHTML = ''; // Clear existing lines
             splitterLines = [];
@@ -3400,9 +3703,11 @@
             });
 
             // Save state
+            const addGapsToggle = document.getElementById('splitAddGapsToggle');
             savedSplitState = {
                 splitPositions: splitPositions,
-                removedIndices: removedIndices
+                removedIndices: removedIndices,
+                addGaps: addGapsToggle ? !!addGapsToggle.checked : true
             };
 
             // Render
@@ -3429,6 +3734,7 @@
                     // --- SPLIT LOGIC ---
                     const splitPositions = savedSplitState.splitPositions;
                     const removedIndices = savedSplitState.removedIndices;
+                    const gapPx = (savedSplitState.addGaps === false) ? 0 : SPLIT_GAP;
 
                     // Map split positions to original image coordinates
                     const boundaries = [0];
@@ -3450,7 +3756,7 @@
 
                     // Calculate new width
                     const numActive = activeSegments.length;
-                    const totalGapWidth = numActive > 1 ? (numActive - 1) * SPLIT_GAP : 0;
+                    const totalGapWidth = numActive > 1 ? (numActive - 1) * gapPx : 0;
                     const totalImageWidth = activeSegments.reduce((sum, seg) => sum + seg.width, 0);
 
                     // Determine extra height for brackets if groups exist
@@ -3481,7 +3787,7 @@
                         }
 
                         if (index < activeSegments.length - 1) {
-                            currentX += seg.width + SPLIT_GAP;
+                            currentX += seg.width + gapPx;
                         } else {
                             currentX += seg.width;
                         }
@@ -3628,8 +3934,633 @@
             img.src = originalCroppedImageSrc;
         }
 
+        // ===== MULTI-GEL MODE =====
+
+        function toggleMultiGelMode() {
+            isMultiGelMode = !isMultiGelMode;
+
+            const sizeButtons = document.getElementById('selection');
+            const customWellsInput = document.getElementById('customWellsInput');
+            const multiGelSection = document.getElementById('multiGelSection');
+            const modeIndicator = document.getElementById('modeIndicator');
+            const heroDescription = document.getElementById('heroDescription');
+            const resultsSection = document.getElementById('results');
+            const heroTitle = document.getElementById('heroTitle');
+
+            if (isMultiGelMode) {
+                // Switch to Multi-Gel mode
+                heroTitle.textContent = 'Multiple Gels';
+                modeIndicator.textContent = '\u25B2 Click to switch to Size Selection';
+                heroDescription.textContent = 'Upload multiple gel images below. Add labels, then export them all as a combined figure.';
+
+                sizeButtons.style.display = 'none';
+                customWellsInput.style.display = 'none';
+                customWellsInput.classList.remove('show');
+                resultsSection.style.display = 'none';
+                resultsSection.classList.remove('show');
+
+                multiGelSection.classList.add('show');
+                setupMultiGelUploader();
+            } else {
+                // Switch back to Size Selection mode
+                heroTitle.textContent = 'Size Selection';
+                modeIndicator.textContent = '\u25BC Click to switch to Multiple Gels';
+                heroDescription.textContent = 'Choose your preferred option from the selections below. Each choice offers different capabilities tailored to your specific needs.';
+
+                sizeButtons.style.display = 'flex';
+                multiGelSection.classList.remove('show');
+            }
+        }
+
+
+        function setupMultiGelUploader() {
+            if (multiGelUploaderSetup) return;
+            multiGelUploaderSetup = true;
+
+            const dropZone = document.getElementById('multiGelDropZone');
+            const fileInput = document.getElementById('multiGelFileInput');
+
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over'), false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over'), false);
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleMultiGelFiles(files);
+                }
+            }, false);
+
+            dropZone.addEventListener('click', () => fileInput.click());
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleMultiGelFiles(e.target.files);
+                    fileInput.value = ''; // Reset so same files can be re-added
+                }
+            });
+        }
+
+        function handleMultiGelFiles(files) {
+            const fileArr = Array.from(files).filter(function(f) { return f && f.type.startsWith('image/'); });
+            if (fileArr.length === 0) return;
+
+            Promise.all(fileArr.map(function(f) {
+                return new Promise(function(resolve) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) { resolve({ file: f, dataUrl: e.target.result }); };
+                    reader.readAsDataURL(f);
+                });
+            })).then(function(results) {
+                results.forEach(function(r) {
+                    multiGelCropQueue.push({
+                        id: Date.now() + Math.random(),
+                        dataUrl: r.dataUrl,
+                        label: r.file.name.replace(/\.[^/.]+$/, ''),
+                        wells: 10,
+                        analysis: null
+                    });
+                });
+                multiGelCropIndex = 0;
+                isMultiGelCropping = true;
+                openMultiGelCropperFor(0);
+            });
+        }
+
+        function openMultiGelCropperFor(index) {
+            const item = multiGelCropQueue[index];
+            if (!item) { endMultiGelCropFlow(); return; }
+            const imageToCrop = document.getElementById('imageToCrop');
+            const modal = document.getElementById('cropModal');
+            const cropBtn = document.getElementById('cropBtn');
+            const cancelBtn = document.getElementById('cancelCropBtn');
+
+            imageToCrop.src = item.dataUrl;
+            modal.style.display = 'flex';
+
+            if (cropper) { cropper.destroy(); cropper = null; }
+            cropper = new Cropper(imageToCrop, {
+                aspectRatio: NaN,
+                viewMode: 1,
+                background: false,
+                autoCropArea: 0.8,
+            });
+
+            const remaining = multiGelCropQueue.length - index;
+            const isLast = remaining === 1;
+            cropBtn.textContent = isLast ? 'Crop & Finish' : ('Crop & Next (' + (remaining - 1) + ' remaining)');
+            cancelBtn.textContent = 'Skip This Gel';
+        }
+
+        function applyCropMultiGel() {
+            if (!cropper) return;
+            const croppedCanvas = cropper.getCroppedCanvas();
+            if (!croppedCanvas) {
+                alert('Could not apply crop.');
+                return;
+            }
+            const dataUrl = croppedCanvas.toDataURL('image/png');
+            const entry = multiGelCropQueue[multiGelCropIndex];
+            entry.dataUrl = dataUrl;
+            multiGelImages.push(entry);
+            renderMultiGelGallery();
+            advanceMultiGelCrop();
+        }
+
+        function advanceMultiGelCrop() {
+            multiGelCropIndex++;
+            if (multiGelCropIndex < multiGelCropQueue.length) {
+                openMultiGelCropperFor(multiGelCropIndex);
+            } else {
+                endMultiGelCropFlow();
+            }
+        }
+
+        function endMultiGelCropFlow() {
+            const modal = document.getElementById('cropModal');
+            modal.style.display = 'none';
+            if (cropper) { cropper.destroy(); cropper = null; }
+            document.getElementById('cropBtn').textContent = 'Crop & Use Image';
+            document.getElementById('cancelCropBtn').textContent = 'Cancel';
+            multiGelCropQueue = [];
+            multiGelCropIndex = 0;
+            isMultiGelCropping = false;
+            const fileInput = document.getElementById('multiGelFileInput');
+            if (fileInput) fileInput.value = '';
+        }
+
+        function renderMultiGelGallery() {
+            const gallery = document.getElementById('multiGelGallery');
+            const countEl = document.getElementById('multiGelCount');
+            const exportContainer = document.getElementById('multiGelExportContainer');
+
+            gallery.innerHTML = '';
+
+            if (multiGelImages.length === 0) {
+                countEl.style.display = 'none';
+                exportContainer.style.display = 'none';
+                return;
+            }
+
+            countEl.style.display = 'block';
+            countEl.textContent = `${multiGelImages.length} gel image${multiGelImages.length !== 1 ? 's' : ''} added`;
+            exportContainer.style.display = 'block';
+
+            multiGelImages.forEach((gel, index) => {
+                const card = document.createElement('div');
+                card.className = 'multi-gel-card';
+                card.style.animationDelay = `${index * 0.05}s`;
+
+                let ticksHtml = '<div class="well-ticks">';
+                for (let w = 0; w < gel.wells; w++) {
+                    const centerPct = ((w + 0.5) / gel.wells) * 100;
+                    ticksHtml += `<div class="well-num" style="left:${centerPct}%;">${w + 1}</div>`;
+                    if (w > 0) {
+                        const edgePct = (w / gel.wells) * 100;
+                        ticksHtml += `<div class="well-tick" style="left:${edgePct}%;"></div>`;
+                    }
+                }
+                ticksHtml += '</div>';
+
+                card.innerHTML = `
+                    <div class="multi-gel-thumb">
+                        <img src="${gel.dataUrl}" alt="Gel ${index + 1}">
+                        ${ticksHtml}
+                    </div>
+                    <div class="multi-gel-card-info">
+                        <div class="multi-gel-card-row">
+                            <input type="text" class="multi-gel-card-label" value="${gel.label}" placeholder="Enter label..."
+                                onchange="updateMultiGelLabel('${gel.id}', this.value)">
+                            <button class="multi-gel-card-remove" onclick="removeMultiGel('${gel.id}')" title="Remove">&times;</button>
+                        </div>
+                        <div class="multi-gel-card-row">
+                            <select class="multi-gel-wells-select" onchange="updateMultiGelWells('${gel.id}', this.value)">
+                                <option value="6" ${gel.wells === 6 ? 'selected' : ''}>6 Wells</option>
+                                <option value="10" ${gel.wells === 10 ? 'selected' : ''}>10 Wells</option>
+                                <option value="15" ${gel.wells === 15 ? 'selected' : ''}>15 Wells</option>
+                                <option value="other">Other...</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+
+                // If wells is a custom number (not 6, 10, or 15), add it as selected option
+                if (gel.wells !== 6 && gel.wells !== 10 && gel.wells !== 15) {
+                    const select = card.querySelector('.multi-gel-wells-select');
+                    const customOpt = document.createElement('option');
+                    customOpt.value = gel.wells;
+                    customOpt.textContent = gel.wells + ' Wells';
+                    customOpt.selected = true;
+                    select.insertBefore(customOpt, select.querySelector('option[value="other"]'));
+                }
+
+                gallery.appendChild(card);
+            });
+        }
+
+        function updateMultiGelLabel(id, newLabel) {
+            var gel = multiGelImages.find(function(g) { return String(g.id) === String(id); });
+            if (gel) gel.label = newLabel;
+        }
+
+        function updateMultiGelWells(id, value) {
+            var gel = multiGelImages.find(function(g) { return String(g.id) === String(id); });
+            if (!gel) return;
+
+            if (value === 'other') {
+                var custom = prompt('Enter number of wells (1-20):', '8');
+                var num = parseInt(custom);
+                if (num && num >= 1 && num <= 20) {
+                    gel.wells = num;
+                } else {
+                    alert('Please enter a number between 1 and 20');
+                }
+            } else {
+                gel.wells = parseInt(value);
+            }
+            renderMultiGelGallery();
+        }
+
+        function removeMultiGel(id) {
+            multiGelImages = multiGelImages.filter(function(g) { return String(g.id) !== String(id); });
+            renderMultiGelGallery();
+        }
+
+        async function exportMultiGel() {
+            if (multiGelImages.length === 0) {
+                alert('Please add at least one gel image.');
+                return;
+            }
+
+            // Load all images
+            const loadedImages = await Promise.all(multiGelImages.map(gel => {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => resolve({ img, label: gel.label });
+                    img.src = gel.dataUrl;
+                });
+            }));
+
+            // Calculate canvas dimensions
+            const PADDING = 40;
+            const LABEL_HEIGHT = 50;
+            const GAP = 30;
+            const maxWidth = Math.max(...loadedImages.map(item => item.img.naturalWidth));
+            const totalHeight = loadedImages.reduce((sum, item) => {
+                return sum + item.img.naturalHeight + LABEL_HEIGHT + GAP;
+            }, PADDING) - GAP + PADDING; // Remove last gap, add bottom padding
+
+            const canvasWidth = maxWidth + PADDING * 2;
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            const dpr = Math.max(2, window.devicePixelRatio || 1);
+            canvas.width = canvasWidth * dpr;
+            canvas.height = totalHeight * dpr;
+            ctx.scale(dpr, dpr);
+
+            // White background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvasWidth, totalHeight);
+
+            let currentY = PADDING;
+
+            loadedImages.forEach((item, index) => {
+                const imgWidth = item.img.naturalWidth;
+                const imgHeight = item.img.naturalHeight;
+
+                // Draw label
+                const labelFontSize = Math.max(18, Math.min(32, maxWidth * 0.03));
+                ctx.font = `bold ${labelFontSize}px sans-serif`;
+                ctx.fillStyle = 'black';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(item.label, PADDING, currentY + LABEL_HEIGHT - 10);
+
+                currentY += LABEL_HEIGHT;
+
+                // Center image horizontally
+                const imgX = PADDING + (maxWidth - imgWidth) / 2;
+                ctx.drawImage(item.img, imgX, currentY);
+
+                currentY += imgHeight + GAP;
+            });
+
+            // Download using the combined labels as filename
+            var filename = multiGelImages.map(function(g) { return g.label; }).filter(Boolean).join('_') || 'gel-analysis-multi';
+            var link = document.createElement('a');
+            link.download = filename + '.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // ===== MULTI-GEL ANALYZE WORKFLOW =====
+
+        function startMultiGelAnalysis() {
+            if (multiGelImages.length === 0) {
+                alert('Please add at least one gel image.');
+                return;
+            }
+            multiGelAnalyzeIndex = 0;
+            document.getElementById('multiGelSection').classList.remove('show');
+            document.getElementById('selection').style.display = 'none';
+            document.getElementById('customWellsInput').style.display = 'none';
+            loadGelIntoSingleWorkflow(0);
+        }
+
+        function loadGelIntoSingleWorkflow(i) {
+            const gel = multiGelImages[i];
+            if (!gel) return;
+
+            currentWellCount = gel.wells;
+
+            // Reset shared split / group / preview state between gels
+            savedSplitState = null;
+            wellGroups = [];
+            activeWellPositions = null;
+            const splitToggle = document.getElementById('splitImageToggle');
+            const groupToggle = document.getElementById('groupWellsToggle');
+            const editGroupsBtn = document.getElementById('editGroupsBtn');
+            const addGapsToggle = document.getElementById('splitAddGapsToggle');
+            if (splitToggle) splitToggle.checked = false;
+            if (groupToggle) groupToggle.checked = false;
+            if (editGroupsBtn) editGroupsBtn.style.display = 'none';
+            if (addGapsToggle) addGapsToggle.checked = true;
+
+            // Single-mode uses originalCroppedImageSrc for split recalculation
+            originalCroppedImageSrc = gel.dataUrl;
+
+            // Update section titles
+            document.getElementById('label-section-title').textContent = gel.wells + ' Wells Configuration';
+            document.getElementById('label-section-description').textContent = 'Configure your ' + gel.wells + ' label slots';
+
+            // Build label slots for this well count
+            generateLabelSlots(gel.wells, gel.wells <= 6 ? 'big' : 'small');
+
+            // Inject the gel image directly into the preview (bypass cropper)
+            const imagePreview = document.getElementById('imagePreview');
+            const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+            const dropZone = document.getElementById('dropZone');
+            imagePreview.onload = function() {
+                if (typeof renderPreview === 'function') {
+                    renderPreview();
+                }
+                if (typeof adjustPreviewLayout === 'function') {
+                    adjustPreviewLayout();
+                }
+            };
+            imagePreview.src = gel.dataUrl;
+            imagePreviewContainer.style.display = 'block';
+            dropZone.style.display = 'none';
+
+            // Restore prior analysis if it exists
+            if (gel.analysis) {
+                setTimeout(function() { restoreAnalysisIntoDOM(gel.analysis); }, 50);
+            } else {
+                // Clear annotation for fresh gel
+                const annotation = document.getElementById('annotationText');
+                if (annotation) annotation.value = '';
+            }
+
+            // Show the results section & banner
+            const resultsSection = document.getElementById('results');
+            resultsSection.style.display = 'block';
+            resultsSection.classList.add('show');
+            document.getElementById('recentLabelsSection').classList.add('show');
+            document.getElementById('imageUploaderSection').classList.add('show');
+            document.getElementById('annotationSection').classList.add('show');
+            document.getElementById('exportSection').classList.add('show');
+            document.getElementById('ladder-selection-container').classList.add('fade-in');
+            document.getElementById('of-interest-container').classList.add('fade-in');
+
+            // Show multi-gel buttons, hide single export button
+            document.getElementById('exportBtn').style.display = 'none';
+            document.getElementById('multiGelNextBtn').style.display = '';
+            document.getElementById('multiGelExportOneBtn').style.display = '';
+            const nextBtn = document.getElementById('multiGelNextBtn');
+            nextBtn.textContent = (i === multiGelImages.length - 1) ? 'Save & Finish' : 'Save & Next Gel';
+
+            // Show the banner
+            const banner = document.getElementById('multiGelAnalyzeBanner');
+            const bannerText = document.getElementById('multiGelBannerText');
+            banner.style.display = 'flex';
+            bannerText.textContent = 'Analyzing gel ' + (i + 1) + ' of ' + multiGelImages.length + ': ' + (gel.label || '(unnamed)');
+
+            // Scroll to banner
+            setTimeout(function() {
+                banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
+        function captureCurrentAnalysis() {
+            const labelInputs = document.querySelectorAll('#labelSlots .label-slot-input');
+            const labels = Array.from(labelInputs).map(function(el) { return el.value; });
+            const ladderType = (document.getElementById('ladderType') || {}).value || 'none';
+            const ladderPosToggle = document.getElementById('ladderPositionToggle');
+            const ladderPosition = (ladderPosToggle && ladderPosToggle.checked) ? 'R' : 'L';
+            const annotation = (document.getElementById('annotationText') || {}).value || '';
+            const dateToggle = document.getElementById('dateToggle');
+            const includeDate = !!(dateToggle && dateToggle.checked);
+            const splitToggle = document.getElementById('splitImageToggle');
+            const groupToggle = document.getElementById('groupWellsToggle');
+            return {
+                labels: labels,
+                ladderType: ladderType,
+                ladderPosition: ladderPosition,
+                annotation: annotation,
+                includeDate: includeDate,
+                splitEnabled: !!(splitToggle && splitToggle.checked),
+                splitState: savedSplitState ? JSON.parse(JSON.stringify(savedSplitState)) : null,
+                groupEnabled: !!(groupToggle && groupToggle.checked),
+                wellGroups: wellGroups ? JSON.parse(JSON.stringify(wellGroups)) : [],
+                activeWellPositions: activeWellPositions ? JSON.parse(JSON.stringify(activeWellPositions)) : null
+            };
+        }
+
+        function restoreAnalysisIntoDOM(analysis) {
+            if (!analysis) return;
+            const labelInputs = document.querySelectorAll('#labelSlots .label-slot-input');
+            (analysis.labels || []).forEach(function(v, idx) {
+                if (labelInputs[idx]) labelInputs[idx].value = v;
+            });
+            const ladderSel = document.getElementById('ladderType');
+            if (ladderSel && analysis.ladderType) {
+                ladderSel.value = analysis.ladderType;
+                if (typeof handleLadderChange === 'function') handleLadderChange();
+            }
+            const ladderPosToggle = document.getElementById('ladderPositionToggle');
+            if (ladderPosToggle) {
+                ladderPosToggle.checked = (analysis.ladderPosition === 'R');
+                if (typeof handleLadderPositionChange === 'function') handleLadderPositionChange();
+            }
+            const annotation = document.getElementById('annotationText');
+            if (annotation) annotation.value = analysis.annotation || '';
+            const dateToggle = document.getElementById('dateToggle');
+            if (dateToggle) dateToggle.checked = !!analysis.includeDate;
+
+            // Restore split state
+            savedSplitState = analysis.splitState || null;
+            activeWellPositions = analysis.activeWellPositions || null;
+            const splitToggle = document.getElementById('splitImageToggle');
+            if (splitToggle) splitToggle.checked = !!analysis.splitEnabled;
+
+            // Restore group state
+            wellGroups = analysis.wellGroups ? JSON.parse(JSON.stringify(analysis.wellGroups)) : [];
+            const groupToggle = document.getElementById('groupWellsToggle');
+            if (groupToggle) groupToggle.checked = !!analysis.groupEnabled;
+            const editGroupsBtn = document.getElementById('editGroupsBtn');
+            if (editGroupsBtn) editGroupsBtn.style.display = analysis.groupEnabled ? '' : 'none';
+
+            if (typeof renderPreview === 'function') renderPreview();
+            if (typeof updateLabelPreview === 'function') updateLabelPreview();
+        }
+
+        function saveAndAdvanceMultiGel() {
+            if (multiGelAnalyzeIndex < 0) return;
+            multiGelImages[multiGelAnalyzeIndex].analysis = captureCurrentAnalysis();
+
+            const next = multiGelAnalyzeIndex + 1;
+            if (next < multiGelImages.length) {
+                multiGelAnalyzeIndex = next;
+                loadGelIntoSingleWorkflow(next);
+            } else {
+                exitMultiGelAnalysisToGallery();
+            }
+        }
+
+        function exitMultiGelAnalysisToGallery() {
+            multiGelAnalyzeIndex = -1;
+
+            // Hide banner
+            document.getElementById('multiGelAnalyzeBanner').style.display = 'none';
+
+            // Hide results section
+            const resultsSection = document.getElementById('results');
+            resultsSection.style.display = 'none';
+            resultsSection.classList.remove('show');
+
+            // Reset export buttons
+            document.getElementById('exportBtn').style.display = '';
+            document.getElementById('multiGelNextBtn').style.display = 'none';
+            document.getElementById('multiGelExportOneBtn').style.display = 'none';
+
+            // Return to multi-gel gallery
+            isMultiGelMode = true;
+            document.getElementById('multiGelSection').classList.add('show');
+            document.getElementById('selection').style.display = 'none';
+
+            // If any gels have analysis, flip the top action to Bulk Export
+            const topBtn = document.getElementById('multiGelTopActionBtn');
+            const anyAnalyzed = multiGelImages.some(function(g) { return g.analysis; });
+            if (topBtn) {
+                if (anyAnalyzed) {
+                    topBtn.textContent = 'Bulk Export';
+                    topBtn.setAttribute('onclick', 'bulkExportAnalyzedGels()');
+                } else {
+                    topBtn.textContent = 'Analyze';
+                    topBtn.setAttribute('onclick', 'startMultiGelAnalysis()');
+                }
+            }
+
+            // Scroll back up
+            document.getElementById('multiGelSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        async function bulkExportAnalyzedGels() {
+            const analyzed = multiGelImages.filter(function(g) { return g.analysis; });
+            if (analyzed.length === 0) {
+                alert('No analyzed gels to export. Click Analyze first.');
+                return;
+            }
+            if (typeof JSZip === 'undefined') {
+                alert('ZIP library not loaded — please reload the page and try again.');
+                return;
+            }
+
+            // Temporarily enter single-mode to render each gel
+            document.getElementById('multiGelSection').classList.remove('show');
+            const resultsSection = document.getElementById('results');
+            resultsSection.style.display = 'block';
+            resultsSection.classList.add('show');
+
+            const zip = new JSZip();
+            const usedNames = {};
+
+            for (let i = 0; i < analyzed.length; i++) {
+                const gel = analyzed[i];
+                const canvas = await new Promise(function(resolve) {
+                    currentWellCount = gel.wells;
+                    generateLabelSlots(gel.wells, gel.wells <= 6 ? 'big' : 'small');
+
+                    const imagePreview = document.getElementById('imagePreview');
+                    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+                    imagePreview.onload = function() {
+                        if (typeof renderPreview === 'function') renderPreview();
+                        setTimeout(function() {
+                            restoreAnalysisIntoDOM(gel.analysis);
+                            setTimeout(async function() {
+                                const c = await exportImage({ returnCanvas: true });
+                                resolve(c);
+                            }, 200);
+                        }, 100);
+                    };
+                    imagePreview.src = gel.dataUrl;
+                    imagePreviewContainer.style.display = 'block';
+                    document.getElementById('dropZone').style.display = 'none';
+                });
+
+                if (!canvas) continue;
+
+                const blob = await new Promise(function(resolve) {
+                    canvas.toBlob(function(b) { resolve(b); }, 'image/png');
+                });
+                if (!blob) continue;
+
+                let base = (gel.label || ('gel-' + (i + 1))).toString().trim().replace(/[\\/:*?"<>|]/g, '_');
+                if (!base) base = 'gel-' + (i + 1);
+                let name = base + '.png';
+                if (usedNames[name]) {
+                    let n = 2;
+                    while (usedNames[base + '-' + n + '.png']) n++;
+                    name = base + '-' + n + '.png';
+                }
+                usedNames[name] = true;
+                zip.file(name, blob);
+            }
+
+            // Return to gallery
+            resultsSection.style.display = 'none';
+            document.getElementById('multiGelSection').classList.add('show');
+
+            const zipBlob = await zip.generateAsync({ type: 'blob' });
+            const url = URL.createObjectURL(zipBlob);
+            const link = document.createElement('a');
+            const d = new Date();
+            const stamp = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+            link.href = url;
+            link.download = 'gel-analysis-' + stamp + '.zip';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+        }
+
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </body>
 
 </html>

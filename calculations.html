@@ -287,6 +287,54 @@
             border-color: var(--muted-blue);
         }
 
+        .cs-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        .cs-table th,
+        .cs-table td {
+            padding: 0.65rem 0.75rem;
+            border: 1px solid #e5e5e5;
+            text-align: left;
+        }
+
+        .cs-table th {
+            background: var(--off-white);
+            font-weight: 600;
+        }
+
+        .cs-table input {
+            width: 100%;
+            padding: 0.4rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .mode-select {
+            padding: 0.6rem 0.9rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: #f8f9fa;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--soft-black);
+            cursor: pointer;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .mode-select:hover {
+            border-color: var(--muted-blue);
+        }
+
+        .mode-select:focus {
+            outline: none;
+            border-color: var(--muted-blue);
+            box-shadow: 0 0 0 3px rgba(74, 144, 164, 0.15);
+        }
+
         .input-group {
             display: flex;
             gap: 0.5rem;
@@ -566,6 +614,7 @@
                 <button class="tab-button active" onclick="openTab('dilution', this)">Dilution Calculation</button>
                 <button class="tab-button" onclick="openTab('molarity', this)">Molarity Calculation</button>
                 <button class="tab-button" onclick="openTab('transfection', this)">Transfection Calculation</button>
+                <button class="tab-button" onclick="openTab('cells', this)">Cells</button>
             </div>
 
             <div id="dilution" class="tab-content active">
@@ -752,49 +801,140 @@
             </div>
 
             <div id="transfection" class="tab-content">
-                <h2>Transfection Calculator</h2>
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:0.5rem;">
+                    <h2 style="margin:0;">Transfection Calculator</h2>
+                    <select id="trans-mode" class="mode-select" style="max-width:180px;" onchange="switchTransfectionMode(this.value)">
+                        <option value="suspension" selected>Suspension</option>
+                        <option value="adherent">Adherent</option>
+                    </select>
+                </div>
                 <p style="margin-bottom: 1.5rem; color: #666;">Calculate the amount of DNA needed for transfection.</p>
 
-                <!-- Section 1 -->
-                <div class="calc-section"
-                    style="margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid #eee;">
-                    <h3>DNA Volume Calculation</h3>
-                    <div class="calc-form">
-                        <div class="form-group">
-                            <label>Volume of Culture (mL)</label>
-                            <input type="number" id="trans-vol-culture" placeholder="e.g., 10">
+                <div id="trans-suspension" class="trans-mode-panel">
+                    <!-- Section 1 -->
+                    <div class="calc-section"
+                        style="margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid #eee;">
+                        <h3>DNA Volume Calculation</h3>
+                        <div class="calc-form">
+                            <div class="form-group">
+                                <label>Volume of Culture (mL)</label>
+                                <input type="number" id="trans-vol-culture" placeholder="e.g., 10">
+                            </div>
+                            <div class="form-group">
+                                <label>DNA Concentration (ng/µL)</label>
+                                <input type="number" id="trans-dna-conc" placeholder="e.g., 100">
+                            </div>
+                            <button class="calc-btn" onclick="calculateTransfectionSection1()">Calculate DNA Volume</button>
                         </div>
-                        <div class="form-group">
-                            <label>DNA Concentration (ng/µL)</label>
-                            <input type="number" id="trans-dna-conc" placeholder="e.g., 100">
+                        <div id="trans-result-1" class="result-box">
+                            <h3>Required DNA Volume</h3>
+                            <div class="result-value" id="trans-output-1"></div>
                         </div>
-                        <button class="calc-btn" onclick="calculateTransfectionSection1()">Calculate DNA Volume</button>
                     </div>
-                    <div id="trans-result-1" class="result-box">
-                        <h3>Required DNA Volume</h3>
-                        <div class="result-value" id="trans-output-1"></div>
+
+                    <!-- Section 2 -->
+                    <div class="calc-section">
+                        <h3>PEI Calculation</h3>
+                        <div class="calc-form">
+                            <div class="form-group">
+                                <label>PEI Concentration (mg/mL)</label>
+                                <input type="number" id="trans-pei-conc" value="1">
+                            </div>
+                            <div class="form-group">
+                                <label>PEI Multiplier</label>
+                                <input type="number" id="trans-pei-mult" value="4">
+                            </div>
+                            <button class="calc-btn" onclick="calculateTransfectionSection2()">Calculate PEI Volume</button>
+                        </div>
+                        <div id="trans-result-2" class="result-box">
+                            <h3>Required PEI Volume</h3>
+                            <div class="result-value" id="trans-output-2"></div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Section 2 -->
-                <div class="calc-section">
-                    <h3>PEI Calculation</h3>
-                    <div class="calc-form">
-                        <div class="form-group">
-                            <label>PEI Concentration (mg/mL)</label>
-                            <input type="number" id="trans-pei-conc" value="1">
+                <div id="trans-adherent" class="trans-mode-panel" style="display:none;">
+                    <div class="calc-section">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; margin-bottom:1rem;">
+                            <h3 style="margin:0;">Adherent Plasmids</h3>
+                            <div class="form-group" style="max-width:180px; margin:0;">
+                                <label>Total DNA (ng)</label>
+                                <input type="number" id="adherent-total-ng" value="2000" oninput="recalcAdherent()">
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>PEI Multiplier</label>
-                            <input type="number" id="trans-pei-mult" value="4">
+                        <div id="adherent-inputs" class="calc-form">
+                            <div class="form-group adherent-row">
+                                <label>Plasmid Concentration (ng/µL)</label>
+                                <input type="number" class="adherent-conc" placeholder="e.g., 500" oninput="recalcAdherent()">
+                                <div class="adherent-vol" style="font-size:0.9rem; color:var(--muted-blue); margin-top:0.25rem;">Volume: — µL</div>
+                            </div>
                         </div>
-                        <button class="calc-btn" onclick="calculateTransfectionSection2()">Calculate PEI Volume</button>
-                    </div>
-                    <div id="trans-result-2" class="result-box">
-                        <h3>Required PEI Volume</h3>
-                        <div class="result-value" id="trans-output-2"></div>
+                        <button class="calc-btn" style="margin-top:1rem; padding:0.6rem 1rem;"
+                            onclick="addAdherentInput()">+</button>
                     </div>
                 </div>
+            </div>
+
+            <div id="cells" class="tab-content">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:0.5rem;">
+                    <h2 style="margin:0;">Cells</h2>
+                    <select id="cells-mode" class="mode-select" style="max-width:180px;" onchange="switchCellsMode(this.value)">
+                        <option value="suspension" selected>Suspension</option>
+                        <option value="adherent">Adherent</option>
+                    </select>
+                </div>
+                <p style="color:#666;">Cell-related calculators coming soon.</p>
+
+                <div id="cells-suspension" class="cells-mode-panel">
+                    <div class="calc-section">
+                        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; align-items:end;">
+                            <div class="form-group">
+                                <label>Target Density (cells/mL)</label>
+                                <input type="number" id="cs-target-density" placeholder="e.g., 1e6" oninput="calcCellsSuspension()">
+                            </div>
+                            <div class="form-group">
+                                <label>Target Volume (mL)</label>
+                                <input type="number" id="cs-target-volume" placeholder="e.g., 30" oninput="calcCellsSuspension()">
+                            </div>
+                            <div class="form-group">
+                                <label>Initial Density (cells/mL)</label>
+                                <input type="number" id="cs-initial-density" placeholder="e.g., 5e6" oninput="calcCellsSuspension()">
+                            </div>
+                            <div class="form-group">
+                                <label>Starting Volume (mL)</label>
+                                <input type="text" id="cs-starting-volume" placeholder="—" readonly>
+                            </div>
+                        </div>
+                        <div style="display:flex; justify-content:center; margin-top:1.5rem;">
+                            <button class="calc-btn" style="margin:0;" onclick="addCellsSuspensionRow()">Add to Table</button>
+                        </div>
+                    </div>
+
+                    <div class="calc-section" style="margin-top:2rem; overflow-x:auto;">
+                        <table id="cs-table" class="cs-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Name</th>
+                                    <th>Starting Volume</th>
+                                    <th>Initial Density</th>
+                                    <th>Target Volume</th>
+                                    <th>Target Density</th>
+                                    <th>Incubator</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                        <div style="display:flex; justify-content:center; align-items:center; gap:1rem; margin-top:1rem;">
+                            <button class="calc-btn" style="margin:0;" onclick="copyCellsSuspensionTable()">Copy Table</button>
+                            <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; user-select:none;">
+                                <input type="checkbox" id="cs-copy-headers">
+                                Include column titles
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div id="cells-adherent" class="cells-mode-panel" style="display:none;"></div>
             </div>
         </div>
         </div>
@@ -1336,6 +1476,144 @@
                 appState.savedItems.push(newItem);
                 renderAllLists();
                 document.getElementById('mol-save-name').value = '';
+            }
+
+            function switchTransfectionMode(mode) {
+                document.getElementById('trans-suspension').style.display =
+                    mode === 'suspension' ? 'block' : 'none';
+                document.getElementById('trans-adherent').style.display =
+                    mode === 'adherent' ? 'block' : 'none';
+            }
+
+            function switchCellsMode(mode) {
+                document.getElementById('cells-suspension').style.display =
+                    mode === 'suspension' ? 'block' : 'none';
+                document.getElementById('cells-adherent').style.display =
+                    mode === 'adherent' ? 'block' : 'none';
+            }
+
+            function calcCellsSuspension() {
+                const td = parseFloat(document.getElementById('cs-target-density').value);
+                const tv = parseFloat(document.getElementById('cs-target-volume').value);
+                const id_ = parseFloat(document.getElementById('cs-initial-density').value);
+                const out = document.getElementById('cs-starting-volume');
+                if (!isNaN(td) && !isNaN(tv) && !isNaN(id_) && id_ > 0) {
+                    out.value = ((td * tv) / id_).toPrecision(4);
+                } else {
+                    out.value = '';
+                }
+            }
+
+            function addCellsSuspensionRow() {
+                const td = document.getElementById('cs-target-density').value;
+                const tv = document.getElementById('cs-target-volume').value;
+                const id_ = document.getElementById('cs-initial-density').value;
+                const sv = document.getElementById('cs-starting-volume').value;
+                if (!td || !tv || !id_ || !sv) {
+                    alert('Enter Target Density, Target Volume, and Initial Density (>0) first.');
+                    return;
+                }
+                const d = new Date();
+                const today = `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
+                const tbody = document.querySelector('#cs-table tbody');
+                const tr = document.createElement('tr');
+                tr.innerHTML =
+                    `<td><input type="text" value="${today}" style="width:5.5rem;"></td>` +
+                    `<td><input type="text"></td>` +
+                    `<td>${sv}</td>` +
+                    `<td>${id_}</td>` +
+                    `<td>${tv}</td>` +
+                    `<td>${td}</td>` +
+                    `<td><input type="text"></td>`;
+                tbody.appendChild(tr);
+            }
+
+            async function copyCellsSuspensionTable() {
+                const table = document.getElementById('cs-table');
+                const trs = table.querySelectorAll('tr');
+                if (trs.length <= 1) {
+                    alert('No rows in the table to copy.');
+                    return;
+                }
+
+                const includeHeaders = document.getElementById('cs-copy-headers').checked;
+
+                const allRows = [];
+                trs.forEach(tr => {
+                    const cells = [];
+                    tr.querySelectorAll('th,td').forEach(cell => {
+                        const input = cell.querySelector('input');
+                        cells.push(input ? input.value : cell.textContent.trim());
+                    });
+                    allRows.push({ isHeader: tr.querySelector('th') !== null, cells });
+                });
+
+                const rowData = includeHeaders ? allRows : allRows.filter(r => !r.isHeader);
+                if (rowData.length === 0) {
+                    alert('No rows in the table to copy.');
+                    return;
+                }
+
+                const plainText = rowData.map(r => r.cells.join('\t')).join('\n');
+
+                let htmlText = '<table border="1" style="border-collapse: collapse;">';
+                rowData.forEach(r => {
+                    const tag = r.isHeader ? 'th' : 'td';
+                    const bg = r.isHeader ? ' background-color: #f1f3f5;' : '';
+                    htmlText += '<tr>';
+                    r.cells.forEach(c => {
+                        htmlText += `<${tag} style="padding: 5px; text-align: left;${bg}">${c}</${tag}>`;
+                    });
+                    htmlText += '</tr>';
+                });
+                htmlText += '</table>';
+
+                try {
+                    if (navigator.clipboard && window.ClipboardItem) {
+                        const htmlBlob = new Blob([htmlText], { type: 'text/html' });
+                        const textBlob = new Blob([plainText], { type: 'text/plain' });
+                        await navigator.clipboard.write([
+                            new ClipboardItem({
+                                'text/html': htmlBlob,
+                                'text/plain': textBlob
+                            })
+                        ]);
+                        alert('Table copied to clipboard!');
+                    } else {
+                        await navigator.clipboard.writeText(plainText);
+                        alert('Table copied to clipboard!');
+                    }
+                } catch (err) {
+                    console.error('Failed to copy: ', err);
+                    alert('Failed to copy to clipboard (check browser permissions)');
+                }
+            }
+
+            function addAdherentInput() {
+                const container = document.getElementById('adherent-inputs');
+                const row = document.createElement('div');
+                row.className = 'form-group adherent-row';
+                row.innerHTML =
+                    '<label>Plasmid Concentration (ng/µL)</label>' +
+                    '<input type="number" class="adherent-conc" placeholder="e.g., 500" oninput="recalcAdherent()">' +
+                    '<div class="adherent-vol" style="font-size:0.9rem; color:var(--muted-blue); margin-top:0.25rem;">Volume: — µL</div>';
+                container.appendChild(row);
+                recalcAdherent();
+            }
+
+            function recalcAdherent() {
+                const total = parseFloat(document.getElementById('adherent-total-ng').value);
+                const rows = document.querySelectorAll('#adherent-inputs .adherent-row');
+                const perPlasmid = (!isNaN(total) && rows.length > 0) ? total / rows.length : NaN;
+                rows.forEach(row => {
+                    const conc = parseFloat(row.querySelector('.adherent-conc').value);
+                    const out = row.querySelector('.adherent-vol');
+                    if (!isNaN(conc) && conc > 0 && !isNaN(perPlasmid)) {
+                        out.textContent = 'Volume: ' + (perPlasmid / conc).toPrecision(4) + ' µL (' + perPlasmid.toFixed(1) + ' ng)';
+                    } else {
+                        out.textContent = 'Volume: — µL';
+                    }
+                });
             }
 
             function calculateTransfectionSection1() {
