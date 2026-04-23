@@ -899,8 +899,7 @@
         <div class="container">
             <div class="hero-content fade-in">
                 <h1>File Conversions</h1>
-                <p>Convert molecular structure files and image formats. All processing happens entirely in your
-                    browser.</p>
+                <p>Convert files.</p>
             </div>
         </div>
     </section>
@@ -913,16 +912,14 @@
                     <div class="card-icon">&#129516;</div>
                     <h3>Structure Files</h3>
                     <div class="card-format">PDB, CIF, SDF, MOL2, PDBQT</div>
-                    <p>Molecular structure conversions for docking simulations. Receptor prep, ligand prep, and format
-                        conversions with Gasteiger charges and AutoDock atom typing.</p>
+                    <p>Molecular structure files.</p>
                     <div class="card-badge">Molecular</div>
                 </div>
                 <div class="conversion-card category-card" onclick="selectCategory('images')">
                     <div class="card-icon">&#128444;</div>
                     <h3>Image Conversions</h3>
                     <div class="card-format">HEIC, JPG, PNG, WebP, BMP, GIF, TIFF</div>
-                    <p>Convert between common image formats. HEIC to JPG/PNG, format changes, and quality adjustments
-                        processed entirely in your browser.</p>
+                    <p>Image files.</p>
                     <div class="card-badge">Media</div>
                 </div>
             </div>
@@ -942,37 +939,35 @@
                     <div class="card-icon">&#129516;</div>
                     <h3>Structure Preparation</h3>
                     <div class="card-format">PDB / CIF &rarr; PDBQT</div>
-                    <p>Prepare protein and receptor structures for molecular docking with Gasteiger charges and AutoDock
-                        atom types</p>
+                    <p>Prepare structures for docking.</p>
                     <div class="card-badge">Receptor</div>
                 </div>
                 <div class="conversion-card" onclick="selectConversion('ligand')">
                     <div class="card-icon">&#128138;</div>
                     <h3>Ligand Preparation</h3>
                     <div class="card-format">PDB / SDF / MOL2 &rarr; PDBQT</div>
-                    <p>Prepare small molecule ligands with torsion tree, charges, and AutoDock atom types for docking
-                    </p>
+                    <p>Prepare ligands for docking.</p>
                     <div class="card-badge">Ligand</div>
                 </div>
                 <div class="conversion-card" onclick="selectConversion('sdf2pdb')">
                     <div class="card-icon">&#128260;</div>
                     <h3>SDF to PDB</h3>
                     <div class="card-format">SDF / MOL &rarr; PDB</div>
-                    <p>Convert Structure Data Files from chemical databases to standard PDB format</p>
+                    <p>Convert SDF to PDB.</p>
                     <div class="card-badge">Format</div>
                 </div>
                 <div class="conversion-card" onclick="selectConversion('cif2pdb')">
                     <div class="card-icon">&#128196;</div>
                     <h3>CIF to PDB</h3>
                     <div class="card-format">mmCIF &rarr; PDB</div>
-                    <p>Convert macromolecular CIF files from the Protein Data Bank to legacy PDB format</p>
+                    <p>Convert CIF to PDB.</p>
                     <div class="card-badge">Format</div>
                 </div>
                 <div class="conversion-card" onclick="selectConversion('mol2pdb')">
                     <div class="card-icon">&#9878;</div>
                     <h3>MOL2 to PDB</h3>
                     <div class="card-format">MOL2 &rarr; PDB</div>
-                    <p>Convert Tripos MOL2 files with atom types and charges to standard PDB format</p>
+                    <p>Convert MOL2 to PDB.</p>
                     <div class="card-badge">Format</div>
                 </div>
             </div>
@@ -985,7 +980,7 @@
             <button class="back-button" onclick="backToCategories()">&larr; Back to Categories</button>
             <div class="section-header">
                 <h2>Image Conversions</h2>
-                <p>Upload an image and convert it to a different format</p>
+                <p>Upload an image.</p>
             </div>
             <div class="file-uploader-section">
                 <div id="dropZone-images" class="drop-zone" data-conv="images">
@@ -1035,7 +1030,7 @@
             <button class="back-button" onclick="backToCards()">&larr; Back to Conversions</button>
             <div class="section-header">
                 <h2>Structure Preparation</h2>
-                <p>Upload a PDB or CIF file to generate a PDBQT with Gasteiger charges and AutoDock atom types</p>
+                <p>Upload a PDB or CIF.</p>
             </div>
             <div class="options-panel">
                 <label><input type="checkbox" id="opt-addH-structure" checked> Add polar hydrogens</label>
@@ -1134,7 +1129,7 @@
             <button class="back-button" onclick="backToCards()">&larr; Back to Conversions</button>
             <div class="section-header">
                 <h2>Ligand Preparation</h2>
-                <p>Upload a small molecule file to generate a PDBQT with torsion tree for docking</p>
+                <p>Upload a ligand file.</p>
             </div>
             <div class="options-panel">
                 <label><input type="checkbox" id="opt-addH-ligand" checked> Add hydrogens</label>
@@ -1178,7 +1173,7 @@
             <button class="back-button" onclick="backToCards()">&larr; Back to Conversions</button>
             <div class="section-header">
                 <h2>SDF to PDB</h2>
-                <p>Convert Structure Data Files to PDB format with CONECT records</p>
+                <p>Upload an SDF.</p>
             </div>
             <div class="options-panel">
                 <label><input type="checkbox" id="opt-bulk-sdf2pdb"> Auto-bulk to ZIP</label>
@@ -1220,7 +1215,7 @@
             <button class="back-button" onclick="backToCards()">&larr; Back to Conversions</button>
             <div class="section-header">
                 <h2>CIF to PDB</h2>
-                <p>Convert macromolecular CIF files to legacy PDB format</p>
+                <p>Upload a CIF.</p>
             </div>
             <div class="options-panel">
                 <label><input type="checkbox" id="opt-bulk-cif2pdb"> Auto-bulk to ZIP</label>
@@ -1262,7 +1257,7 @@
             <button class="back-button" onclick="backToCards()">&larr; Back to Conversions</button>
             <div class="section-header">
                 <h2>MOL2 to PDB</h2>
-                <p>Convert Tripos MOL2 files to standard PDB format</p>
+                <p>Upload a MOL2.</p>
             </div>
             <div class="options-panel">
                 <label><input type="checkbox" id="opt-bulk-mol2pdb"> Auto-bulk to ZIP</label>
@@ -1317,7 +1312,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2025 CadeWardInc. All rights reserved. | Advanced scientific analysis tools.</p>
+                <p>&copy; 2025 CadeWardInc. All rights reserved. | Built by Cade Ward.</p>
             </div>
         </div>
     </footer>

@@ -1897,8 +1897,7 @@
         <div class="container">
             <div class="hero-content fade-in">
                 <h1 id="heroH1" style="cursor:pointer" title="Click to toggle Multiple Gels mode"><span id="heroTitle">Size Selection</span><span class="mode-indicator" id="modeIndicator">▼ Click to switch to Multiple Gels</span></h1>
-                <p id="heroDescription">Choose your preferred option from the selections below. Each choice offers different capabilities
-                    tailored to your specific needs.</p>
+                <p id="heroDescription">Choose well count for your gel.</p>
 
                 <div class="button-container" id="selection">
                     <button class="selection-button big-button" onclick="handleSelection('big')">
@@ -2180,7 +2179,7 @@
             </div>
 
             <div class="footer-bottom">
-                <p>&copy; 2025 CadeWardInc. All rights reserved. | Advanced scientific analysis tools.</p>
+                <p>&copy; 2025 CadeWardInc. All rights reserved. | Built by Cade Ward.</p>
             </div>
         </div>
     </footer>
@@ -3735,17 +3734,10 @@
                 });
             }
 
-            // Draw ladder units at top left corner (or top right if shifted)
+            // Draw ladder units directly above the ladder column
             ctx.font = `bold ${ladderFontSize}px sans-serif`;
             ctx.fillStyle = 'black';
-            ctx.textBaseline = 'top';
-
-            if (isLadderRight) {
-                ctx.textAlign = 'left';
-            } else {
-                ctx.textAlign = 'left'; // Always left align the unit header itself relative to its anchor? 
-                // Actually, if it's on the left side, it's usually top-left of the area.
-            }
+            ctx.textBaseline = 'bottom';
 
             let units = '';
             if (ladderType === '100bp' || ladderType === '1kbp') {
@@ -3756,11 +3748,49 @@
 
             if (units) {
                 if (isLadderMiddle) {
-                    // Single units label at top-left of the gel
-                    ctx.textAlign = 'left';
-                    ctx.fillText(units, imageX, PADDING / 2);
+                    // Center above the first (leftmost) ladder column, just above its topmost marker
+                    ctx.textAlign = 'center';
+                    const firstPct = (Array.isArray(ladderMiddlePositions) && ladderMiddlePositions[0] != null)
+                        ? ladderMiddlePositions[0]
+                        : 50;
+                    const cx = imageX + (firstPct / 100) * imagePreview.naturalWidth;
+                    const firstColYs = (Array.isArray(ladderMarkerYPercents) && Array.isArray(ladderMarkerYPercents[0]))
+                        ? ladderMarkerYPercents[0]
+                        : null;
+                    let topPct = 5;
+                    if (firstColYs && firstColYs.length) {
+                        topPct = Math.min.apply(null, firstColYs.filter(function(v) { return typeof v === 'number'; }));
+                    } else {
+                        const defaults = getLadderMarkerData(ladderType).map(function(m) { return m.pos; });
+                        if (defaults.length) topPct = Math.min.apply(null, defaults);
+                    }
+                    const topMarkerY = imageY + (imagePreview.naturalHeight * (topPct / 100));
+                    ctx.fillText(units, cx, topMarkerY - ladderFontSize * 0.9);
                 } else {
-                    ctx.fillText(units, ladderUnitX, PADDING / 2);
+                    // Find the topmost marker Y across the single L/R column
+                    let minY = Infinity;
+                    ladderMarkers.forEach(function(marker) {
+                        let markerTopPx;
+                        const topStyle = marker.style.top;
+                        if (topStyle.includes('%')) {
+                            markerTopPx = ladderContainerHeight * (parseFloat(topStyle) / 100);
+                        } else {
+                            markerTopPx = parseFloat(topStyle);
+                        }
+                        const rel = markerTopPx / ladderContainerHeight;
+                        const y = imageY + (imagePreview.naturalHeight * rel);
+                        if (y < minY) minY = y;
+                    });
+                    if (!isFinite(minY)) minY = imageY;
+
+                    const unitsY = minY - ladderFontSize * 0.9;
+                    if (isLadderRight) {
+                        ctx.textAlign = 'left';
+                        ctx.fillText(units, imageX + imagePreview.naturalWidth + (baseFontSize * 0.75), unitsY);
+                    } else {
+                        ctx.textAlign = 'right';
+                        ctx.fillText(units, imageX - (baseFontSize * 0.75), unitsY);
+                    }
                 }
             }
 
@@ -4483,7 +4513,7 @@
                 // Switch back to Size Selection mode
                 heroTitle.textContent = 'Size Selection';
                 modeIndicator.textContent = '\u25BC Click to switch to Multiple Gels';
-                heroDescription.textContent = 'Choose your preferred option from the selections below. Each choice offers different capabilities tailored to your specific needs.';
+                heroDescription.textContent = 'Choose well count for your gel.';
 
                 sizeButtons.style.display = 'flex';
                 multiGelSection.classList.remove('show');
