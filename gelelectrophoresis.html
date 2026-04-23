@@ -443,89 +443,151 @@
         }
 
         /* L/R Switch Styles */
-        .lr-switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 28px;
+        .ladder-pos-selector {
+            display: inline-flex;
             margin-left: 1rem;
-        }
-
-        .lr-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .lr-slider-track {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #f0f0f0;
-            /* Off-white/grey background */
-            transition: .4s;
-            border-radius: 4px;
-            /* Rectangular with slight rounding */
             border: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 8px;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-radius: 6px;
+            overflow: hidden;
+            background: #f5f6f8;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
         }
 
-        .lr-slider-track:before {
-            position: absolute;
-            content: "";
-            height: 22px;
-            width: 26px;
-            /* Slightly wider to cover letter well */
-            left: 2px;
-            bottom: 2px;
-            background-color: var(--muted-blue);
-            transition: .4s;
-            border-radius: 3px;
-            /* Rectangular */
-            z-index: 1;
-            /* Behind text */
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-        }
-
-        .lr-text {
-            color: #999;
+        .ladder-pos-btn {
+            background: transparent;
+            border: none;
+            padding: 5px 14px;
+            min-width: 34px;
             font-size: 0.8rem;
             font-weight: 700;
-            z-index: 2;
-            /* On top of knob */
-            transition: color 0.4s;
+            color: #8a8f98;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease;
             user-select: none;
-            position: relative;
-            width: 20px;
+            font-family: inherit;
+            letter-spacing: 0.02em;
+        }
+
+        .ladder-pos-btn:hover:not(.active) {
+            background: rgba(0, 0, 0, 0.04);
+            color: var(--primary-black);
+        }
+
+        .ladder-pos-btn + .ladder-pos-btn {
+            border-left: 1px solid var(--border-color);
+        }
+
+        .ladder-pos-btn.active {
+            background: var(--muted-blue);
+            color: var(--pure-white);
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
+        }
+
+        .ladder-middle-count-wrapper {
+            display: none;
+            align-items: center;
+            gap: 0.6rem;
+            margin-top: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            background: #f5f6f8;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: var(--primary-black);
+            width: fit-content;
+        }
+
+        .ladder-middle-count-wrapper.show {
+            display: inline-flex;
+        }
+
+        .ladder-middle-count-wrapper label {
+            font-weight: 600;
+            color: var(--primary-black);
+            white-space: nowrap;
+        }
+
+        .ladder-middle-count-wrapper input[type="number"] {
+            width: 64px;
+            padding: 5px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            background: var(--pure-white);
             text-align: center;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
         }
 
-        .lr-text.left {
+        .ladder-middle-count-wrapper input[type="number"]:focus {
+            outline: none;
+            border-color: var(--muted-blue);
+            box-shadow: 0 0 0 2px rgba(90, 135, 170, 0.18);
+        }
+
+        /* Middle ladders overlaid on image preview */
+        .middle-ladders-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        .ladder-middle-column {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 0;
+            transform: translateX(-50%);
+            pointer-events: none;
+        }
+
+        .ladder-middle-handle {
+            position: absolute;
+            top: -26px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--muted-blue);
             color: var(--pure-white);
-            /* Default selected (show through/on accent) */
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            padding: 3px 10px;
+            border-radius: 10px;
+            cursor: grab;
+            pointer-events: auto;
+            user-select: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+            white-space: nowrap;
+            transition: background 0.15s ease, box-shadow 0.15s ease;
+            z-index: 4;
         }
 
-        .lr-text.right {
-            color: #999;
+        .ladder-middle-handle:hover {
+            background: #3f5f7a;
         }
 
-        input:checked+.lr-slider-track:before {
-            transform: translateX(28px);
+        .ladder-middle-handle.dragging {
+            cursor: grabbing;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
         }
 
-        input:checked+.lr-slider-track .lr-text.left {
-            color: #999;
+        .ladder-middle-column .ladder-label-marker {
+            position: absolute;
+            left: 50%;
+            right: auto;
+            transform: translate(-50%, -50%);
+            background-color: transparent;
+            pointer-events: auto;
+            text-align: center;
+            white-space: nowrap;
         }
 
-        input:checked+.lr-slider-track .lr-text.right {
-            color: var(--pure-white);
+        .ladder-middle-column .ladder-label-marker.dragging {
+            background-color: rgba(255, 255, 255, 1);
         }
 
         .date-toggle-wrapper {
@@ -1852,14 +1914,17 @@
                     <div id="ladder-selection-container" class="ladder-selection-container">
                         <div class="ladder-header">
                             <h3>Ladder Type</h3>
-                            <label class="lr-switch" title="Ladder Position: Left / Right">
-                                <input type="checkbox" id="ladderPositionToggle"
-                                    onchange="handleLadderPositionChange()">
-                                <span class="lr-slider-track">
-                                    <span class="lr-text left">L</span>
-                                    <span class="lr-text right">R</span>
-                                </span>
-                            </label>
+                            <div class="ladder-pos-selector" id="ladderPosSelector" title="Ladder Position: Left / Middle / Right">
+                                <button type="button" class="ladder-pos-btn active" data-pos="L" onclick="setLadderPosition('L')">L</button>
+                                <button type="button" class="ladder-pos-btn" data-pos="M" onclick="setLadderPosition('M')">M</button>
+                                <button type="button" class="ladder-pos-btn" data-pos="R" onclick="setLadderPosition('R')">R</button>
+                            </div>
+                            <input type="hidden" id="ladderPositionValue" value="L">
+                        </div>
+                        <div id="ladderMiddleCountWrapper" class="ladder-middle-count-wrapper">
+                            <label for="ladderMiddleCount">Number of Ladders</label>
+                            <input type="number" id="ladderMiddleCount" value="1" min="1" max="12"
+                                onchange="handleLadderMiddleCountChange()" oninput="handleLadderMiddleCountChange()">
                         </div>
                         <div class="select-wrapper">
                             <select id="ladderType" name="ladderType">
@@ -1926,6 +1991,9 @@
                         </div>
                         <div id="ladderLabelsContainer" class="ladder-labels-container">
                             <!-- Vertical ladder labels will be generated here -->
+                        </div>
+                        <div id="middleLaddersContainer" class="middle-ladders-container" style="display:none;">
+                            <!-- M-mode draggable ladder columns generated here -->
                         </div>
                         <div id="ofInterestMarkerContainer" class="of-interest-marker-container">
                             <!-- Biomolecule marker will be generated here -->
@@ -2288,19 +2356,234 @@
 
         // ===== LADDER LOGIC =====
         function handleLadderChange() {
+            // Reset shared marker Y state so defaults rehydrate for the new type
+            ladderMarkerYPercents = null;
             updateLadderPreview();
+            if (getLadderPosition() === 'M') renderMiddleLadders();
+        }
+
+        // Middle-mode ladder state
+        let ladderMiddlePositions = [];     // array of x-percentages (0-100) across image width
+        let ladderMarkerYPercents = null;   // per-column 2D array: [col][marker] = y-percentage
+
+        function getLadderPosition() {
+            const el = document.getElementById('ladderPositionValue');
+            const v = el ? el.value : 'L';
+            return (v === 'M' || v === 'R') ? v : 'L';
+        }
+
+        function getLadderMiddleCount() {
+            const el = document.getElementById('ladderMiddleCount');
+            const n = el ? parseInt(el.value, 10) : 1;
+            return isNaN(n) || n < 1 ? 1 : Math.min(n, 12);
+        }
+
+        function getLadderMarkerData(type) {
+            if (type === '100bp') {
+                return [
+                    { text: '1,500', pos: 10.0 },
+                    { text: '1,000', pos: 22.0 },
+                    { text: '900', pos: 25.5 },
+                    { text: '800', pos: 29.0 },
+                    { text: '700', pos: 32.5 },
+                    { text: '600', pos: 37.0 },
+                    { text: '500', pos: 42.5 },
+                    { text: '400', pos: 49.0 },
+                    { text: '300', pos: 57.5 },
+                    { text: '200', pos: 69.5 },
+                    { text: '100', pos: 90.0 }
+                ];
+            } else if (type === '1kbp') {
+                return [
+                    { text: '10,000', pos: 10.0 },
+                    { text: '8,000', pos: 15.0 },
+                    { text: '6,000', pos: 21.0 },
+                    { text: '5,000', pos: 25.0 },
+                    { text: '4,000', pos: 30.0 },
+                    { text: '3,000', pos: 36.0 },
+                    { text: '2,000', pos: 40.0 },
+                    { text: '1,500', pos: 45.0 },
+                    { text: '1,200', pos: 51.0 },
+                    { text: '1,000', pos: 60.0 },
+                    { text: '900', pos: 66.0 },
+                    { text: '800', pos: 75.0 },
+                    { text: '700', pos: 90.0 }
+                ];
+            } else if (type === 'protein') {
+                return [
+                    { text: '245', pos: 5.0 },
+                    { text: '180', pos: 14.0 },
+                    { text: '135', pos: 22.0 },
+                    { text: '100', pos: 31.0 },
+                    { text: '75', pos: 39.0 },
+                    { text: '63', pos: 44.0 },
+                    { text: '48', pos: 52.0 },
+                    { text: '35', pos: 61.0 },
+                    { text: '25', pos: 71.0 },
+                    { text: '20', pos: 77.0 },
+                    { text: '17', pos: 82.0 },
+                    { text: '11', pos: 95.0 }
+                ];
+            }
+            return [];
+        }
+
+        function setLadderPosition(pos) {
+            if (pos !== 'L' && pos !== 'M' && pos !== 'R') pos = 'L';
+            const hidden = document.getElementById('ladderPositionValue');
+            if (hidden) hidden.value = pos;
+
+            document.querySelectorAll('#ladderPosSelector .ladder-pos-btn').forEach(function(btn) {
+                btn.classList.toggle('active', btn.getAttribute('data-pos') === pos);
+            });
+
+            const countWrapper = document.getElementById('ladderMiddleCountWrapper');
+            if (countWrapper) countWrapper.classList.toggle('show', pos === 'M');
+
+            handleLadderPositionChange();
         }
 
         function handleLadderPositionChange() {
-            const toggle = document.getElementById('ladderPositionToggle');
+            const pos = getLadderPosition();
             const ladderContainer = document.getElementById('ladderLabelsContainer');
+            const middleContainer = document.getElementById('middleLaddersContainer');
 
-            if (toggle.checked) {
-                ladderContainer.classList.add('right-side');
+            if (!ladderContainer) return;
+
+            ladderContainer.classList.toggle('right-side', pos === 'R');
+            ladderContainer.classList.toggle('middle-side', pos === 'M');
+
+            if (pos === 'M') {
+                ladderContainer.style.display = 'none';
+                if (middleContainer) middleContainer.style.display = 'block';
+                renderMiddleLadders();
             } else {
-                ladderContainer.classList.remove('right-side');
+                ladderContainer.style.display = '';
+                if (middleContainer) {
+                    middleContainer.style.display = 'none';
+                    middleContainer.innerHTML = '';
+                }
             }
             adjustPreviewLayout();
+        }
+
+        function handleLadderMiddleCountChange() {
+            if (getLadderPosition() === 'M') renderMiddleLadders();
+        }
+
+        function renderMiddleLadders() {
+            const middleContainer = document.getElementById('middleLaddersContainer');
+            if (!middleContainer) return;
+
+            const count = getLadderMiddleCount();
+            const ladderType = document.getElementById('ladderType').value;
+            const markers = getLadderMarkerData(ladderType);
+
+            // Initialize or resize per-ladder X positions (evenly spaced defaults)
+            if (!Array.isArray(ladderMiddlePositions)) ladderMiddlePositions = [];
+            while (ladderMiddlePositions.length < count) {
+                const i = ladderMiddlePositions.length;
+                ladderMiddlePositions.push(((i + 1) / (count + 1)) * 100);
+            }
+            if (ladderMiddlePositions.length > count) ladderMiddlePositions.length = count;
+
+            // Initialize per-column marker Y percents from defaults if missing
+            if (!Array.isArray(ladderMarkerYPercents)) ladderMarkerYPercents = [];
+            for (let i = 0; i < count; i++) {
+                if (!Array.isArray(ladderMarkerYPercents[i]) || ladderMarkerYPercents[i].length !== markers.length) {
+                    ladderMarkerYPercents[i] = markers.map(function(m) { return m.pos; });
+                }
+            }
+            if (ladderMarkerYPercents.length > count) ladderMarkerYPercents.length = count;
+
+            middleContainer.innerHTML = '';
+            if (markers.length === 0 || count === 0) return;
+
+            for (let i = 0; i < count; i++) {
+                const col = document.createElement('div');
+                col.className = 'ladder-middle-column';
+                col.style.left = ladderMiddlePositions[i] + '%';
+                col.dataset.index = i;
+
+                const handle = document.createElement('div');
+                handle.className = 'ladder-middle-handle';
+                handle.textContent = 'L' + (i + 1);
+                handle.title = 'Drag to reposition this ladder';
+                handle.addEventListener('mousedown', function(e) { startMiddleColumnDrag(e, col, i); });
+                col.appendChild(handle);
+
+                const colIndex = i;
+                markers.forEach(function(m, mi) {
+                    const md = document.createElement('div');
+                    md.className = 'ladder-label-marker';
+                    md.textContent = m.text;
+                    md.style.top = ladderMarkerYPercents[colIndex][mi] + '%';
+                    md.dataset.mi = mi;
+                    md.dataset.col = colIndex;
+                    md.addEventListener('mousedown', function(e) { startMiddleMarkerDrag(e, md, colIndex, mi); });
+                    md.addEventListener('contextmenu', function(e) {
+                        e.preventDefault();
+                        md.style.display = 'none';
+                    });
+                    col.appendChild(md);
+                });
+
+                middleContainer.appendChild(col);
+            }
+        }
+
+        function startMiddleColumnDrag(event, col, index) {
+            event.preventDefault();
+            event.stopPropagation();
+            const handle = col.querySelector('.ladder-middle-handle');
+            if (handle) handle.classList.add('dragging');
+
+            const container = document.getElementById('middleLaddersContainer');
+            const rect = container.getBoundingClientRect();
+
+            const doDrag = function(moveEvent) {
+                const relativeX = moveEvent.clientX - rect.left;
+                let pct = (relativeX / rect.width) * 100;
+                pct = Math.max(1, Math.min(99, pct));
+                ladderMiddlePositions[index] = pct;
+                col.style.left = pct + '%';
+            };
+
+            const stopDrag = function() {
+                if (handle) handle.classList.remove('dragging');
+                document.removeEventListener('mousemove', doDrag);
+                document.removeEventListener('mouseup', stopDrag);
+            };
+
+            document.addEventListener('mousemove', doDrag);
+            document.addEventListener('mouseup', stopDrag);
+        }
+
+        function startMiddleMarkerDrag(event, marker, colIndex, markerIndex) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const middleContainer = document.getElementById('middleLaddersContainer');
+            const rect = middleContainer.getBoundingClientRect();
+            marker.classList.add('dragging');
+
+            const doDrag = function(moveEvent) {
+                const relativeY = moveEvent.clientY - rect.top;
+                let pct = (relativeY / rect.height) * 100;
+                pct = Math.max(0, Math.min(100, pct));
+                if (!Array.isArray(ladderMarkerYPercents[colIndex])) ladderMarkerYPercents[colIndex] = [];
+                ladderMarkerYPercents[colIndex][markerIndex] = pct;
+                marker.style.top = pct + '%';
+            };
+
+            const stopDrag = function() {
+                marker.classList.remove('dragging');
+                document.removeEventListener('mousemove', doDrag);
+                document.removeEventListener('mouseup', stopDrag);
+            };
+
+            document.addEventListener('mousemove', doDrag);
+            document.addEventListener('mouseup', stopDrag);
         }
 
         function updateLadderPreview() {
@@ -2511,27 +2794,43 @@
                 previewContainer.style.marginLeft = `${finalOffset}px`;
 
                 // --- Adjust Vertical Ladder ---
-                const isLadderRight = document.getElementById('ladderPositionToggle').checked;
+                const ladderPos = getLadderPosition();
+                const isLadderRight = ladderPos === 'R';
+                const isLadderMiddle = ladderPos === 'M';
 
                 ladderContainer.style.height = `${renderedImageHeight}px`;
                 ladderContainer.style.top = `${imageOffsetTop + 105}px`; // Move down by 105px
 
-                if (isLadderRight) {
+                if (isLadderMiddle) {
+                    // Center the ladder column over the image (preview shows a single master column)
+                    ladderContainer.style.left = `${imageOffsetLeft + (renderedImageWidth / 2) - 25}px`;
+                    ladderContainer.style.right = 'auto';
+                    ladderContainer.style.width = '50px';
+                } else if (isLadderRight) {
                     ladderContainer.style.left = 'auto';
                     ladderContainer.style.right = '0px';
+                    if (imageOffsetLeft > 1) {
+                        ladderContainer.style.width = `${imageOffsetLeft}px`;
+                    } else {
+                        ladderContainer.style.width = '50px';
+                    }
                 } else {
                     ladderContainer.style.left = '0px';
                     ladderContainer.style.right = 'auto';
+                    if (imageOffsetLeft > 1) {
+                        ladderContainer.style.width = `${imageOffsetLeft}px`;
+                    } else {
+                        ladderContainer.style.width = '50px';
+                    }
                 }
 
-                // If there is a gray area to the left of the image (pillarboxing)...
-                if (imageOffsetLeft > 1) {
-                    // Make the ladder container fill that gray area.
-                    // The labels inside are right-aligned, so they will appear next to the image.
-                    ladderContainer.style.width = `${imageOffsetLeft}px`;
-                } else {
-                    // If there is no gray area, use the default width and place it on the image.
-                    ladderContainer.style.width = '50px';
+                // --- Adjust Middle Ladders Container (overlays the image exactly) ---
+                const middleContainer = document.getElementById('middleLaddersContainer');
+                if (middleContainer) {
+                    middleContainer.style.top = `${imageOffsetTop + 105}px`;
+                    middleContainer.style.left = `${imageOffsetLeft}px`;
+                    middleContainer.style.width = `${renderedImageWidth}px`;
+                    middleContainer.style.height = `${renderedImageHeight}px`;
                 }
 
                 // --- Adjust Biomolecule Marker Container ---
@@ -2539,22 +2838,20 @@
                 ofInterestContainer.style.height = `${renderedImageHeight}px`;
                 ofInterestContainer.style.top = `${imageOffsetTop + 105}px`; // Same offset as ladder
 
-                // Swap side based on ladder position
+                // Swap side based on ladder position (Middle -> keep biomarker on right)
                 if (isLadderRight) {
                     // Ladder Right -> Biomarker Left
                     ofInterestContainer.style.left = '0px';
                     ofInterestContainer.style.right = 'auto';
-                    // Check if we need to adjust width for pillarboxing on the left?
                     if (imageOffsetLeft > 1) {
                         ofInterestContainer.style.width = `${imageOffsetLeft}px`;
                     } else {
                         ofInterestContainer.style.width = '50px';
                     }
                 } else {
-                    // Ladder Left (default) -> Biomarker Right
+                    // Ladder Left or Middle -> Biomarker Right
                     ofInterestContainer.style.left = 'auto';
                     ofInterestContainer.style.right = '0px';
-                    // Reset width to default 50px (as right side usually doesn't have pillarbox logic handled same way, or simply overlays)
                     ofInterestContainer.style.width = '50px';
                 }
             }
@@ -3109,7 +3406,11 @@
             }
 
             // Define final LOGICAL canvas dimensions
-            const canvasWidth = LADDER_AREA_WIDTH + imagePreview.naturalWidth + biomoleculeMarkerWidth + PADDING;
+            const ladderPosMode = getLadderPosition();
+            const isLadderMidMode = ladderPosMode === 'M';
+            const middleLadderCount = isLadderMidMode ? getLadderMiddleCount() : 0;
+            const sideLadderArea = isLadderMidMode ? (PADDING / 2) : LADDER_AREA_WIDTH;
+            const canvasWidth = sideLadderArea + imagePreview.naturalWidth + biomoleculeMarkerWidth + PADDING;
             const canvasHeight = TOP_LABEL_AREA_HEIGHT + imagePreview.naturalHeight + annotationHeight;
 
             const canvas = document.createElement('canvas');
@@ -3133,14 +3434,18 @@
             ctx.fillRect(0, 0, canvasWidth, canvasHeight); // Use logical dimensions for drawing
 
             // --- LADDER POSITION LOGIC ---
-            const isLadderRight = document.getElementById('ladderPositionToggle').checked;
+            const isLadderRight = ladderPosMode === 'R';
+            const isLadderMiddle = ladderPosMode === 'M';
 
-            // Determine X positions based on toggle
+            // Determine X positions based on mode
             let imageX, ladderUnitX;
 
-            if (isLadderRight) {
+            if (isLadderMiddle) {
+                // Image starts at the small left padding; ladder columns overlay the image
+                imageX = sideLadderArea;
+                ladderUnitX = imageX + (baseFontSize * 0.5); // Units label near top-left of image
+            } else if (isLadderRight) {
                 // Image starts at padding (left side) OR after biomarker if it exists
-                // Ladder is on right
                 if (ofInterestMarker) {
                     imageX = biomoleculeMarkerWidth + (PADDING / 2);
                 } else {
@@ -3168,36 +3473,97 @@
             ctx.textAlign = 'right';
             ctx.textBaseline = 'middle'; // Vertically center the text on its Y coordinate
 
-            ladderMarkers.forEach(marker => {
-                // --- BUG FIX: Handle both % and px units for 'top' style ---
-                let markerTopPx;
-                const topStyle = marker.style.top;
+            if (isLadderMiddle) {
+                // In middle mode, read from user-placed positions + custom marker Y percents
+                const ladderType = document.getElementById('ladderType').value;
+                const markerData = getLadderMarkerData(ladderType);
 
-                if (topStyle.includes('%')) {
-                    // Initial state: 'top' is in percentage
-                    const topPercent = parseFloat(topStyle) / 100;
-                    markerTopPx = ladderContainerHeight * topPercent;
-                } else {
-                    // Dragged state: 'top' is in pixels
-                    markerTopPx = parseFloat(topStyle);
+                const N = Math.max(1, middleLadderCount);
+                const xPcts = [];
+                for (let i = 0; i < N; i++) {
+                    const pct = (Array.isArray(ladderMiddlePositions) && ladderMiddlePositions[i] != null)
+                        ? ladderMiddlePositions[i]
+                        : ((i + 1) / (N + 1)) * 100;
+                    xPcts.push(pct);
                 }
 
-                const relativeY = markerTopPx / ladderContainerHeight;
-                const y = imageY + (imagePreview.naturalHeight * relativeY);
+                // Determine which markers are visible in the preview (right-clicked markers are hidden)
+                const visibleMarkerIndices = new Set();
+                document.querySelectorAll('#middleLaddersContainer .ladder-middle-column').forEach(function(col) {
+                    col.querySelectorAll('.ladder-label-marker').forEach(function(m) {
+                        if (m.style.display !== 'none') {
+                            visibleMarkerIndices.add(parseInt(m.dataset.mi, 10));
+                        }
+                    });
+                });
+                // If preview wasn't rendered yet, fall back to showing every marker
+                const useAll = visibleMarkerIndices.size === 0;
 
-                let x;
-                if (isLadderRight) {
-                    // Ladder on Right: Align Left against the right edge of image
-                    ctx.textAlign = 'left';
-                    x = imageX + imagePreview.naturalWidth + (baseFontSize * 0.75);
-                } else {
-                    // Ladder on Left (Default): Align Right against left edge of image
-                    ctx.textAlign = 'right';
-                    x = imageX - (baseFontSize * 0.75);
+                ctx.font = `bold ${ladderFontSize}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                // Build per-column visibility & Y data from the preview (independent per ladder)
+                const perColumnData = [];
+                const columnEls = document.querySelectorAll('#middleLaddersContainer .ladder-middle-column');
+                for (let i = 0; i < N; i++) {
+                    const col = columnEls[i];
+                    const yPctArr = [];
+                    const visibleSet = new Set();
+                    if (col) {
+                        col.querySelectorAll('.ladder-label-marker').forEach(function(el) {
+                            const mi = parseInt(el.dataset.mi, 10);
+                            if (el.style.display !== 'none') visibleSet.add(mi);
+                        });
+                    }
+                    const savedYs = (Array.isArray(ladderMarkerYPercents) && Array.isArray(ladderMarkerYPercents[i]))
+                        ? ladderMarkerYPercents[i]
+                        : null;
+                    markerData.forEach(function(m, mi) {
+                        yPctArr[mi] = (savedYs && savedYs[mi] != null) ? savedYs[mi] : m.pos;
+                    });
+                    perColumnData.push({ ys: yPctArr, visible: visibleSet, hasPreview: !!col });
                 }
 
-                ctx.fillText(marker.textContent, x, y);
-            });
+                ctx.fillStyle = 'black';
+
+                perColumnData.forEach(function(colData, i) {
+                    const cx = imageX + (xPcts[i] / 100) * imagePreview.naturalWidth;
+                    markerData.forEach(function(m, mi) {
+                        // If we have a preview column for this ladder, respect its per-marker visibility;
+                        // otherwise (preview not yet rendered), show all markers.
+                        if (colData.hasPreview && !colData.visible.has(mi)) return;
+                        const y = imageY + (imagePreview.naturalHeight * (colData.ys[mi] / 100));
+                        ctx.fillText(m.text, cx, y);
+                    });
+                });
+            } else {
+                ladderMarkers.forEach(marker => {
+                    // --- BUG FIX: Handle both % and px units for 'top' style ---
+                    let markerTopPx;
+                    const topStyle = marker.style.top;
+
+                    if (topStyle.includes('%')) {
+                        const topPercent = parseFloat(topStyle) / 100;
+                        markerTopPx = ladderContainerHeight * topPercent;
+                    } else {
+                        markerTopPx = parseFloat(topStyle);
+                    }
+
+                    const relativeY = markerTopPx / ladderContainerHeight;
+                    const y = imageY + (imagePreview.naturalHeight * relativeY);
+
+                    let x;
+                    if (isLadderRight) {
+                        ctx.textAlign = 'left';
+                        x = imageX + imagePreview.naturalWidth + (baseFontSize * 0.75);
+                    } else {
+                        ctx.textAlign = 'right';
+                        x = imageX - (baseFontSize * 0.75);
+                    }
+                    ctx.fillText(marker.textContent, x, y);
+                });
+            }
 
             // Draw ladder units at top left corner (or top right if shifted)
             ctx.font = `bold ${ladderFontSize}px sans-serif`;
@@ -3219,7 +3585,13 @@
             }
 
             if (units) {
-                ctx.fillText(units, ladderUnitX, PADDING / 2);
+                if (isLadderMiddle) {
+                    // Single units label at top-left of the gel
+                    ctx.textAlign = 'left';
+                    ctx.fillText(units, imageX, PADDING / 2);
+                } else {
+                    ctx.fillText(units, ladderUnitX, PADDING / 2);
+                }
             }
 
             // 3.5. Draw biomolecule marker on the right side (if enabled)
@@ -4300,6 +4672,13 @@
             if (editGroupsBtn) editGroupsBtn.style.display = 'none';
             if (addGapsToggle) addGapsToggle.checked = true;
 
+            // Reset ladder position selector to L and count to 1 for each fresh gel
+            const ladderMiddleCountEl = document.getElementById('ladderMiddleCount');
+            if (ladderMiddleCountEl) ladderMiddleCountEl.value = 1;
+            ladderMiddlePositions = [];
+            ladderMarkerYPercents = null;
+            if (typeof setLadderPosition === 'function') setLadderPosition('L');
+
             // Single-mode uses originalCroppedImageSrc for split recalculation
             originalCroppedImageSrc = gel.dataUrl;
 
@@ -4369,8 +4748,8 @@
             const labelInputs = document.querySelectorAll('#labelSlots .label-slot-input');
             const labels = Array.from(labelInputs).map(function(el) { return el.value; });
             const ladderType = (document.getElementById('ladderType') || {}).value || 'none';
-            const ladderPosToggle = document.getElementById('ladderPositionToggle');
-            const ladderPosition = (ladderPosToggle && ladderPosToggle.checked) ? 'R' : 'L';
+            const ladderPosition = getLadderPosition();
+            const ladderMiddleCount = getLadderMiddleCount();
             const annotation = (document.getElementById('annotationText') || {}).value || '';
             const dateToggle = document.getElementById('dateToggle');
             const includeDate = !!(dateToggle && dateToggle.checked);
@@ -4380,6 +4759,11 @@
                 labels: labels,
                 ladderType: ladderType,
                 ladderPosition: ladderPosition,
+                ladderMiddleCount: ladderMiddleCount,
+                ladderMiddlePositions: Array.isArray(ladderMiddlePositions) ? ladderMiddlePositions.slice() : [],
+                ladderMarkerYPercents: Array.isArray(ladderMarkerYPercents)
+                    ? ladderMarkerYPercents.map(function(arr) { return Array.isArray(arr) ? arr.slice() : null; })
+                    : null,
                 annotation: annotation,
                 includeDate: includeDate,
                 splitEnabled: !!(splitToggle && splitToggle.checked),
@@ -4401,11 +4785,19 @@
                 ladderSel.value = analysis.ladderType;
                 if (typeof handleLadderChange === 'function') handleLadderChange();
             }
-            const ladderPosToggle = document.getElementById('ladderPositionToggle');
-            if (ladderPosToggle) {
-                ladderPosToggle.checked = (analysis.ladderPosition === 'R');
-                if (typeof handleLadderPositionChange === 'function') handleLadderPositionChange();
+            const ladderMiddleCountEl = document.getElementById('ladderMiddleCount');
+            if (ladderMiddleCountEl) {
+                const savedCount = parseInt(analysis.ladderMiddleCount, 10);
+                ladderMiddleCountEl.value = (isNaN(savedCount) || savedCount < 1) ? 1 : savedCount;
             }
+            ladderMiddlePositions = Array.isArray(analysis.ladderMiddlePositions)
+                ? analysis.ladderMiddlePositions.slice()
+                : [];
+            ladderMarkerYPercents = Array.isArray(analysis.ladderMarkerYPercents)
+                ? analysis.ladderMarkerYPercents.map(function(arr) { return Array.isArray(arr) ? arr.slice() : null; })
+                : null;
+            const savedPos = (analysis.ladderPosition === 'R' || analysis.ladderPosition === 'M') ? analysis.ladderPosition : 'L';
+            setLadderPosition(savedPos);
             const annotation = document.getElementById('annotationText');
             if (annotation) annotation.value = analysis.annotation || '';
             const dateToggle = document.getElementById('dateToggle');
