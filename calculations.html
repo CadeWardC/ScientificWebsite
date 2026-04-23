@@ -615,6 +615,7 @@
                 <button class="tab-button" onclick="openTab('molarity', this)">Molarity Calculation</button>
                 <button class="tab-button" onclick="openTab('transfection', this)">Transfection Calculation</button>
                 <button class="tab-button" onclick="openTab('cells', this)">Cells</button>
+                <button class="tab-button" onclick="openTab('protein', this)">Protein</button>
             </div>
 
             <div id="dilution" class="tab-content active">
@@ -935,6 +936,36 @@
                     </div>
                 </div>
                 <div id="cells-adherent" class="cells-mode-panel" style="display:none;"></div>
+            </div>
+
+            <div id="protein" class="tab-content">
+                <h2>Protein Molarity Calculator</h2>
+                <p style="margin-bottom: 1.5rem; color: #666;">Calculate the molarity of a protein solution from its molecular weight and concentration.</p>
+                <div class="calc-section">
+                    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; align-items:end;">
+                        <div class="form-group">
+                            <label>Molecular Weight (kDa)</label>
+                            <input type="number" id="prot-mw" placeholder="e.g., 50" oninput="calcProteinMolarity()">
+                        </div>
+                        <div class="form-group">
+                            <label>Concentration (mg/mL)</label>
+                            <input type="number" id="prot-conc" placeholder="e.g., 1.5" oninput="calcProteinMolarity()">
+                        </div>
+                        <div class="form-group">
+                            <label>Output Unit</label>
+                            <select id="prot-unit" class="mode-select" onchange="calcProteinMolarity()">
+                                <option value="1">M</option>
+                                <option value="1e-3">mM</option>
+                                <option value="1e-6" selected>µM</option>
+                                <option value="1e-9">nM</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="prot-result" class="result-box" style="margin-top:1.5rem;">
+                        <h3>Molarity</h3>
+                        <div class="result-value" id="prot-output"></div>
+                    </div>
+                </div>
             </div>
         </div>
         </div>
@@ -1490,6 +1521,29 @@
                     mode === 'suspension' ? 'block' : 'none';
                 document.getElementById('cells-adherent').style.display =
                     mode === 'adherent' ? 'block' : 'none';
+            }
+
+            function calcProteinMolarity() {
+                const mwRaw = document.getElementById('prot-mw').value;
+                const concRaw = document.getElementById('prot-conc').value;
+                const mw = parseFloat(mwRaw);
+                const conc = parseFloat(concRaw);
+                const unitFactor = parseFloat(document.getElementById('prot-unit').value);
+                const unitLabel = document.getElementById('prot-unit').selectedOptions[0].textContent;
+                const out = document.getElementById('prot-output');
+                const box = document.getElementById('prot-result');
+
+                const bothFilled = mwRaw !== '' && concRaw !== '' && !isNaN(mw) && !isNaN(conc) && mw > 0 && conc >= 0;
+                if (bothFilled) {
+                    // Molarity (M) = (mg/mL) / (kDa * 1000)
+                    const molarityM = conc / (mw * 1000);
+                    const value = molarityM / unitFactor;
+                    out.textContent = value.toPrecision(4) + ' ' + unitLabel;
+                    box.classList.add('show');
+                } else {
+                    out.textContent = '';
+                    box.classList.remove('show');
+                }
             }
 
             function calcCellsSuspension() {

@@ -713,6 +713,75 @@
             color: var(--primary-black);
         }
 
+        .biomarker-list {
+            list-style: none;
+            margin: 0.75rem 0 0 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .biomarker-list:empty {
+            display: none;
+        }
+
+        .biomarker-list-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.6rem;
+            background: #f5f6f8;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .biomarker-list-item .biomarker-name {
+            flex: 1;
+            color: var(--primary-black);
+            word-break: break-word;
+        }
+
+        .biomarker-list-item .biomarker-name-input {
+            flex: 1;
+            padding: 3px 6px;
+            border: 1px solid var(--muted-blue);
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            background: var(--pure-white);
+            outline: none;
+        }
+
+        .biomarker-list-item .biomarker-edit-btn,
+        .biomarker-list-item .biomarker-remove-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1;
+            padding: 2px 6px;
+            color: #8a8f98;
+            border-radius: 4px;
+            transition: background 0.15s ease, color 0.15s ease;
+            font-family: inherit;
+        }
+
+        .biomarker-list-item .biomarker-edit-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--muted-blue);
+        }
+
+        .biomarker-list-item .biomarker-remove-btn {
+            font-size: 1.1rem;
+        }
+
+        .biomarker-list-item .biomarker-remove-btn:hover {
+            background: rgba(255, 107, 107, 0.12);
+            color: #ff6b6b;
+        }
+
         /* Of Interest Marker (Right side) */
         .of-interest-marker-container {
             position: absolute;
@@ -1950,6 +2019,7 @@
                                 placeholder="Enter biomolecule name (e.g., GFP, β-actin)" />
                             <button class="add-interest-btn" onclick="addOfInterestMarker()">Add Marker</button>
                         </div>
+                        <ul id="biomarkerList" class="biomarker-list"></ul>
                         <div class="of-interest-toggle-wrapper">
                             <span class="of-interest-toggle-label">Show Marker on Export</span>
                             <label class="date-switch">
@@ -2694,27 +2764,113 @@
         }
 
         // ===== OF INTEREST LOGIC =====
+        // Multi-biomarker state: array of { id, name, topPct }
+        let biomarkers = [];
+
         function addOfInterestMarker() {
-            const value = document.getElementById('ofInterestValue').value.trim();
+            const input = document.getElementById('ofInterestValue');
+            const value = input.value.trim();
             if (!value) {
                 alert('Please enter a biomolecule name for the marker.');
                 return;
             }
 
+            const id = (typeof crypto !== 'undefined' && crypto.randomUUID)
+                ? crypto.randomUUID()
+                : String(Date.now()) + '-' + Math.random().toString(36).slice(2, 8);
+
+            biomarkers.push({ id: id, name: value, topPct: 50 });
+            input.value = '';
+            renderBiomarkers();
+        }
+
+        function renderBiomarkers() {
+            // Rebuild the preview markers
             const container = document.getElementById('ofInterestMarkerContainer');
-            container.innerHTML = ''; // Clear any existing marker
+            if (container) {
+                container.innerHTML = '';
+                biomarkers.forEach(function(b) {
+                    const markerDiv = document.createElement('div');
+                    markerDiv.className = 'of-interest-marker';
+                    markerDiv.textContent = b.name;
+                    markerDiv.style.top = b.topPct + '%';
+                    markerDiv.dataset.id = b.id;
+                    markerDiv.addEventListener('mousedown', function(e) {
+                        startOfInterestDrag(e, markerDiv, container);
+                    });
+                    container.appendChild(markerDiv);
+                });
+            }
 
-            const markerDiv = document.createElement('div');
-            markerDiv.className = 'of-interest-marker';
-            markerDiv.textContent = value;
+            // Rebuild the list in the card
+            const list = document.getElementById('biomarkerList');
+            if (!list) return;
+            list.innerHTML = '';
+            biomarkers.forEach(function(b) {
+                const li = document.createElement('li');
+                li.className = 'biomarker-list-item';
+                li.dataset.id = b.id;
 
-            // Set initial position at 50% (middle)
-            markerDiv.style.top = '50%';
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'biomarker-name';
+                nameSpan.textContent = b.name;
 
-            // Add drag handler using the same logic as ladder markers
-            markerDiv.addEventListener('mousedown', (e) => startOfInterestDrag(e, markerDiv, container));
+                const editBtn = document.createElement('button');
+                editBtn.type = 'button';
+                editBtn.className = 'biomarker-edit-btn';
+                editBtn.title = 'Edit';
+                editBtn.textContent = '✎';
+                editBtn.addEventListener('click', function() { startEditBiomarker(b.id); });
 
-            container.appendChild(markerDiv);
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'biomarker-remove-btn';
+                removeBtn.title = 'Remove';
+                removeBtn.textContent = '×';
+                removeBtn.addEventListener('click', function() { removeBiomarker(b.id); });
+
+                li.appendChild(nameSpan);
+                li.appendChild(editBtn);
+                li.appendChild(removeBtn);
+                list.appendChild(li);
+            });
+        }
+
+        function startEditBiomarker(id) {
+            const list = document.getElementById('biomarkerList');
+            if (!list) return;
+            const li = list.querySelector('.biomarker-list-item[data-id="' + CSS.escape(id) + '"]');
+            if (!li) return;
+            const b = biomarkers.find(function(x) { return x.id === id; });
+            if (!b) return;
+
+            const nameSpan = li.querySelector('.biomarker-name');
+            if (!nameSpan) return;
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'biomarker-name-input';
+            input.value = b.name;
+
+            const commit = function() {
+                const v = input.value.trim();
+                if (v) b.name = v;
+                renderBiomarkers();
+            };
+            input.addEventListener('blur', commit);
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+                else if (e.key === 'Escape') { e.preventDefault(); renderBiomarkers(); }
+            });
+
+            li.replaceChild(input, nameSpan);
+            input.focus();
+            input.select();
+        }
+
+        function removeBiomarker(id) {
+            biomarkers = biomarkers.filter(function(b) { return b.id !== id; });
+            renderBiomarkers();
         }
 
         function startOfInterestDrag(event, marker, container) {
@@ -2729,10 +2885,9 @@
                 let newTop = initialTop + deltaY;
 
                 // Allow dragging across the full vertical span of the image
-                // Use minimal constraints to allow full image height movement
                 const halfMarkerHeight = marker.offsetHeight / 2;
-                const minTop = 0; // Allow to go to the very top of the image
-                const maxTop = container.offsetHeight - marker.offsetHeight; // Allow to go to the very bottom
+                const minTop = 0;
+                const maxTop = container.offsetHeight - marker.offsetHeight;
 
                 newTop = Math.max(minTop, Math.min(newTop, maxTop));
                 marker.style.top = `${newTop}px`;
@@ -2740,6 +2895,17 @@
 
             const stopDrag = () => {
                 marker.classList.remove('dragging');
+                // Commit final position as a percent of container height
+                const containerHeight = container.offsetHeight;
+                if (containerHeight > 0) {
+                    const topPx = parseFloat(marker.style.top);
+                    if (!isNaN(topPx)) {
+                        const pct = Math.max(0, Math.min(100, (topPx / containerHeight) * 100));
+                        const id = marker.dataset.id;
+                        const b = biomarkers.find(function(x) { return x.id === id; });
+                        if (b) b.topPct = pct;
+                    }
+                }
                 document.removeEventListener('mousemove', doDrag);
                 document.removeEventListener('mouseup', stopDrag);
             };
@@ -3395,14 +3561,18 @@
 
             // Calculate biomolecule marker space needed on the right
             const ofInterestToggle = document.getElementById('ofInterestToggle').checked;
-            const ofInterestMarker = document.querySelector('.of-interest-marker');
+            const hasBiomarkers = Array.isArray(biomarkers) && biomarkers.length > 0;
             let biomoleculeMarkerWidth = 0;
 
-            if (ofInterestMarker) {
-                // Estimate width needed for biomolecule marker text
+            if (hasBiomarkers) {
                 const tempCtx = document.createElement('canvas').getContext('2d');
-                tempCtx.font = `bold ${topLabelFontSize}px sans-serif`; // Use larger font size
-                biomoleculeMarkerWidth = tempCtx.measureText(ofInterestMarker.textContent).width + (baseFontSize * 2); // More spacing
+                tempCtx.font = `bold ${topLabelFontSize}px sans-serif`;
+                let maxTextWidth = 0;
+                biomarkers.forEach(function(b) {
+                    const w = tempCtx.measureText(b.name).width;
+                    if (w > maxTextWidth) maxTextWidth = w;
+                });
+                biomoleculeMarkerWidth = maxTextWidth + (baseFontSize * 2);
             }
 
             // Define final LOGICAL canvas dimensions
@@ -3446,7 +3616,7 @@
                 ladderUnitX = imageX + (baseFontSize * 0.5); // Units label near top-left of image
             } else if (isLadderRight) {
                 // Image starts at padding (left side) OR after biomarker if it exists
-                if (ofInterestMarker) {
+                if (hasBiomarkers) {
                     imageX = biomoleculeMarkerWidth + (PADDING / 2);
                 } else {
                     imageX = PADDING / 2;
@@ -3594,50 +3764,26 @@
                 }
             }
 
-            // 3.5. Draw biomolecule marker on the right side (if enabled)
-            if (ofInterestMarker) {
-                const ofInterestContainer = document.getElementById('ofInterestMarkerContainer');
-                const imagePreviewElement = document.getElementById('imagePreview');
-
-                ctx.font = `bold ${topLabelFontSize}px sans-serif`; // Use larger font for biomolecule marker
-                ctx.fillStyle = '#ff6b6b'; // Use the same color as the marker border
-                ctx.textAlign = 'left';
+            // 3.5. Draw biomolecule markers (loop over all entries)
+            if (hasBiomarkers) {
+                ctx.font = `bold ${topLabelFontSize}px sans-serif`;
+                ctx.fillStyle = '#ff6b6b';
                 ctx.textBaseline = 'middle';
 
-                // Use the same approach as ladder markers
-                const ofInterestContainerHeight = ofInterestContainer.offsetHeight;
-
-                // Get the exact positioning from the preview
-                let markerTopPx;
-                const topStyle = ofInterestMarker.style.top;
-
-                if (topStyle.includes('%')) {
-                    // Initial state: 'top' is in percentage
-                    const topPercent = parseFloat(topStyle) / 100;
-                    markerTopPx = ofInterestContainerHeight * topPercent;
-                } else {
-                    // Dragged state: 'top' is in pixels
-                    markerTopPx = parseFloat(topStyle);
-                }
-
-                // Calculate relative position (same as ladder logic)
-                const relativeY = markerTopPx / ofInterestContainerHeight;
-                const y = imageY + (imagePreview.naturalHeight * relativeY);
-
-                // Position on the right side of the image with proper spacing
                 let x;
-                // Swap positioning based on toggle
                 if (isLadderRight) {
-                    // Ladder on Right -> Biomarker on Left
-                    ctx.textAlign = 'right'; // Align text to point towards the image
+                    ctx.textAlign = 'right';
                     x = imageX - (baseFontSize * 1.5);
                 } else {
-                    // Ladder on Left -> Biomarker on Right
                     ctx.textAlign = 'left';
                     x = imageX + imagePreview.naturalWidth + (baseFontSize * 1.5);
                 }
 
-                ctx.fillText(ofInterestMarker.textContent, x, y);
+                biomarkers.forEach(function(b) {
+                    const pct = (typeof b.topPct === 'number') ? b.topPct : 50;
+                    const y = imageY + (imagePreview.naturalHeight * (pct / 100));
+                    ctx.fillText(b.name, x, y);
+                });
             }
 
             // 4. Draw top labels
@@ -4679,6 +4825,10 @@
             ladderMarkerYPercents = null;
             if (typeof setLadderPosition === 'function') setLadderPosition('L');
 
+            // Reset biomarkers for each fresh gel
+            biomarkers = [];
+            renderBiomarkers();
+
             // Single-mode uses originalCroppedImageSrc for split recalculation
             originalCroppedImageSrc = gel.dataUrl;
 
@@ -4764,6 +4914,9 @@
                 ladderMarkerYPercents: Array.isArray(ladderMarkerYPercents)
                     ? ladderMarkerYPercents.map(function(arr) { return Array.isArray(arr) ? arr.slice() : null; })
                     : null,
+                biomarkers: Array.isArray(biomarkers)
+                    ? biomarkers.map(function(b) { return { id: b.id, name: b.name, topPct: b.topPct }; })
+                    : [],
                 annotation: annotation,
                 includeDate: includeDate,
                 splitEnabled: !!(splitToggle && splitToggle.checked),
@@ -4796,6 +4949,10 @@
             ladderMarkerYPercents = Array.isArray(analysis.ladderMarkerYPercents)
                 ? analysis.ladderMarkerYPercents.map(function(arr) { return Array.isArray(arr) ? arr.slice() : null; })
                 : null;
+            biomarkers = Array.isArray(analysis.biomarkers)
+                ? analysis.biomarkers.map(function(b) { return { id: b.id, name: b.name, topPct: b.topPct }; })
+                : [];
+            renderBiomarkers();
             const savedPos = (analysis.ladderPosition === 'R' || analysis.ladderPosition === 'M') ? analysis.ladderPosition : 'L';
             setLadderPosition(savedPos);
             const annotation = document.getElementById('annotationText');
