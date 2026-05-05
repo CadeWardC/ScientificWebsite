@@ -122,6 +122,45 @@
             cursor: pointer;
         }
 
+        /* Instrument Toggle */
+        .instrument-toggle {
+            position: fixed;
+            top: 80px;
+            left: 2rem;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            padding: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            user-select: none;
+        }
+
+        .instrument-toggle .toggle-option {
+            padding: 0.4rem 1rem;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            color: rgba(10, 10, 10, 0.45);
+            background: transparent;
+            border: none;
+            white-space: nowrap;
+        }
+
+        .instrument-toggle .toggle-option.active {
+            background: var(--muted-blue);
+            color: var(--pure-white);
+            box-shadow: 0 1px 4px rgba(74, 144, 164, 0.35);
+        }
+
+        .instrument-toggle .toggle-option:not(.active):hover {
+            color: var(--primary-black);
+        }
+
         /* Main Content */
         .main-content {
             padding-top: 100px;
@@ -247,6 +286,121 @@
             color: var(--muted-blue);
         }
 
+        /* Fraction Groups Panel */
+        .fraction-groups-panel {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: #fafafa;
+        }
+
+        .fraction-groups-panel h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--soft-black);
+        }
+
+        .group-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .group-controls input[type="color"] {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            cursor: pointer;
+            padding: 2px;
+        }
+
+        .group-controls input[type="text"] {
+            padding: 0.35rem 0.6rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            width: 120px;
+        }
+
+        .group-controls .btn-sm {
+            padding: 0.35rem 0.75rem;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: background 0.2s;
+        }
+
+        .group-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .group-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.6rem;
+            border-radius: 6px;
+            background: white;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-size: 0.85rem;
+        }
+
+        .group-item:hover {
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        }
+
+        .group-item.active {
+            border-color: var(--muted-blue);
+            background: var(--light-blue);
+        }
+
+        .group-swatch {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        .group-fractions {
+            color: #888;
+            font-size: 0.8rem;
+            margin-left: auto;
+        }
+
+        .group-delete {
+            background: none;
+            border: none;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 0 4px;
+            transition: color 0.15s;
+        }
+
+        .group-delete:hover {
+            color: #d9534f;
+        }
+
+        .group-hint {
+            font-size: 0.8rem;
+            color: #999;
+            font-style: italic;
+            margin-top: 0.5rem;
+        }
+
         .footer-bottom {
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             padding-top: 2rem;
@@ -287,6 +441,12 @@
         </nav>
     </header>
 
+    <!-- Instrument Mode Toggle -->
+    <div class="instrument-toggle" id="instrumentToggle">
+        <button class="toggle-option active" id="toggleAKTA" onclick="setInstrument('akta')">ÄKTA</button>
+        <button class="toggle-option" id="toggleBioRad" onclick="setInstrument('biorad')">BioRad</button>
+    </div>
+
     <main class="main-content container">
         <div class="section-header">
             <h1>Size Exclusion Graphing</h1>
@@ -315,6 +475,14 @@
                             onchange="updateShowGridlines()">
                         <label for="showGridlines" style="font-weight: normal; cursor: pointer;">Gridlines</label>
                     </div>
+                    <div id="fractionVolumeRow" style="margin-top: 0.5rem; display: none; align-items: center; gap: 0.5rem;">
+                        <label for="fractionVolume" style="font-weight: normal; white-space: nowrap;">Fraction Vol (mL):</label>
+                        <input type="number" id="fractionVolume" placeholder="e.g. 1" value="1" min="0.1" step="0.1"
+                            style="width: 80px; padding: 0.4rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem;">
+                        <label for="fractionStart" style="font-weight: normal; white-space: nowrap; margin-left: 0.5rem;">Start:</label>
+                        <input type="number" id="fractionStart" placeholder="auto" min="0" step="0.1"
+                            style="width: 80px; padding: 0.4rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem;">
+                    </div>
                 </div>
                 <div class="control-group">
                     <label>Series Toggles</label>
@@ -333,6 +501,21 @@
 
             <div style="position: relative; height: 500px; width: 100%;">
                 <canvas id="secChart"></canvas>
+            </div>
+
+            <!-- Fraction Groups Panel -->
+            <div class="fraction-groups-panel" id="fractionGroupsPanel" style="display: none;">
+                <h3>Fraction Groups</h3>
+                <div class="group-controls">
+                    <input type="color" id="groupColor" value="#4a90a4" title="Group color">
+                    <input type="text" id="groupName" placeholder="Group name">
+                    <button class="btn-sm" style="background: var(--muted-blue); color: white;" onclick="addGroup()">+ New Group</button>
+                    <button class="btn-sm" style="background: #6c757d; color: white;" onclick="clearAllGroups()">Clear All</button>
+                </div>
+                <div class="group-list" id="groupList">
+                    <em style="color: #999; font-size: 0.85rem;">No groups yet. Create one and click fraction labels on the chart.</em>
+                </div>
+                <p class="group-hint" id="groupHint" style="display: none;">Click fraction labels on the chart to add/remove them from the selected group.</p>
             </div>
         </div>
     </main>
@@ -364,8 +547,116 @@
 
     <script>
         let myChart = null;
+        let currentInstrument = 'akta';
+        let fractionGroups = [];  // [{name, color, fractionIndices: []}]
+        let activeGroupIndex = -1;
+        let currentFractions = []; // stored globally for click detection
+
+        function setInstrument(mode) {
+            currentInstrument = mode;
+            document.getElementById('toggleAKTA').classList.toggle('active', mode === 'akta');
+            document.getElementById('toggleBioRad').classList.toggle('active', mode === 'biorad');
+            // Show/hide the fraction volume input
+            document.getElementById('fractionVolumeRow').style.display = mode === 'biorad' ? 'flex' : 'none';
+        }
 
         function parseData(text) {
+            if (currentInstrument === 'biorad') {
+                return parseBioRadData(text);
+            }
+            return parseAKTAData(text);
+        }
+
+        function parseBioRadData(text) {
+            const lines = text.trim().split('\n');
+            const datasetsInfo = [];
+            let fractions = [];
+
+            if (lines.length < 3) return { datasetsInfo, fractions };
+
+            let delimiter = ',';
+            if (lines[0].includes('\t')) delimiter = '\t';
+
+            // Row 0: sample name (repeated) — skip
+            // Row 1: headers like "UV3 (280 nm)_volume", "UV3 (280 nm)_mAU", ...
+            // Row 2+: data
+            const headers = lines[1].split(delimiter).map(h => h.trim());
+            const startRow = 2;
+
+            // Parse paired columns: each series is (name_volume, name_unit)
+            // Identify pairs by finding columns ending with "_volume" and the next column as the value
+            for (let c = 0; c < headers.length - 1; c += 2) {
+                const volHeader = headers[c];
+                const valHeader = headers[c + 1];
+
+                if (!volHeader || !valHeader) continue;
+
+                // Extract series name: everything before the last underscore segment
+                // e.g. "UV3 (280 nm)_volume" → "UV3 (280 nm)"
+                // e.g. "UV3 (280 nm)_mAU" → unit is "mAU"
+                const lastUnderscore = valHeader.lastIndexOf('_');
+                let seriesName, unit;
+                if (lastUnderscore !== -1) {
+                    seriesName = valHeader.substring(0, lastUnderscore);
+                    unit = valHeader.substring(lastUnderscore + 1);
+                } else {
+                    seriesName = valHeader;
+                    unit = '';
+                }
+
+                const label = unit ? `${seriesName} (${unit})` : seriesName;
+
+                datasetsInfo.push({
+                    label: label,
+                    xIndex: c,       // each series has its own volume column
+                    yIndex: c + 1,
+                    dataPoints: []
+                });
+            }
+
+            // Parse data rows
+            for (let i = startRow; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                const parts = line.split(delimiter).map(p => p.trim());
+
+                datasetsInfo.forEach(ds => {
+                    if (parts.length > Math.max(ds.xIndex, ds.yIndex)) {
+                        if (parts[ds.xIndex] !== '' && parts[ds.yIndex] !== '') {
+                            const x = parseFloat(parts[ds.xIndex]);
+                            const y = parseFloat(parts[ds.yIndex]);
+                            if (!isNaN(x) && !isNaN(y)) {
+                                ds.dataPoints.push({ x, y });
+                            }
+                        }
+                    }
+                });
+            }
+
+            const validDatasets = datasetsInfo.filter(ds => ds.dataPoints.length > 0);
+
+            // Generate fractions from user-specified volume interval
+            const fractionVol = parseFloat(document.getElementById('fractionVolume').value);
+            if (!isNaN(fractionVol) && fractionVol > 0 && validDatasets.length > 0) {
+                // Use first dataset's x-range to determine fraction span
+                const allX = validDatasets[0].dataPoints.map(p => p.x);
+                const xMin = Math.min(...allX);
+                const xMax = Math.max(...allX);
+
+                const fractionStartInput = document.getElementById('fractionStart').value;
+                let start = fractionStartInput !== '' ? parseFloat(fractionStartInput) : Math.floor(xMin / fractionVol) * fractionVol;
+
+                let fracNum = 1;
+                for (let v = start; v <= xMax; v += fractionVol) {
+                    fractions.push({ x: parseFloat(v.toFixed(4)), label: `${fracNum}` });
+                    fracNum++;
+                }
+            }
+
+            return { datasetsInfo: validDatasets, fractions };
+        }
+
+        function parseAKTAData(text) {
             const lines = text.trim().split('\n');
             const datasetsInfo = [];
             const fractions = [];
@@ -509,7 +800,7 @@
             return { datasetsInfo: validDatasets, fractions };
         }
 
-        // Custom plugin to draw fraction lines and labels
+        // Custom plugin to draw fraction lines, labels, and group rectangles
         const fractionLinesPlugin = {
             id: 'fractionLines',
             afterDraw: (chart, args, options) => {
@@ -517,18 +808,56 @@
 
                 const { ctx, chartArea: { top, bottom, left, right }, scales: { x } } = chart;
 
+                // --- Draw group rectangles first (behind everything) ---
+                fractionGroups.forEach(group => {
+                    if (group.fractionIndices.length === 0) return;
+
+                    // For each fraction in the group, draw a rectangle spanning that fraction's region
+                    group.fractionIndices.forEach(fracIdx => {
+                        if (fracIdx >= options.fractions.length) return;
+
+                        const fracStart = x.getPixelForValue(options.fractions[fracIdx].x);
+                        let fracEnd;
+                        if (fracIdx < options.fractions.length - 1) {
+                            fracEnd = x.getPixelForValue(options.fractions[fracIdx + 1].x);
+                        } else {
+                            fracEnd = right;
+                        }
+
+                        // Clamp to chart area
+                        const drawLeft = Math.max(fracStart, left);
+                        const drawRight = Math.min(fracEnd, right);
+
+                        if (drawLeft < drawRight) {
+                            // Fill with translucent color
+                            ctx.save();
+                            ctx.fillStyle = group.color + '30'; // ~19% opacity
+                            ctx.fillRect(drawLeft, top, drawRight - drawLeft, bottom - top);
+
+                            // Draw border rectangle
+                            ctx.strokeStyle = group.color;
+                            ctx.lineWidth = 2;
+                            ctx.setLineDash([]);
+                            ctx.strokeRect(drawLeft, top, drawRight - drawLeft, bottom - top);
+                            ctx.restore();
+                        }
+                    });
+                });
+
+                // --- Draw fraction lines and labels ---
                 ctx.save();
                 ctx.lineWidth = 1;
-                ctx.strokeStyle = '#d3d3d3'; // Light gray
-                ctx.setLineDash([]); // Solid line
-                ctx.fillStyle = 'black'; // Darker text
+                ctx.strokeStyle = '#d3d3d3';
+                ctx.setLineDash([]);
                 ctx.font = 'bold 14px sans-serif';
                 ctx.textAlign = 'center';
+
+                // Store label positions for click detection
+                chart._fractionLabelAreas = [];
 
                 options.fractions.forEach((fraction, index) => {
                     const xPos = x.getPixelForValue(fraction.x);
 
-                    // Only draw if within chart area
                     if (xPos >= left && xPos <= right) {
                         // Draw Vertical Line
                         ctx.beginPath();
@@ -536,22 +865,38 @@
                         ctx.lineTo(xPos, bottom);
                         ctx.stroke();
 
-                        // Calculate center position for label (between this line and next)
+                        // Calculate center position for label
                         let nextXPos;
                         if (index < options.fractions.length - 1) {
                             nextXPos = x.getPixelForValue(options.fractions[index + 1].x);
                         } else {
-                            nextXPos = right; // Use end of chart for last fraction
+                            nextXPos = right;
                         }
-
-                        // Ensure nextXPos is within bounds for calculation
                         if (nextXPos > right) nextXPos = right;
 
                         const centerPos = (xPos + nextXPos) / 2;
 
-                        // Draw label at the top, centered in the area
                         if (centerPos >= left && centerPos <= right) {
+                            // Check if this fraction is in any group
+                            let labelColor = 'black';
+                            for (const g of fractionGroups) {
+                                if (g.fractionIndices.includes(index)) {
+                                    labelColor = g.color;
+                                    break;
+                                }
+                            }
+                            ctx.fillStyle = labelColor;
                             ctx.fillText(fraction.label, centerPos, top + 15);
+
+                            // Store the label's hit area for click detection
+                            const textWidth = ctx.measureText(fraction.label).width;
+                            chart._fractionLabelAreas.push({
+                                index: index,
+                                x: centerPos - textWidth / 2 - 4,
+                                y: top,
+                                w: textWidth + 8,
+                                h: 22
+                            });
                         }
                     }
                 });
@@ -715,6 +1060,22 @@
                     options: {
                         devicePixelRatio: 3,
                         onClick: (e) => {
+                            // Check if a fraction label was clicked first
+                            const rect = myChart.canvas.getBoundingClientRect();
+                            const clickX = e.x !== undefined ? e.x : (e.native ? e.native.offsetX : 0);
+                            const clickY = e.y !== undefined ? e.y : (e.native ? e.native.offsetY : 0);
+
+                            if (myChart._fractionLabelAreas && activeGroupIndex >= 0) {
+                                for (const area of myChart._fractionLabelAreas) {
+                                    if (clickX >= area.x && clickX <= area.x + area.w &&
+                                        clickY >= area.y && clickY <= area.y + area.h) {
+                                        toggleFractionInGroup(area.index);
+                                        return;
+                                    }
+                                }
+                            }
+
+                            // Otherwise handle marker clicks
                             const points = myChart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
 
                             if (points.length) {
@@ -756,6 +1117,7 @@
                             fractionLines: {
                                 fractions: showFractions ? fractions : []
                             },
+                            fractionGroupRects: {},
                             zoom: {
                                 zoom: {
                                     wheel: { enabled: false },
@@ -779,6 +1141,16 @@
                 });
 
                 buildSeriesToggles(datasetsInfo, graphColors);
+
+                // Store fractions globally and show groups panel if fractions exist
+                currentFractions = fractions;
+                const groupsPanel = document.getElementById('fractionGroupsPanel');
+                if (showFractions && fractions.length > 0) {
+                    groupsPanel.style.display = 'block';
+                } else {
+                    groupsPanel.style.display = 'none';
+                }
+                renderGroupList();
 
             } catch (error) {
                 console.error(error);
@@ -901,6 +1273,128 @@
                 myChart.destroy();
                 myChart = null;
             }
+            fractionGroups = [];
+            activeGroupIndex = -1;
+            currentFractions = [];
+            document.getElementById('fractionGroupsPanel').style.display = 'none';
+            renderGroupList();
+        }
+
+        // ---- Fraction Group Functions ----
+
+        function addGroup() {
+            const color = document.getElementById('groupColor').value;
+            const nameInput = document.getElementById('groupName');
+            const name = nameInput.value.trim() || `Group ${fractionGroups.length + 1}`;
+            fractionGroups.push({ name, color, fractionIndices: [] });
+            activeGroupIndex = fractionGroups.length - 1;
+            nameInput.value = '';
+            renderGroupList();
+            document.getElementById('groupHint').style.display = 'block';
+        }
+
+        function clearAllGroups() {
+            fractionGroups = [];
+            activeGroupIndex = -1;
+            renderGroupList();
+            document.getElementById('groupHint').style.display = 'none';
+            if (myChart) myChart.update();
+        }
+
+        function selectGroup(idx) {
+            activeGroupIndex = idx;
+            renderGroupList();
+            document.getElementById('groupHint').style.display = 'block';
+        }
+
+        function deleteGroup(idx) {
+            fractionGroups.splice(idx, 1);
+            if (activeGroupIndex >= fractionGroups.length) {
+                activeGroupIndex = fractionGroups.length - 1;
+            }
+            renderGroupList();
+            if (myChart) myChart.update();
+        }
+
+        function toggleFractionInGroup(fracIndex) {
+            if (activeGroupIndex < 0 || activeGroupIndex >= fractionGroups.length) return;
+
+            const group = fractionGroups[activeGroupIndex];
+            const pos = group.fractionIndices.indexOf(fracIndex);
+
+            if (pos !== -1) {
+                // Remove from this group
+                group.fractionIndices.splice(pos, 1);
+            } else {
+                // Remove from any other group first
+                fractionGroups.forEach((g, gi) => {
+                    if (gi !== activeGroupIndex) {
+                        const p = g.fractionIndices.indexOf(fracIndex);
+                        if (p !== -1) g.fractionIndices.splice(p, 1);
+                    }
+                });
+                group.fractionIndices.push(fracIndex);
+                group.fractionIndices.sort((a, b) => a - b);
+            }
+
+            renderGroupList();
+            if (myChart) myChart.update();
+        }
+
+        function updateGroupColor(idx, color) {
+            fractionGroups[idx].color = color;
+            renderGroupList();
+            if (myChart) myChart.update();
+        }
+
+        function renderGroupList() {
+            const container = document.getElementById('groupList');
+            if (fractionGroups.length === 0) {
+                container.innerHTML = '<em style="color: #999; font-size: 0.85rem;">No groups yet. Create one and click fraction labels on the chart.</em>';
+                return;
+            }
+
+            container.innerHTML = '';
+            fractionGroups.forEach((group, idx) => {
+                const item = document.createElement('div');
+                item.className = 'group-item' + (idx === activeGroupIndex ? ' active' : '');
+                item.onclick = (e) => {
+                    if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT') selectGroup(idx);
+                };
+
+                const colorInput = document.createElement('input');
+                colorInput.type = 'color';
+                colorInput.value = group.color;
+                colorInput.style.cssText = 'width:22px;height:22px;border:1px solid #ccc;border-radius:4px;cursor:pointer;padding:1px;';
+                colorInput.onchange = (e) => updateGroupColor(idx, e.target.value);
+
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = group.name;
+                nameSpan.style.fontWeight = '500';
+
+                const fracSpan = document.createElement('span');
+                fracSpan.className = 'group-fractions';
+                if (group.fractionIndices.length > 0) {
+                    const labels = group.fractionIndices.map(fi => {
+                        return currentFractions[fi] ? currentFractions[fi].label : fi;
+                    });
+                    fracSpan.textContent = `[${labels.join(', ')}]`;
+                } else {
+                    fracSpan.textContent = '(empty)';
+                }
+
+                const delBtn = document.createElement('button');
+                delBtn.className = 'group-delete';
+                delBtn.innerHTML = '×';
+                delBtn.title = 'Delete group';
+                delBtn.onclick = () => deleteGroup(idx);
+
+                item.appendChild(colorInput);
+                item.appendChild(nameSpan);
+                item.appendChild(fracSpan);
+                item.appendChild(delBtn);
+                container.appendChild(item);
+            });
         }
     </script>
 </body>
