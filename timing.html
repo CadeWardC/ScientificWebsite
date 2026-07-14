@@ -616,6 +616,12 @@
             document.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             btn.classList.add('active');
+
+            if (tabId === 'stopwatch') {
+                stopwatch.updateDisplay();
+            } else {
+                countdown.updateDocumentTitle();
+            }
         }
 
         function formatTimerInput(el) {
@@ -665,6 +671,8 @@
             start: function () {
                 if (!this.running) {
                     this.startTime = performance.now() - this.elapsedTime;
+                    this.running = true;
+                    this.updateDisplay();
 
                     this.timerInterval = setInterval(() => {
                         this.elapsedTime = performance.now() - this.startTime;
@@ -672,7 +680,6 @@
                     }
 
                         , 10);
-                    this.running = true;
                     document.getElementById('sw-start').style.display = 'none';
                     document.getElementById('sw-stop').style.display = 'inline-block';
                     document.getElementById('sw-lap').disabled = false;
@@ -683,8 +690,10 @@
 
             stop: function () {
                 if (this.running) {
+                    this.elapsedTime = performance.now() - this.startTime;
                     clearInterval(this.timerInterval);
                     this.running = false;
+                    this.updateDisplay();
                     document.getElementById('sw-start').style.display = 'inline-block';
                     document.getElementById('sw-stop').style.display = 'none';
                     document.getElementById('sw-lap').disabled = true;
@@ -729,7 +738,14 @@
             ,
 
             updateDisplay: function () {
-                document.getElementById('stopwatch-display').textContent = this.formatTime(this.elapsedTime);
+                const formattedTime = this.formatTime(this.elapsedTime);
+                document.getElementById('stopwatch-display').textContent = formattedTime;
+
+                if (document.getElementById('stopwatch').classList.contains('active')) {
+                    document.title = this.running || this.elapsedTime > 0
+                        ? `${formattedTime} - Stopwatch`
+                        : DEFAULT_PAGE_TITLE;
+                }
             }
 
             ,
@@ -771,6 +787,14 @@
             },
 
             updateDocumentTitle: function () {
+                if (document.getElementById('stopwatch').classList.contains('active')) {
+                    const stopwatchTime = stopwatch.formatTime(stopwatch.elapsedTime);
+                    document.title = stopwatch.running || stopwatch.elapsedTime > 0
+                        ? `${stopwatchTime} - Stopwatch`
+                        : DEFAULT_PAGE_TITLE;
+                    return;
+                }
+
                 if (this.isConcurrent) {
                     const activeItems = this.queue.filter(item => item.active);
                     if (activeItems.length > 0) {
