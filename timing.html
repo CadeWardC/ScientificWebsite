@@ -445,6 +445,13 @@
             min-width: 80px;
         }
 
+        .timer-status {
+            min-height: 1.5rem;
+            margin: 0.75rem 0 0;
+            color: rgba(10, 10, 10, 0.65);
+            font-size: 0.9rem;
+        }
+
         .option-btn {
             padding: 0.5rem 1.5rem;
             /* Smaller padding */
@@ -547,7 +554,8 @@
             <!-- Input (Setup) / Display (Running/Sequential) -->
             <div id="timer-setup" style="display:flex; justify-content:center; width:100%; margin-bottom: 1rem;">
                 <div class="time-input-group">
-                    <input type="text" id="t-input" placeholder="00:00:00" oninput="formatTimerInput(this)">
+                    <input type="text" id="t-input" placeholder="00:00:00" inputmode="numeric"
+                        aria-label="Timer duration in hours, minutes, and seconds" oninput="formatTimerInput(this)">
                     <label>HH:MM:SS</label>
                 </div>
             </div>
@@ -563,6 +571,7 @@
                     style="display:none; background-color: var(--danger-red);">Stop Alarm</button>
                 <button class="control-btn btn-reset" onclick="countdown.reset()">Reset</button>
             </div>
+            <p class="timer-status" id="timer-status" role="status" aria-live="polite">Enter a duration, then start the timer.</p>
 
             <!-- Options Buttons -->
             <div class="toggle-container" id="timer-options" style="margin-bottom: 1rem;">
@@ -655,10 +664,10 @@
 
             start: function () {
                 if (!this.running) {
-                    this.startTime = Date.now() - this.elapsedTime;
+                    this.startTime = performance.now() - this.elapsedTime;
 
                     this.timerInterval = setInterval(() => {
-                        this.elapsedTime = Date.now() - this.startTime;
+                        this.elapsedTime = performance.now() - this.startTime;
                         this.updateDisplay();
                     }
 
@@ -743,14 +752,42 @@
             ;
 
         // Countdown Logic
+        // A deadline based on performance.now() keeps the timer accurate even if the
+        // browser delays a repaint or throttles this tab in the background.
+        const DEFAULT_PAGE_TITLE = 'Timing - Scientific Tools';
         const countdown = {
-            totalSeconds: 0,
+            totalMilliseconds: 0,
             interval: null,
+            deadline: null,
+            alarmTimeout: null,
             running: false,
             queue: [],
             currentStepIndex: -1,
             isNonstop: false,
             isConcurrent: false,
+
+            setStatus: function (message) {
+                document.getElementById('timer-status').textContent = message;
+            },
+
+            updateDocumentTitle: function () {
+                if (this.isConcurrent) {
+                    const activeItems = this.queue.filter(item => item.active);
+                    if (activeItems.length > 0) {
+                        const nextItem = activeItems.reduce((soonest, item) =>
+                            item.remainingMilliseconds < soonest.remainingMilliseconds ? item : soonest
+                        );
+                        const label = activeItems.length === 1 ? 'Timer' : `${activeItems.length} timers`;
+                        document.title = `${this.formatTime(nextItem.remainingMilliseconds)} - ${label}`;
+                        return;
+                    }
+                } else if (this.currentStepIndex >= 0 && this.currentStepIndex < this.queue.length) {
+                    document.title = `${this.formatTime(this.totalMilliseconds)} - Timer`;
+                    return;
+                }
+
+                document.title = DEFAULT_PAGE_TITLE;
+            },
 
             toggleNonstop: function (el) {
                 if (this.running) {
@@ -801,12 +838,15 @@
                 if (parts.length >= 2) m = parts[1];
                 if (parts.length >= 3) s = parts[2];
 
-                const totalSec = h * 3600 + m * 60 + s;
-                if (totalSec <= 0) return;
+                const totalMilliseconds = (h * 3600 + m * 60 + s) * 1000;
+                if (totalMilliseconds <= 0) {
+                    this.setStatus('Enter a duration greater than zero.');
+                    return;
+                }
 
                 this.queue.push({
-                    totalSeconds: totalSec,
-                    remainingSeconds: totalSec,
+                    totalMilliseconds,
+                    remainingMilliseconds: totalMilliseconds,
                     originalText: timeStr || "00:00:00",
                     active: false,
                     completed: false,
@@ -815,6 +855,7 @@
                 });
 
                 inputEl.value = ''; // Clear input
+                this.setStatus(`${this.queue.length} timer step${this.queue.length === 1 ? '' : 's'} ready.`);
                 this.renderQueue();
             },
 
@@ -846,7 +887,7 @@
 
                     div.className = className;
 
-                    const timeDisp = this.formatTime(item.remainingSeconds);
+                    const timeDisp = this.formatTime(item.remainingMilliseconds);
                     let html = `<span>Step ${index + 1} (${item.originalText})</span>`;
 
                     if (this.isConcurrent) {
@@ -866,13 +907,32 @@
                     div.innerHTML = html;
                     container.appendChild(div);
                 });
+
+                this.updateDocumentTitle();
             },
 
-            formatTime: function (sec) {
-                const h = Math.floor(sec / 3600);
-                const m = Math.floor((sec % 3600) / 60);
-                const s = sec % 60;
+            formatTime: function (milliseconds) {
+                const totalSeconds = Math.max(0, Math.ceil(milliseconds / 1000));
+                const h = Math.floor(totalSeconds / 3600);
+                const m = Math.floor((totalSeconds % 3600) / 60);
+                const s = totalSeconds % 60;
                 return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            },
+
+            tick: function () {
+                if (!this.running || this.isConcurrent || this.deadline === null) return;
+
+                const currentItem = this.queue[this.currentStepIndex];
+                if (!currentItem) return;
+
+                this.totalMilliseconds = Math.max(0, this.deadline - performance.now());
+                currentItem.remainingMilliseconds = this.totalMilliseconds;
+                this.updateDisplay();
+                this.renderQueue();
+
+                if (this.totalMilliseconds === 0) {
+                    this.finish();
+                }
             },
 
             start: function () {
@@ -882,43 +942,28 @@
                 if (this.queue.length === 0) return;
 
                 if (!this.running) {
-                    // Hide setup
                     document.getElementById('timer-setup').style.display = 'none';
-                    // We also hide options? Or keep them? User usually sets options then starts.
-                    // Keep options visible? No, simplicity.
                     document.getElementById('timer-options').style.display = 'none';
                     document.getElementById('add-container').style.display = 'none';
 
-
                     if (this.isConcurrent) {
-                        // Concurrent Mode
-                        // Global start doesn't do anything special here as controls are per item?
-                        // Actually, if we hit global start, maybe it enters "Running Mode" where buttons appear?
-                        // Because previously we were in "Setup Mode".
-
-                        // We need to render queue to show buttons
                         this.running = true;
+                        this.setStatus('Start each timer independently.');
                         this.renderQueue();
                     } else {
-                        // Sequential Mode
                         document.getElementById('timer-display').style.display = 'block';
                         if (this.currentStepIndex === -1) this.currentStepIndex = 0;
                         if (this.currentStepIndex < this.queue.length) {
-                            this.totalSeconds = this.queue[this.currentStepIndex].remainingSeconds;
-                            this.updateDisplay();
-                            this.interval = setInterval(() => {
-                                this.totalSeconds--;
-                                this.queue[this.currentStepIndex].remainingSeconds = this.totalSeconds;
-                                this.updateDisplay();
-                                if (this.totalSeconds <= 0) {
-                                    this.finish();
-                                }
-                            }, 1000);
-
+                            const currentItem = this.queue[this.currentStepIndex];
+                            this.totalMilliseconds = currentItem.remainingMilliseconds;
+                            this.deadline = performance.now() + this.totalMilliseconds;
                             this.running = true;
+                            this.tick();
+                            this.interval = window.setInterval(() => this.tick(), 100);
                             document.getElementById('t-start').style.display = 'none';
                             document.getElementById('t-stop').style.display = 'inline-block';
                             document.getElementById('t-alarm-stop').style.display = 'none';
+                            this.setStatus(`Step ${this.currentStepIndex + 1} is running.`);
                         } else {
                             this.reset();
                             return;
@@ -929,7 +974,6 @@
             },
 
             startItem: function (index) {
-                // Ensure we are "running" (setup hidden)
                 if (!this.running) {
                     this.running = true;
                     document.getElementById('timer-setup').style.display = 'none';
@@ -941,78 +985,100 @@
                 if (item.active || item.completed) return;
 
                 item.active = true;
+                item.deadline = performance.now() + item.remainingMilliseconds;
+                this.setStatus(`Step ${index + 1} is running.`);
                 this.renderQueue();
 
-                item.interval = setInterval(() => {
-                    item.remainingSeconds--;
-                    // Update ONLY this item's text if possible, or re-render?
-                    // Re-render is expensive if frequent? With a few timers it is fine.
-                    this.renderQueue();
+                item.interval = window.setInterval(() => this.tickItem(item), 100);
+                this.tickItem(item);
+            },
 
-                    if (item.remainingSeconds <= 0) {
-                        clearInterval(item.interval);
-                        item.active = false;
-                        item.completed = true;
-                        this.finishItem(item);
-                    }
-                }, 1000);
+            tickItem: function (item) {
+                if (!item.active || item.deadline === undefined) return;
+
+                item.remainingMilliseconds = Math.max(0, item.deadline - performance.now());
+                this.renderQueue();
+
+                if (item.remainingMilliseconds === 0) {
+                    clearInterval(item.interval);
+                    item.interval = null;
+                    item.active = false;
+                    item.completed = true;
+                    this.finishItem(item);
+                }
             },
 
             stopItem: function (index) {
                 const item = this.queue[index];
+                this.tickItem(item);
+                if (item.completed) return;
                 if (item.interval) {
                     clearInterval(item.interval);
                     item.interval = null;
                 }
                 item.active = false;
+                item.deadline = null;
+                this.setStatus(`Step ${index + 1} paused.`);
                 this.renderQueue();
             },
 
             resetItem: function (index) {
                 const item = this.queue[index];
-                item.remainingSeconds = item.totalSeconds;
+                item.remainingMilliseconds = item.totalMilliseconds;
                 item.completed = false;
                 item.active = false;
                 if (item.interval) clearInterval(item.interval);
+                item.interval = null;
+                item.deadline = null;
+                this.setStatus(`Step ${index + 1} is ready to run again.`);
                 this.renderQueue();
             },
 
             finishItem: function (item) {
+                this.setStatus('A concurrent timer has finished.');
                 this.renderQueue();
                 const audio = document.getElementById('timer-sound');
-                // Play short beep
-                const beep = audio.cloneNode(); // Clone to allow overlapping sounds? or just play main
+                const beep = audio.cloneNode();
                 beep.volume = 0.5;
                 beep.play().catch(e => console.log(e));
             },
 
             stop: function () {
-                // Global Stop
                 if (this.running) {
-                    this.running = false;
-
                     if (this.isConcurrent) {
-                        // Pause all
                         this.queue.forEach(item => {
+                            this.tickItem(item);
                             if (item.interval) clearInterval(item.interval);
                             item.active = false;
+                            item.deadline = null;
                         });
                         this.renderQueue();
                     } else {
+                        this.tick();
+                        if (!this.running) return;
                         clearInterval(this.interval);
+                        this.interval = null;
+                        this.deadline = null;
                     }
 
+                    this.running = false;
                     document.getElementById('t-start').style.display = 'inline-block';
                     document.getElementById('t-stop').style.display = 'none';
                     document.getElementById('t-start').textContent = 'Resume';
+                    this.setStatus('Timer paused.');
+                    this.updateDocumentTitle();
                 }
             },
 
             reset: function () {
                 clearInterval(this.interval);
+                clearTimeout(this.alarmTimeout);
                 this.running = false;
+                this.interval = null;
+                this.deadline = null;
+                this.alarmTimeout = null;
+                this.totalMilliseconds = 0;
 
-                // Clear concurrent intervals
                 this.queue.forEach(item => {
                     if (item.interval) clearInterval(item.interval);
                 });
@@ -1028,8 +1094,8 @@
                 document.getElementById('t-start').style.display = 'inline-block';
                 document.getElementById('t-stop').style.display = 'none';
                 document.getElementById('t-alarm-stop').style.display = 'none';
+                this.setStatus('Enter a duration, then start the timer.');
 
-                // Stop sound if playing
                 const audio = document.getElementById('timer-sound');
                 audio.pause();
                 audio.currentTime = 0;
@@ -1037,35 +1103,41 @@
             },
 
             finish: function () {
-                // Sequential Finish
                 clearInterval(this.interval);
+                this.interval = null;
+                this.deadline = null;
                 this.running = false;
+                this.totalMilliseconds = 0;
+
+                const currentItem = this.queue[this.currentStepIndex];
+                if (currentItem) currentItem.remainingMilliseconds = 0;
+                this.updateDisplay();
+                this.renderQueue();
 
                 const audio = document.getElementById('timer-sound');
 
                 if (this.isNonstop) {
-                    // Nonstop Mode
                     audio.play().catch(e => console.log(e));
-                    // Maybe just 2 seconds of alarm then next?
-                    setTimeout(() => {
+                    this.setStatus('Step complete. Moving to the next step.');
+                    this.alarmTimeout = window.setTimeout(() => {
                         audio.pause();
                         audio.currentTime = 0;
                         this.stopAlarmAndNext();
-                    }, 2000); // 2 sec beep
+                    }, 2000);
                 } else {
-                    // Normal Wait Mode
-                    this.updateDisplay();
                     audio.loop = true;
                     audio.play().catch(e => console.log('Audio play failed', e));
 
                     document.getElementById('t-start').style.display = 'none';
                     document.getElementById('t-stop').style.display = 'none';
                     document.getElementById('t-alarm-stop').style.display = 'inline-block';
+                    this.setStatus('Step complete. Stop the alarm to begin the next step.');
                 }
             },
 
             stopAlarmAndNext: function () {
-                // Stop Sound
+                clearTimeout(this.alarmTimeout);
+                this.alarmTimeout = null;
                 const audio = document.getElementById('timer-sound');
                 audio.pause();
                 audio.currentTime = 0;
@@ -1073,14 +1145,9 @@
 
                 document.getElementById('t-alarm-stop').style.display = 'none';
 
-                // Mark current as done
                 this.currentStepIndex++;
 
                 if (this.currentStepIndex < this.queue.length) {
-                    // Prepare next step
-                    // Recursively start next?
-                    // Need to set running false/true logic correct
-                    // this.start() checks if !running. We just set running=false in finish().
                     this.start();
                 } else {
                     alert("All timers complete!");
@@ -1089,7 +1156,7 @@
             },
 
             updateDisplay: function () {
-                document.getElementById('timer-display').textContent = this.formatTime(this.totalSeconds);
+                document.getElementById('timer-display').textContent = this.formatTime(this.totalMilliseconds);
             }
         };
 
