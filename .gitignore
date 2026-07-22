@@ -1,1 +1,3 @@
 /.claude
+/dist
+/.openai/*.tar.gz

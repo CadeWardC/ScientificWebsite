@@ -5,6 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculations - Scientific Tools</title>
+    <meta name="description" content="Calculate how much harvested adherent cell suspension and fresh medium you need for a target cell count and final volume.">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Adherent Cell Calculator - Scientific Tools">
+    <meta property="og:description" content="Plan cell suspension and medium volumes with confidence.">
+    <meta property="og:image" content="og-adherent-cell-calculator.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Adherent Cell Calculator - Scientific Tools">
+    <meta name="twitter:description" content="Plan cell suspension and medium volumes with confidence.">
+    <meta name="twitter:image" content="og-adherent-cell-calculator.png">
     <style>
         * {
             margin: 0;
@@ -313,6 +322,152 @@
             font-size: 0.9rem;
         }
 
+        .adherent-calculator {
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
+            gap: 2rem;
+            align-items: start;
+            margin-top: 1.5rem;
+        }
+
+        .adherent-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.35rem 0.7rem;
+            margin-bottom: 0.9rem;
+            border-radius: 999px;
+            background: var(--light-blue);
+            color: #316b7b;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .adherent-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .cell-input-card {
+            padding: 1.1rem;
+            border: 1px solid #e2e7e9;
+            border-radius: 10px;
+            background: #fbfcfc;
+        }
+
+        .cell-input-card .form-group {
+            gap: 0.65rem;
+        }
+
+        .cell-step {
+            display: inline-grid;
+            place-items: center;
+            width: 1.65rem;
+            height: 1.65rem;
+            margin-bottom: 0.55rem;
+            border-radius: 50%;
+            background: var(--soft-black);
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .adherent-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.25rem;
+        }
+
+        .adherent-actions .calc-btn {
+            flex: 1;
+            margin: 0;
+        }
+
+        .calc-btn.secondary-btn {
+            flex: 0 0 auto !important;
+            padding-inline: 1.25rem;
+            border: 1px solid #d5dde0;
+            background: white;
+            color: var(--soft-black);
+        }
+
+        .calc-btn.secondary-btn:hover {
+            background: var(--off-white);
+            color: var(--soft-black);
+        }
+
+        .adherent-results-card {
+            position: sticky;
+            top: 96px;
+            padding: 1.6rem;
+            border-radius: 12px;
+            background: var(--soft-black);
+            color: white;
+            box-shadow: 0 8px 24px rgba(10, 10, 10, 0.14);
+        }
+
+        .adherent-results-card h3 {
+            margin-bottom: 0.4rem;
+        }
+
+        .adherent-status {
+            padding: 1rem 0;
+            color: rgba(255, 255, 255, 0.68);
+        }
+
+        .adherent-result-grid {
+            display: grid;
+            gap: 0.85rem;
+            margin: 1.25rem 0;
+        }
+
+        .adherent-result-item {
+            padding: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 9px;
+            background: rgba(255, 255, 255, 0.07);
+        }
+
+        .adherent-result-label {
+            color: rgba(255, 255, 255, 0.68);
+            font-size: 0.82rem;
+        }
+
+        .adherent-result-value {
+            margin-top: 0.2rem;
+            color: #8fc7d6;
+            font-size: 1.55rem;
+            font-weight: 750;
+            line-height: 1.2;
+        }
+
+        .adherent-summary {
+            color: rgba(255, 255, 255, 0.78);
+            font-size: 0.9rem;
+        }
+
+        .adherent-error {
+            margin-top: 1rem;
+            padding: 1rem;
+            border: 1px solid rgba(255, 198, 198, 0.32);
+            border-radius: 9px;
+            background: rgba(220, 53, 69, 0.18);
+            color: #ffd7db;
+            font-size: 0.92rem;
+        }
+
+        .formula-note {
+            margin-top: 1.25rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.55);
+            font-size: 0.78rem;
+            line-height: 1.5;
+        }
+
         .mode-select {
             padding: 0.6rem 0.9rem;
             border: 1px solid #ddd;
@@ -577,6 +732,28 @@
         @media (max-width: 900px) {
             .calc-layout {
                 grid-template-columns: 1fr;
+            }
+
+            .adherent-calculator {
+                grid-template-columns: 1fr;
+            }
+
+            .adherent-results-card {
+                position: static;
+            }
+        }
+
+        @media (max-width: 620px) {
+            .adherent-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .adherent-actions {
+                flex-direction: column;
+            }
+
+            .secondary-btn {
+                flex: 1 1 auto !important;
             }
         }
     </style>
@@ -880,13 +1057,13 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:0.5rem;">
                     <h2 style="margin:0;">Cells</h2>
                     <select id="cells-mode" class="mode-select" style="max-width:180px;" onchange="switchCellsMode(this.value)">
-                        <option value="suspension" selected>Suspension</option>
-                        <option value="adherent">Adherent</option>
+                        <option value="adherent" selected>Adherent</option>
+                        <option value="suspension">Suspension</option>
                     </select>
                 </div>
-                <p style="color:#666;">Cell-related calculators coming soon.</p>
+                <p id="cells-intro" style="color:#666;">Plan a target cell suspension after harvesting adherent cells.</p>
 
-                <div id="cells-suspension" class="cells-mode-panel">
+                <div id="cells-suspension" class="cells-mode-panel" style="display:none;">
                     <div class="calc-section">
                         <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; align-items:end;">
                             <div class="form-group">
@@ -935,7 +1112,93 @@
                         </div>
                     </div>
                 </div>
-                <div id="cells-adherent" class="cells-mode-panel" style="display:none;"></div>
+                <div id="cells-adherent" class="cells-mode-panel">
+                    <div class="adherent-calculator">
+                        <form class="calc-main" onsubmit="event.preventDefault(); calcAdherentCells();" novalidate>
+                            <span class="adherent-eyebrow">Adherent cell setup</span>
+                            <h3 id="adherent-calculator-title" style="font-size:1.45rem; margin-bottom:0.45rem;">Prepare your target cell suspension</h3>
+                            <p style="color:#666;">Enter what you have and what you need. The calculator will tell you how much harvested cell suspension to use and how much fresh medium to add.</p>
+
+                            <div class="adherent-grid">
+                                <div class="cell-input-card">
+                                    <span class="cell-step">1</span>
+                                    <div class="form-group">
+                                        <label for="ca-initial-concentration">Initial cell concentration</label>
+                                        <div class="input-group">
+                                            <input type="number" id="ca-initial-concentration" min="0" step="any" inputmode="decimal" placeholder="e.g., 1e6" oninput="calcAdherentCells()">
+                                            <select id="ca-concentration-unit" aria-label="Initial concentration unit" onchange="calcAdherentCells()">
+                                                <option value="1" selected>cells/mL</option>
+                                                <option value="1000">cells/µL</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="cell-input-card">
+                                    <span class="cell-step">2</span>
+                                    <div class="form-group">
+                                        <label for="ca-initial-volume">Available suspension volume</label>
+                                        <div class="input-group">
+                                            <input type="number" id="ca-initial-volume" min="0" step="any" inputmode="decimal" placeholder="e.g., 10" oninput="calcAdherentCells()">
+                                            <select id="ca-initial-volume-unit" aria-label="Available suspension volume unit" onchange="calcAdherentCells()">
+                                                <option value="1" selected>mL</option>
+                                                <option value="0.001">µL</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="cell-input-card">
+                                    <span class="cell-step">3</span>
+                                    <div class="form-group">
+                                        <label for="ca-target-cells">Total cells needed</label>
+                                        <input type="number" id="ca-target-cells" min="0" step="any" inputmode="decimal" placeholder="e.g., 2e6" oninput="calcAdherentCells()">
+                                    </div>
+                                </div>
+
+                                <div class="cell-input-card">
+                                    <span class="cell-step">4</span>
+                                    <div class="form-group">
+                                        <label for="ca-final-volume">Desired final volume</label>
+                                        <div class="input-group">
+                                            <input type="number" id="ca-final-volume" min="0" step="any" inputmode="decimal" placeholder="e.g., 5" oninput="calcAdherentCells()">
+                                            <select id="ca-final-volume-unit" aria-label="Desired final volume unit" onchange="calcAdherentCells()">
+                                                <option value="1" selected>mL</option>
+                                                <option value="0.001">µL</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="adherent-actions">
+                                <button type="submit" class="calc-btn">Calculate volumes</button>
+                                <button type="button" class="calc-btn secondary-btn" onclick="resetAdherentCells()">Reset</button>
+                            </div>
+                        </form>
+
+                        <aside class="adherent-results-card" aria-labelledby="adherent-results-title">
+                            <span class="adherent-eyebrow" style="background:rgba(143,199,214,0.14); color:#8fc7d6;">Your cell plan</span>
+                            <h3 id="adherent-results-title">Volumes to prepare</h3>
+                            <div id="ca-status" class="adherent-status" role="status" aria-live="polite">Enter all four values to calculate your cell and medium volumes.</div>
+                            <div id="ca-results" hidden>
+                                <div class="adherent-result-grid">
+                                    <div class="adherent-result-item">
+                                        <div class="adherent-result-label">Take from cell suspension</div>
+                                        <div id="ca-stock-output" class="adherent-result-value"></div>
+                                    </div>
+                                    <div class="adherent-result-item">
+                                        <div class="adherent-result-label">Add fresh medium</div>
+                                        <div id="ca-medium-output" class="adherent-result-value"></div>
+                                    </div>
+                                </div>
+                                <p id="ca-summary" class="adherent-summary"></p>
+                            </div>
+                            <div id="ca-error" class="adherent-error" role="alert" hidden></div>
+                            <p class="formula-note">Calculation: cell suspension volume = total cells needed ÷ initial concentration. Fresh medium = desired final volume − cell suspension volume. Assumes a well-mixed suspension and no cell loss during transfer.</p>
+                        </aside>
+                    </div>
+                </div>
             </div>
 
             <div id="protein" class="tab-content">
@@ -1521,6 +1784,140 @@
                     mode === 'suspension' ? 'block' : 'none';
                 document.getElementById('cells-adherent').style.display =
                     mode === 'adherent' ? 'block' : 'none';
+                document.getElementById('cells-intro').textContent = mode === 'adherent'
+                    ? 'Plan a target cell suspension after harvesting adherent cells.'
+                    : 'Calculate the starting volume needed for a target cell density.';
+            }
+
+            function getAdherentCellPlan(initialConcentration, initialVolumeMl, targetCells, finalVolumeMl) {
+                const availableCells = initialConcentration * initialVolumeMl;
+                const stockVolumeMl = targetCells / initialConcentration;
+                const mediumVolumeMl = finalVolumeMl - stockVolumeMl;
+
+                if (targetCells > availableCells) {
+                    return {
+                        error: 'cells',
+                        availableCells,
+                        shortfallCells: targetCells - availableCells,
+                        stockVolumeMl
+                    };
+                }
+
+                if (mediumVolumeMl < -1e-12) {
+                    return {
+                        error: 'volume',
+                        availableCells,
+                        stockVolumeMl,
+                        mediumVolumeMl
+                    };
+                }
+
+                return {
+                    availableCells,
+                    stockVolumeMl,
+                    mediumVolumeMl: Math.max(0, mediumVolumeMl),
+                    finalDensity: targetCells / finalVolumeMl,
+                    fractionOfStockUsed: targetCells / availableCells
+                };
+            }
+
+            function formatCellNumber(value) {
+                if (!isFinite(value)) return '—';
+                return value.toLocaleString('en-US', { maximumSignificantDigits: 4 });
+            }
+
+            function formatCellVolume(volumeMl, unitFactor, unitLabel) {
+                const converted = volumeMl / unitFactor;
+                let value;
+                if (converted !== 0 && Math.abs(converted) < 0.0001) {
+                    value = converted.toExponential(3);
+                } else {
+                    value = converted.toLocaleString('en-US', {
+                        maximumFractionDigits: 4,
+                        maximumSignificantDigits: 5
+                    });
+                }
+                return value + ' ' + unitLabel;
+            }
+
+            function showAdherentError(message) {
+                document.getElementById('ca-status').hidden = true;
+                document.getElementById('ca-results').hidden = true;
+                const error = document.getElementById('ca-error');
+                error.textContent = message;
+                error.hidden = false;
+            }
+
+            function calcAdherentCells() {
+                const concentrationRaw = document.getElementById('ca-initial-concentration').value;
+                const initialVolumeRaw = document.getElementById('ca-initial-volume').value;
+                const targetCellsRaw = document.getElementById('ca-target-cells').value;
+                const finalVolumeRaw = document.getElementById('ca-final-volume').value;
+                const status = document.getElementById('ca-status');
+                const results = document.getElementById('ca-results');
+                const error = document.getElementById('ca-error');
+
+                if ([concentrationRaw, initialVolumeRaw, targetCellsRaw, finalVolumeRaw].some(value => value === '')) {
+                    status.textContent = 'Enter all four values to calculate your cell and medium volumes.';
+                    status.hidden = false;
+                    results.hidden = true;
+                    error.hidden = true;
+                    return;
+                }
+
+                const concentration = parseFloat(concentrationRaw) * parseFloat(document.getElementById('ca-concentration-unit').value);
+                const initialVolumeMl = parseFloat(initialVolumeRaw) * parseFloat(document.getElementById('ca-initial-volume-unit').value);
+                const targetCells = parseFloat(targetCellsRaw);
+                const finalVolumeFactor = parseFloat(document.getElementById('ca-final-volume-unit').value);
+                const finalVolumeMl = parseFloat(finalVolumeRaw) * finalVolumeFactor;
+
+                if (![concentration, initialVolumeMl, targetCells, finalVolumeMl].every(value => isFinite(value) && value > 0)) {
+                    showAdherentError('Enter values greater than zero in every field.');
+                    return;
+                }
+
+                const plan = getAdherentCellPlan(concentration, initialVolumeMl, targetCells, finalVolumeMl);
+                const outputUnit = document.getElementById('ca-final-volume-unit').selectedOptions[0].textContent;
+
+                if (plan.error === 'cells') {
+                    showAdherentError(
+                        'Not enough cells are available. You have ' + formatCellNumber(plan.availableCells) +
+                        ' cells and need ' + formatCellNumber(targetCells) + '. The shortfall is ' +
+                        formatCellNumber(plan.shortfallCells) + ' cells.'
+                    );
+                    return;
+                }
+
+                if (plan.error === 'volume') {
+                    showAdherentError(
+                        'The requested final volume is too small for this starting concentration. You would need ' +
+                        formatCellVolume(plan.stockVolumeMl, finalVolumeFactor, outputUnit) +
+                        ' of cell suspension. Increase the final volume or use a more concentrated suspension.'
+                    );
+                    return;
+                }
+
+                document.getElementById('ca-stock-output').textContent = formatCellVolume(plan.stockVolumeMl, finalVolumeFactor, outputUnit);
+                document.getElementById('ca-medium-output').textContent = formatCellVolume(plan.mediumVolumeMl, finalVolumeFactor, outputUnit);
+                document.getElementById('ca-summary').textContent =
+                    'Final density: ' + formatCellNumber(plan.finalDensity) + ' cells/mL. This uses ' +
+                    (plan.fractionOfStockUsed * 100).toLocaleString('en-US', { maximumFractionDigits: 1 }) +
+                    '% of the cells available in your starting suspension.';
+
+                status.hidden = true;
+                error.hidden = true;
+                results.hidden = false;
+            }
+
+            function resetAdherentCells() {
+                ['ca-initial-concentration', 'ca-initial-volume', 'ca-target-cells', 'ca-final-volume'].forEach(id => {
+                    document.getElementById(id).value = '';
+                });
+                document.getElementById('ca-concentration-unit').value = '1';
+                document.getElementById('ca-initial-volume-unit').value = '1';
+                document.getElementById('ca-final-volume-unit').value = '1';
+                calcAdherentCells();
+                document.getElementById('ca-initial-concentration').focus();
             }
 
             function calcProteinMolarity() {
