@@ -1814,7 +1814,8 @@
                     return {
                         error: 'concentration',
                         startingCells,
-                        targetConcentration
+                        targetConcentration,
+                        requiredAliquotVolumeMl: targetCells / initialConcentration
                     };
                 }
 
@@ -1904,9 +1905,15 @@
                 }
 
                 if (plan.error === 'concentration') {
+                    const requiredAliquotVolumeText = formatCellVolume(
+                        plan.requiredAliquotVolumeMl,
+                        desiredVolumeFactor,
+                        desiredVolumeUnit
+                    );
                     showAdherentError(
                         'This outcome requires ' + formatCellNumber(plan.targetConcentration) +
-                        ' cells/mL, which is more concentrated than the starting suspension. Adding fresh medium can only lower the concentration. Use a more concentrated starting suspension or a larger desired aliquot volume.'
+                        ' cells/mL, which is more concentrated than the starting suspension. Adding fresh medium can only lower the concentration. At the current starting concentration, an aliquot would need to be at least ' +
+                        requiredAliquotVolumeText + ' to contain ' + formatCellNumber(targetCells) + ' cells.'
                     );
                     return;
                 }
