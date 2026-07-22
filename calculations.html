@@ -6,14 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculations - Scientific Tools</title>
     <meta name="description" content="Calculate how much harvested adherent cell suspension and fresh medium you need for a target cell count and final volume.">
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="Adherent Cell Calculator - Scientific Tools">
-    <meta property="og:description" content="Plan cell suspension and medium volumes with confidence.">
-    <meta property="og:image" content="og-adherent-cell-calculator.png">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Adherent Cell Calculator - Scientific Tools">
-    <meta name="twitter:description" content="Plan cell suspension and medium volumes with confidence.">
-    <meta name="twitter:image" content="og-adherent-cell-calculator.png">
     <style>
         * {
             margin: 0;
@@ -360,6 +352,12 @@
 
         .cell-input-card .form-group {
             gap: 0.65rem;
+        }
+
+        .field-note {
+            color: #6d7478;
+            font-size: 0.78rem;
+            line-height: 1.35;
         }
 
         .cell-step {
@@ -1128,7 +1126,7 @@
                         <form class="calc-main" onsubmit="event.preventDefault(); calcAdherentCells();" novalidate>
                             <span class="adherent-eyebrow">Adherent cell setup</span>
                             <h3 id="adherent-calculator-title" style="font-size:1.45rem; margin-bottom:0.45rem;">Prepare your target cell suspension</h3>
-                            <p style="color:#666;">Enter what you have and what you need. The calculator will tell you how much harvested cell suspension to use and how much fresh medium to add.</p>
+                            <p style="color:#666;">Enter the full starting suspension and your desired outcome. The calculator will tell you how much fresh medium to add to that initial volume.</p>
 
                             <div class="adherent-grid">
                                 <div class="cell-input-card">
@@ -1156,6 +1154,7 @@
                                                 <option value="0.001">µL</option>
                                             </select>
                                         </div>
+                                        <span class="field-note">This entire starting volume will be used.</span>
                                     </div>
                                 </div>
 
@@ -1203,7 +1202,7 @@
                                 <p id="ca-summary" class="adherent-summary"></p>
                             </div>
                             <div id="ca-error" class="adherent-error" role="alert" hidden></div>
-                            <p class="formula-note">Calculation: cell suspension volume = total cells needed ÷ initial concentration. Fresh medium = desired final volume − cell suspension volume. Assumes a well-mixed suspension and no cell loss during transfer.</p>
+                            <p class="formula-note">Calculation: starting cells = initial concentration × initial suspension volume. Fresh medium = desired final volume − initial suspension volume. Adding media changes the volume and concentration, not the total number of cells.</p>
                         </aside>
                     </div>
                 </div>
@@ -1798,34 +1797,33 @@
             }
 
             function getAdherentCellPlan(initialConcentration, initialVolumeMl, targetCells, finalVolumeMl) {
-                const availableCells = initialConcentration * initialVolumeMl;
-                const stockVolumeMl = targetCells / initialConcentration;
-                const mediumVolumeMl = finalVolumeMl - stockVolumeMl;
+                const startingCells = initialConcentration * initialVolumeMl;
+                const cellDifference = targetCells - startingCells;
+                const cellTolerance = Math.max(1, Math.abs(targetCells) * 1e-9);
+                const mediumVolumeMl = finalVolumeMl - initialVolumeMl;
 
-                if (targetCells > availableCells) {
+                if (Math.abs(cellDifference) > cellTolerance) {
                     return {
-                        error: 'cells',
-                        availableCells,
-                        shortfallCells: targetCells - availableCells,
-                        stockVolumeMl
+                        error: 'cells-mismatch',
+                        startingCells,
+                        cellDifference,
+                        requiredInitialVolumeMl: targetCells / initialConcentration
                     };
                 }
 
                 if (mediumVolumeMl < -1e-12) {
                     return {
                         error: 'volume',
-                        availableCells,
-                        stockVolumeMl,
+                        startingCells,
                         mediumVolumeMl
                     };
                 }
 
                 return {
-                    availableCells,
-                    stockVolumeMl,
+                    startingCells,
+                    initialVolumeMl,
                     mediumVolumeMl: Math.max(0, mediumVolumeMl),
-                    finalDensity: targetCells / finalVolumeMl,
-                    fractionOfStockUsed: targetCells / availableCells
+                    finalDensity: startingCells / finalVolumeMl
                 };
             }
 
@@ -1887,38 +1885,37 @@
                 const plan = getAdherentCellPlan(concentration, initialVolumeMl, targetCells, finalVolumeMl);
                 const outputUnit = document.getElementById('ca-final-volume-unit').selectedOptions[0].textContent;
 
-                if (plan.error === 'cells') {
+                if (plan.error === 'cells-mismatch') {
+                    const initialVolumeFactor = parseFloat(document.getElementById('ca-initial-volume-unit').value);
+                    const initialVolumeUnit = document.getElementById('ca-initial-volume-unit').selectedOptions[0].textContent;
                     showAdherentError(
-                        'Not enough cells are available. You have ' + formatCellNumber(plan.availableCells) +
-                        ' cells and need ' + formatCellNumber(targetCells) + '. The shortfall is ' +
-                        formatCellNumber(plan.shortfallCells) + ' cells.'
+                        'Adding fresh medium cannot change the total cell count. Your initial suspension contains ' +
+                        formatCellNumber(plan.startingCells) + ' cells, but your target is ' +
+                        formatCellNumber(targetCells) + ' cells. At this concentration, the starting cell volume would need to be ' +
+                        formatCellVolume(plan.requiredInitialVolumeMl, initialVolumeFactor, initialVolumeUnit) + '.'
                     );
                     return;
                 }
 
                 if (plan.error === 'volume') {
                     showAdherentError(
-                        'The requested final volume is too small for this starting concentration. You would need ' +
-                        formatCellVolume(plan.stockVolumeMl, finalVolumeFactor, outputUnit) +
-                        ' of cell suspension. Increase the final volume or use a more concentrated suspension.'
+                        'The desired final volume must be at least as large as the initial suspension volume. Fresh medium can increase the volume, but it cannot reduce it.'
                     );
                     return;
                 }
 
-                const stockVolumeText = formatCellVolume(plan.stockVolumeMl, finalVolumeFactor, outputUnit);
+                const initialVolumeText = formatCellVolume(plan.initialVolumeMl, finalVolumeFactor, outputUnit);
                 const mediumVolumeText = formatCellVolume(plan.mediumVolumeMl, finalVolumeFactor, outputUnit);
                 const finalVolumeText = formatCellVolume(finalVolumeMl, finalVolumeFactor, outputUnit);
 
                 document.getElementById('ca-medium-output').textContent = mediumVolumeText;
                 document.getElementById('ca-instruction').textContent = plan.mediumVolumeMl === 0
-                    ? 'Use ' + stockVolumeText + ' of your initial cell suspension as-is. No fresh medium needs to be added.'
-                    : 'Add ' + mediumVolumeText + ' of fresh medium to ' + stockVolumeText +
+                    ? 'Use the full ' + initialVolumeText + ' initial cell suspension as-is. No fresh medium needs to be added.'
+                    : 'Add ' + mediumVolumeText + ' of fresh medium to the full ' + initialVolumeText +
                     ' of your initial cell suspension. This gives ' + finalVolumeText + ' containing ' +
-                    formatCellNumber(targetCells) + ' cells.';
+                    formatCellNumber(plan.startingCells) + ' cells.';
                 document.getElementById('ca-summary').textContent =
-                    'Final density: ' + formatCellNumber(plan.finalDensity) + ' cells/mL. This uses ' +
-                    (plan.fractionOfStockUsed * 100).toLocaleString('en-US', { maximumFractionDigits: 1 }) +
-                    '% of the cells available in your starting suspension.';
+                    'Final density: ' + formatCellNumber(plan.finalDensity) + ' cells/mL. All of the initial suspension is used.';
 
                 status.hidden = true;
                 error.hidden = true;
