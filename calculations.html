@@ -458,14 +458,24 @@
             font-size: 0.9rem;
         }
 
-        .adherent-error {
+        .adherent-message {
             margin-top: 1rem;
             padding: 1rem;
-            border: 1px solid rgba(255, 198, 198, 0.32);
             border-radius: 9px;
+            font-size: 0.92rem;
+            line-height: 1.55;
+        }
+
+        .adherent-error {
+            border: 1px solid rgba(255, 198, 198, 0.32);
             background: rgba(220, 53, 69, 0.18);
             color: #ffd7db;
-            font-size: 0.92rem;
+        }
+
+        .adherent-guidance {
+            border: 1px solid rgba(143, 199, 214, 0.34);
+            background: rgba(143, 199, 214, 0.14);
+            color: #d8f0f6;
         }
 
         .formula-note {
@@ -1161,8 +1171,9 @@
                                 <div class="cell-input-card">
                                     <span class="cell-step">3</span>
                                     <div class="form-group">
-                                        <label for="ca-target-cells">Cells needed per desired volume</label>
-                                        <input type="number" id="ca-target-cells" min="0" step="any" inputmode="decimal" placeholder="e.g., 2e6" oninput="calcAdherentCells()">
+                                        <label for="ca-target-cells">Cells needed per desired volume (×10⁶)</label>
+                                        <input type="number" id="ca-target-cells" min="0" step="any" inputmode="decimal" placeholder="e.g., 2" oninput="calcAdherentCells()">
+                                        <span class="field-note">Enter 2 for 2 million cells, or 0.2 for 200,000 cells.</span>
                                     </div>
                                 </div>
 
@@ -1202,7 +1213,7 @@
                                 <p id="ca-instruction" class="adherent-instruction"></p>
                                 <p id="ca-summary" class="adherent-summary"></p>
                             </div>
-                            <div id="ca-error" class="adherent-error" role="alert" hidden></div>
+                            <div id="ca-error" class="adherent-message adherent-error" role="status" aria-live="polite" hidden></div>
                             <p class="formula-note">Calculation: target concentration = cells needed ÷ desired aliquot volume. The full initial suspension is diluted to that concentration. Assumes a well-mixed suspension and no cell loss during transfer.</p>
                         </aside>
                     </div>
@@ -1853,12 +1864,28 @@
                 return value + ' ' + unitLabel;
             }
 
-            function showAdherentError(message) {
+            function showAdherentMessage(message, tone = 'error') {
                 document.getElementById('ca-status').hidden = true;
                 document.getElementById('ca-results').hidden = true;
                 const error = document.getElementById('ca-error');
+                error.className = 'adherent-message ' + (tone === 'guidance' ? 'adherent-guidance' : 'adherent-error');
                 error.textContent = message;
                 error.hidden = false;
+            }
+
+            function showAdherentError(message) {
+                showAdherentMessage(message, 'error');
+            }
+
+            function showAdherentGuidance(message) {
+                showAdherentMessage(message, 'guidance');
+            }
+
+            function parseCellsInMillions(value) {
+                const normalized = value.trim().toLowerCase();
+                const parsed = parseFloat(normalized);
+                if (!isFinite(parsed)) return NaN;
+                return normalized.includes('e') ? parsed : parsed * 1e6;
             }
 
             function calcAdherentCells() {
@@ -1880,7 +1907,7 @@
 
                 const concentration = parseFloat(concentrationRaw) * parseFloat(document.getElementById('ca-concentration-unit').value);
                 const initialVolumeMl = parseFloat(initialVolumeRaw) * parseFloat(document.getElementById('ca-initial-volume-unit').value);
-                const targetCells = parseFloat(targetCellsRaw);
+                const targetCells = parseCellsInMillions(targetCellsRaw);
                 const desiredVolumeFactor = parseFloat(document.getElementById('ca-final-volume-unit').value);
                 const desiredVolumeMl = parseFloat(finalVolumeRaw) * desiredVolumeFactor;
 
@@ -1910,10 +1937,10 @@
                         desiredVolumeFactor,
                         desiredVolumeUnit
                     );
-                    showAdherentError(
-                        'This outcome requires ' + formatCellNumber(plan.targetConcentration) +
-                        ' cells/mL, which is more concentrated than the starting suspension. Adding fresh medium can only lower the concentration. At the current starting concentration, an aliquot would need to be at least ' +
-                        requiredAliquotVolumeText + ' to contain ' + formatCellNumber(targetCells) + ' cells.'
+                    showAdherentGuidance(
+                        'Use more desired volume. At the current starting concentration, ' +
+                        formatCellNumber(targetCells) + ' cells need at least ' + requiredAliquotVolumeText +
+                        ' per aliquot. Adding fresh medium can only lower the concentration.'
                     );
                     return;
                 }
