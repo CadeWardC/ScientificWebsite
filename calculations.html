@@ -1142,14 +1142,15 @@
                                 <div class="cell-input-card">
                                     <span class="cell-step">1</span>
                                     <div class="form-group">
-                                        <label for="ca-initial-concentration">Initial cell concentration</label>
+                                        <label for="ca-initial-concentration">Initial cell concentration (×10⁶)</label>
                                         <div class="input-group">
-                                            <input type="number" id="ca-initial-concentration" min="0" step="any" inputmode="decimal" placeholder="e.g., 1e6" oninput="calcAdherentCells()">
+                                            <input type="number" id="ca-initial-concentration" min="0" step="any" inputmode="decimal" placeholder="e.g., 6.34" oninput="calcAdherentCells()">
                                             <select id="ca-concentration-unit" aria-label="Initial concentration unit" onchange="calcAdherentCells()">
                                                 <option value="1" selected>cells/mL</option>
                                                 <option value="1000">cells/µL</option>
                                             </select>
                                         </div>
+                                        <span class="field-note">Enter 6.34 for 6.34 million cells, or use 6.34e6.</span>
                                     </div>
                                 </div>
 
@@ -1905,7 +1906,7 @@
                     return;
                 }
 
-                const concentration = parseFloat(concentrationRaw) * parseFloat(document.getElementById('ca-concentration-unit').value);
+                const concentration = parseCellsInMillions(concentrationRaw) * parseFloat(document.getElementById('ca-concentration-unit').value);
                 const initialVolumeMl = parseFloat(initialVolumeRaw) * parseFloat(document.getElementById('ca-initial-volume-unit').value);
                 const targetCells = parseCellsInMillions(targetCellsRaw);
                 const desiredVolumeFactor = parseFloat(document.getElementById('ca-final-volume-unit').value);
