@@ -444,6 +444,17 @@
             line-height: 1.2;
         }
 
+        .adherent-instruction {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-left: 3px solid #8fc7d6;
+            border-radius: 0 8px 8px 0;
+            background: rgba(143, 199, 214, 0.1);
+            color: white;
+            font-size: 0.98rem;
+            line-height: 1.55;
+        }
+
         .adherent-summary {
             color: rgba(255, 255, 255, 0.78);
             font-size: 0.9rem;
@@ -1137,7 +1148,7 @@
                                 <div class="cell-input-card">
                                     <span class="cell-step">2</span>
                                     <div class="form-group">
-                                        <label for="ca-initial-volume">Available suspension volume</label>
+                                        <label for="ca-initial-volume">Initial cell suspension volume</label>
                                         <div class="input-group">
                                             <input type="number" id="ca-initial-volume" min="0" step="any" inputmode="decimal" placeholder="e.g., 10" oninput="calcAdherentCells()">
                                             <select id="ca-initial-volume-unit" aria-label="Available suspension volume unit" onchange="calcAdherentCells()">
@@ -1184,14 +1195,11 @@
                             <div id="ca-results" hidden>
                                 <div class="adherent-result-grid">
                                     <div class="adherent-result-item">
-                                        <div class="adherent-result-label">Take from cell suspension</div>
-                                        <div id="ca-stock-output" class="adherent-result-value"></div>
-                                    </div>
-                                    <div class="adherent-result-item">
-                                        <div class="adherent-result-label">Add fresh medium</div>
+                                        <div class="adherent-result-label">Add this much fresh medium</div>
                                         <div id="ca-medium-output" class="adherent-result-value"></div>
                                     </div>
                                 </div>
+                                <p id="ca-instruction" class="adherent-instruction"></p>
                                 <p id="ca-summary" class="adherent-summary"></p>
                             </div>
                             <div id="ca-error" class="adherent-error" role="alert" hidden></div>
@@ -1897,8 +1905,16 @@
                     return;
                 }
 
-                document.getElementById('ca-stock-output').textContent = formatCellVolume(plan.stockVolumeMl, finalVolumeFactor, outputUnit);
-                document.getElementById('ca-medium-output').textContent = formatCellVolume(plan.mediumVolumeMl, finalVolumeFactor, outputUnit);
+                const stockVolumeText = formatCellVolume(plan.stockVolumeMl, finalVolumeFactor, outputUnit);
+                const mediumVolumeText = formatCellVolume(plan.mediumVolumeMl, finalVolumeFactor, outputUnit);
+                const finalVolumeText = formatCellVolume(finalVolumeMl, finalVolumeFactor, outputUnit);
+
+                document.getElementById('ca-medium-output').textContent = mediumVolumeText;
+                document.getElementById('ca-instruction').textContent = plan.mediumVolumeMl === 0
+                    ? 'Use ' + stockVolumeText + ' of your initial cell suspension as-is. No fresh medium needs to be added.'
+                    : 'Add ' + mediumVolumeText + ' of fresh medium to ' + stockVolumeText +
+                    ' of your initial cell suspension. This gives ' + finalVolumeText + ' containing ' +
+                    formatCellNumber(targetCells) + ' cells.';
                 document.getElementById('ca-summary').textContent =
                     'Final density: ' + formatCellNumber(plan.finalDensity) + ' cells/mL. This uses ' +
                     (plan.fractionOfStockUsed * 100).toLocaleString('en-US', { maximumFractionDigits: 1 }) +
