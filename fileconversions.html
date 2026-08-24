@@ -733,6 +733,115 @@
                 width: 100%;
             }
         }
+        /* === AB1 CHROMATOGRAM VIEWER === */
+        .ab1-viewer-section {
+            display: none;
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .ab1-viewer-section.show {
+            display: block;
+        }
+
+        .ab1-viewer-section h3 {
+            margin-bottom: 1rem;
+            color: var(--primary-black);
+        }
+
+        .ab1-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .ab1-zoom-btns {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .ab1-zoom-btn {
+            min-width: 34px;
+            padding: 0.3rem 0.7rem;
+            border: 1px solid var(--border-color);
+            background: var(--pure-white);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--primary-black);
+            transition: all 0.2s ease;
+        }
+
+        .ab1-zoom-btn:hover {
+            background: var(--light-blue);
+            border-color: var(--muted-blue);
+        }
+
+        .ab1-legend {
+            display: flex;
+            gap: 0.9rem;
+            font-family: 'Courier New', monospace;
+            font-weight: 700;
+            font-size: 0.85rem;
+            align-items: center;
+        }
+
+        .legend-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+
+        .ab1-readout {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: rgba(10, 10, 10, 0.7);
+            min-width: 220px;
+            text-align: right;
+        }
+
+        .ab1-canvas-wrap {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        #ab1Canvas {
+            display: block;
+            width: 100%;
+            height: 424px;
+            cursor: grab;
+            touch-action: none;
+        }
+
+        #ab1Canvas.dragging {
+            cursor: grabbing;
+        }
+
+        .ab1-hint {
+            font-size: 0.8rem;
+            color: rgba(10, 10, 10, 0.5);
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+
+        .ab1-meta {
+            font-size: 0.85rem;
+            color: rgba(10, 10, 10, 0.65);
+            margin-top: 1rem;
+            line-height: 1.7;
+        }
+
         /* === 3D DOCKING VIEWER === */
         #docking-viewer-container {
             display: none;
@@ -922,6 +1031,13 @@
                     <p>Image files.</p>
                     <div class="card-badge">Media</div>
                 </div>
+                <div class="conversion-card category-card" onclick="selectCategory('other')">
+                    <div class="card-icon">&#129514;</div>
+                    <h3>Other</h3>
+                    <div class="card-format">.ab1 Sanger Sequencing Traces</div>
+                    <p>Upload and view chromatograms.</p>
+                    <div class="card-badge">Viewer</div>
+                </div>
             </div>
         </div>
     </section>
@@ -1021,6 +1137,69 @@
                     Download</button>
             </div>
             <div id="statusMessage-images" class="status-message"></div>
+        </div>
+    </section>
+
+    <!-- AB1 SANGER TRACE VIEWER -->
+    <section id="conv-ab1" class="conversion-section">
+        <div class="container">
+            <button class="back-button" onclick="backToCategories()">&larr; Back to Categories</button>
+            <div class="section-header">
+                <h2>Sanger Sequencing Viewer</h2>
+                <p>Upload an .ab1 trace file to view its chromatogram, base calls and quality.</p>
+            </div>
+            <div class="file-uploader-section">
+                <div id="dropZone-ab1" class="drop-zone" data-conv="ab1">
+                    <p>Drop .ab1 trace file here</p>
+                    <span>Supports Applied Biosystems .ab1 / .abif Sanger sequencing files</span>
+                    <button class="choose-file-btn">Choose File</button>
+                </div>
+                <input type="file" id="fileInput-ab1" accept=".ab1,.abif" style="display: none;" multiple>
+                <div id="queueContainer-ab1" class="queue-container"></div>
+                <div id="progressContainer-ab1" class="progress-container">
+                    <div class="progress-bar">
+                        <div id="progressFill-ab1" class="progress-fill"></div>
+                    </div>
+                    <div id="progressText-ab1" class="progress-text">Processing...</div>
+                </div>
+            </div>
+            <div id="fileInfo-ab1" class="file-info">
+                <h3>File Summary</h3>
+                <div id="fileStats-ab1" class="file-stats"></div>
+                <div id="ab1MetaLine" class="ab1-meta"></div>
+            </div>
+            <div id="statusMessage-ab1" class="status-message"></div>
+            <div id="ab1ViewerSection" class="ab1-viewer-section">
+                <h3>Chromatogram</h3>
+                <div class="ab1-controls">
+                    <div class="ab1-zoom-btns">
+                        <button class="ab1-zoom-btn" onclick="ab1ZoomIn()" title="Zoom in">+</button>
+                        <button class="ab1-zoom-btn" onclick="ab1ZoomOut()" title="Zoom out">&minus;</button>
+                        <button class="ab1-zoom-btn" onclick="ab1ResetView()">Reset</button>
+                        <button class="ab1-zoom-btn" onclick="ab1FitAll()">Fit All</button>
+                    </div>
+                    <div class="ab1-legend">
+                        <span><span class="legend-dot" style="background:#009e3d;"></span>A</span>
+                        <span><span class="legend-dot" style="background:#0057d9;"></span>C</span>
+                        <span><span class="legend-dot" style="background:#1c1c1c;"></span>G</span>
+                        <span><span class="legend-dot" style="background:#e02424;"></span>T</span>
+                    </div>
+                    <div id="ab1Readout" class="ab1-readout">&nbsp;</div>
+                </div>
+                <div class="ab1-canvas-wrap">
+                    <canvas id="ab1Canvas"></canvas>
+                </div>
+                <div class="ab1-hint">Scroll to zoom &middot; drag to pan &middot; hover for base details</div>
+            </div>
+            <div id="previewPanel-ab1" class="preview-panel">
+                <h3>Basecalled Sequence</h3>
+                <div id="previewContainer-ab1" class="preview-container"></div>
+            </div>
+            <div id="downloadSection-ab1" class="download-section">
+                <button class="download-btn" onclick="downloadAb1Text('fasta')">Download FASTA</button>
+                <button class="download-btn" onclick="downloadAb1Text('fastq')" style="background:var(--muted-blue); margin-left:1rem;">Download FASTQ</button>
+                <button class="download-btn" id="btn-next-ab1" onclick="processNextInQueue('ab1')" style="background:var(--warning-orange); margin-left:1rem; display:none;">Next File</button>
+            </div>
         </div>
     </section>
 
@@ -1330,7 +1509,7 @@
         const conversionZips = {};
         const activeFile = {}; // activeFile[convType] tracks current file
         const completedFiles = {}; // tracks done files
-        const CONV_TYPES = ['structure', 'ligand', 'sdf2pdb', 'cif2pdb', 'mol2pdb', 'images'];
+        const CONV_TYPES = ['structure', 'ligand', 'sdf2pdb', 'cif2pdb', 'mol2pdb', 'images', 'ab1'];
 
         function renderQueueUI(convType) {
             const container = document.getElementById('queueContainer-' + convType);
@@ -1387,6 +1566,13 @@
                     section.classList.add('show');
                     section.scrollIntoView({ behavior: 'smooth' });
                 });
+            } else if (cat === 'other') {
+                const section = document.getElementById('conv-ab1');
+                section.style.display = 'block';
+                requestAnimationFrame(() => {
+                    section.classList.add('show');
+                    section.scrollIntoView({ behavior: 'smooth' });
+                });
             }
         }
 
@@ -1398,6 +1584,11 @@
                 section.classList.remove('show');
                 section.style.display = 'none';
                 resetImageConverter();
+            } else if (activeCategory === 'other') {
+                const section = document.getElementById('conv-ab1');
+                section.classList.remove('show');
+                section.style.display = 'none';
+                resetAb1Viewer();
             }
             activeCategory = null;
             const cats = document.getElementById('categorySelection');
@@ -1467,7 +1658,8 @@
             'sdf2pdb': ['sdf', 'mol'],
             'cif2pdb': ['cif'],
             'mol2pdb': ['mol2'],
-            'images': ['heic', 'heif', 'jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif', 'tiff', 'tif']
+            'images': ['heic', 'heif', 'jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif', 'tiff', 'tif'],
+            'ab1': ['ab1', 'abif']
         };
 
         function initFileUploaders() {
@@ -1607,13 +1799,15 @@
             conversionOutputs[convType + '_isBulk'] = isBulk;
 
             try {
-                const text = await file.text();
+                // .ab1 traces are binary (ABIF container) and must not be decoded as text
+                const content = (convType === 'ab1') ? await file.arrayBuffer() : await file.text();
                 switch (convType) {
-                    case 'structure': await runStructurePipeline(text, ext, file.name); break;
-                    case 'ligand': await runLigandPipeline(text, ext, file.name); break;
-                    case 'sdf2pdb': await runSDF2PDBPipeline(text, file.name); break;
-                    case 'cif2pdb': await runCIF2PDBPipeline(text, file.name); break;
-                    case 'mol2pdb': await runMOL2PDBPipeline(text, file.name); break;
+                    case 'structure': await runStructurePipeline(content, ext, file.name); break;
+                    case 'ligand': await runLigandPipeline(content, ext, file.name); break;
+                    case 'sdf2pdb': await runSDF2PDBPipeline(content, file.name); break;
+                    case 'cif2pdb': await runCIF2PDBPipeline(content, file.name); break;
+                    case 'mol2pdb': await runMOL2PDBPipeline(content, file.name); break;
+                    case 'ab1': await runAb1Pipeline(content, file.name); break;
                 }
             } catch (err) {
                 showStatus(convType, 'Error: ' + err.message, 'error');
@@ -3422,7 +3616,561 @@ energy_range = ${energyRange}
         }
 
         // ========================================
-        // MODULE 16: INITIALIZATION
+        // MODULE 16: AB1 SANGER TRACE PARSER & VIEWER
+        // ========================================
+        let ab1Data = null;                     // parsed data for the trace being viewed
+        let ab1View = { start: 0, end: 0 };     // visible window, in scan points
+        let ab1Ctx = null;
+        let ab1EventsBound = false;
+        let ab1DrawQueued = false;
+
+        const AB1_BASE_COLORS = { A: '#009e3d', C: '#0057d9', G: '#1c1c1c', T: '#e02424', N: '#8a8a8a' };
+        const AB1_LAYOUT = { height: 424, traceTop: 8, traceBot: 284, lettersY: 310, qTop: 332, qBot: 394, rulerY: 414 };
+
+        // --- ABIF binary parser ---
+        // .ab1 files are big-endian ABIF containers (modeled after TIFF): a header
+        // whose root 'tdir' directory entry at byte 6 points at an array of tagged
+        // 28-byte directory entries. Each tag's payload lives either inline (<= 4
+        // bytes, stored in the entry's offset field) or at its dataOffset.
+        function parseAB1(buffer) {
+            if (buffer.byteLength < 128) throw new Error('File is too small to be a valid .ab1 trace.');
+            const dv = new DataView(buffer);
+            const magic = String.fromCharCode(dv.getUint8(0), dv.getUint8(1), dv.getUint8(2), dv.getUint8(3));
+            if (magic !== 'ABIF') throw new Error('Not a valid .ab1 file (ABIF signature not found).');
+
+            // ABIF is big-endian; detect rare little-endian writers via the version word
+            const le = dv.getUint8(4) !== 0x00 && dv.getUint8(5) === 0x00;
+            const i16 = (o) => le ? dv.getInt16(o, true) : dv.getInt16(o);
+            const i32 = (o) => le ? dv.getInt32(o, true) : dv.getInt32(o);
+            const u16 = (o) => le ? dv.getUint16(o, true) : dv.getUint16(o);
+
+            function readEntry(off) {
+                if (off < 0 || off + 28 > buffer.byteLength) return null;
+                let name = '';
+                for (let i = 0; i < 4; i++) name += String.fromCharCode(dv.getUint8(off + i));
+                return {
+                    name: name.replace(/\0/g, ''),
+                    number: i32(off + 4),
+                    elemType: u16(off + 8),
+                    elemSize: u16(off + 10),
+                    count: i32(off + 12),
+                    dataSize: i32(off + 16),
+                    dataOffset: i32(off + 20),
+                    entryOffset: off
+                };
+            }
+
+            const root = readEntry(6);
+            if (!root || root.name !== 'tdir') throw new Error('Corrupt .ab1 tag directory.');
+
+            const tags = {};
+            const stride = root.elemSize || 28;
+            for (let i = 0; i < root.count; i++) {
+                const e = readEntry(root.dataOffset + i * stride);
+                if (!e) break;
+                tags[e.name + ' ' + e.number] = e;
+            }
+
+            const dataOffsetOf = (t) => t.dataSize <= 4 ? t.entryOffset + 20 : t.dataOffset;
+
+            function readInt16Array(name, number) {
+                const t = tags[name + ' ' + number];
+                if (!t) return null;
+                const off = dataOffsetOf(t);
+                const n = Math.min(Math.floor(t.dataSize / 2), Math.floor((buffer.byteLength - off) / 2));
+                const out = new Int16Array(Math.max(0, n));
+                for (let i = 0; i < out.length; i++) out[i] = i16(off + 2 * i);
+                return out;
+            }
+
+            function readByteArray(name, number) {
+                const t = tags[name + ' ' + number];
+                if (!t) return null;
+                const off = dataOffsetOf(t);
+                const n = Math.min(t.dataSize, buffer.byteLength - off);
+                const out = new Uint8Array(Math.max(0, n));
+                for (let i = 0; i < out.length; i++) out[i] = dv.getUint8(off + i);
+                return out;
+            }
+
+            function readInt32Array(name, number) {
+                const t = tags[name + ' ' + number];
+                if (!t) return null;
+                const off = dataOffsetOf(t);
+                const n = Math.min(Math.floor(t.dataSize / 4), Math.floor((buffer.byteLength - off) / 4));
+                const out = new Int32Array(Math.max(0, n));
+                for (let i = 0; i < out.length; i++) out[i] = i32(off + 4 * i);
+                return out;
+            }
+
+            function readString(name, number) {
+                const t = tags[name + ' ' + number];
+                if (!t) return null;
+                const off = dataOffsetOf(t);
+                let s = '';
+                for (let i = 0; i < t.dataSize && off + i < buffer.byteLength; i++) {
+                    s += String.fromCharCode(dv.getUint8(off + i));
+                }
+                // pString (18) / cString (19) carry a length byte; strip defensively
+                if ((t.elemType === 18 || t.elemType === 19) && s.length > 1) s = s.slice(1);
+                else if (s.length > 1 && s.charCodeAt(0) < 32 && s.charCodeAt(0) + 1 >= s.length) s = s.slice(1);
+                return s.replace(/\0+$/, '').trim();
+            }
+
+            function readFloat32(name, number) {
+                const t = tags[name + ' ' + number];
+                if (!t || t.dataSize < 4) return null;
+                return le ? dv.getFloat32(dataOffsetOf(t), true) : dv.getFloat32(dataOffsetOf(t));
+            }
+
+            // FWO_ gives the base carried by each of the four dye channels
+            const fwo = (readString('FWO_', 1) || 'GATC').toUpperCase().replace(/[^ACGTN]/g, '');
+            const baseOrder = (fwo.length === 4 ? fwo : 'GATC').split('');
+
+            // Modern instruments store processed traces in DATA 9-12; old ones use DATA 1-4
+            const channelTags = [9, 10, 11, 12].every((n) => !!tags['DATA ' + n]) ? [9, 10, 11, 12] : [1, 2, 3, 4];
+
+            const traces = {};
+            let traceLen = 0;
+            for (let i = 0; i < 4; i++) {
+                const arr = readInt16Array('DATA', channelTags[i]);
+                traces[baseOrder[i] || 'N'] = arr || new Int16Array(0);
+                traceLen = Math.max(traceLen, traces[baseOrder[i] || 'N'].length);
+            }
+
+            const seq = readString('PBAS', 2) || readString('PBAS', 1) || '';
+            const quals = readByteArray('PCON', 2) || readByteArray('PCON', 1) || new Uint8Array(seq.length);
+            const peaks = readInt16Array('PLOC', 2) || readInt16Array('PLOC', 1) || null;
+            const signals = readInt32Array('S/N%', 1);
+            const sampleName = readString('SMPL', 1);
+            const instrument = readString('MODF', 4) || readString('MODF', 1);
+            const lane = tags['LANE 1'] ? i32(dataOffsetOf(tags['LANE 1'])) : null;
+            const spac = readFloat32('SPAC', 1);
+
+            if (!seq || traceLen === 0) throw new Error('No sequencing data found in file.');
+
+            let medSpacing = (typeof spac === 'number' && spac > 0) ? spac : null;
+            if (!medSpacing && peaks && peaks.length > 2) {
+                const diffs = [];
+                for (let i = 1; i < peaks.length; i++) diffs.push(peaks[i] - peaks[i - 1]);
+                diffs.sort((a, b) => a - b);
+                medSpacing = diffs[Math.floor(diffs.length / 2)];
+            }
+            if (!medSpacing) medSpacing = seq.length ? traceLen / seq.length : 12;
+
+            return {
+                seq, quals, peaks, traces, traceLen, baseOrder, signals,
+                sampleName, instrument, lane, medSpacing
+            };
+        }
+
+        // --- pipeline & viewer ---
+        async function runAb1Pipeline(buffer, fileName) {
+            const p = 'ab1';
+            updateProgress(p, 25, 'Parsing ABIF directory...');
+            await yieldToUI();
+            const parsed = parseAB1(buffer);   // throws on invalid files (handled by caller)
+
+            updateProgress(p, 65, 'Rendering chromatogram...');
+            await yieldToUI();
+
+            ab1Data = Object.assign({ fileName }, parsed);
+            displayAb1Stats(ab1Data);
+            renderAb1Sequence(ab1Data);
+            document.getElementById('previewPanel-ab1').classList.add('show');
+            document.getElementById('ab1ViewerSection').classList.add('show');
+            setupAb1Viewer();
+            document.getElementById('downloadSection-ab1').classList.add('show');
+            document.getElementById('progressContainer-ab1').style.display = 'none';
+
+            const q = conversionQueues['ab1'] || [];
+            const btnNext = document.getElementById('btn-next-ab1');
+            if (q.length > 0) {
+                btnNext.textContent = 'Next File (' + q.length + ' remaining)';
+                btnNext.style.display = 'inline-block';
+            } else {
+                btnNext.style.display = 'none';
+            }
+            showStatus(p, 'Trace loaded — scroll to zoom, drag to pan.', 'success');
+        }
+
+        function displayAb1Stats(d) {
+            const n = d.seq.length;
+            let sum = 0, q20 = 0, q40 = 0;
+            for (let i = 0; i < n; i++) {
+                const q = d.quals[i] === undefined ? 0 : d.quals[i];
+                sum += q;
+                if (q >= 20) q20++;
+                if (q >= 40) q40++;
+            }
+            const meanQ = n ? (sum / n).toFixed(1) : '0';
+            const fileSize = activeFile['ab1'] ? (activeFile['ab1'].size / 1024).toFixed(1) + ' KB' : '—';
+
+            const stat = (v, l) => '<div class="stat-item"><span class="stat-value">' + v +
+                '</span><span class="stat-label">' + l + '</span></div>';
+            document.getElementById('fileStats-ab1').innerHTML =
+                stat(n, 'Bases Called') +
+                stat(meanQ, 'Mean Quality') +
+                stat(q20 + ' · ' + (n ? Math.round(100 * q20 / n) : 0) + '%', 'Bases ≥ Q20') +
+                stat(String(q40), 'Bases ≥ Q40') +
+                stat(d.medSpacing.toFixed(1), 'Peak Spacing (pts)') +
+                stat(fileSize, 'File Size');
+
+            const meta = [];
+            if (d.sampleName) meta.push('<strong>Sample:</strong> ' + d.sampleName);
+            if (d.instrument) meta.push('<strong>Instrument:</strong> ' + d.instrument);
+            if (d.lane !== null && d.lane !== undefined) meta.push('<strong>Lane:</strong> ' + d.lane);
+            if (d.signals && d.signals.length === 4) {
+                meta.push('<strong>Signal (' + d.baseOrder.join('') + '):</strong> ' +
+                    d.baseOrder.map((b, i) => b + ' ' + d.signals[i]).join(' · '));
+            }
+            document.getElementById('ab1MetaLine').innerHTML = meta.join(' &nbsp;|&nbsp; ');
+            document.getElementById('fileInfo-ab1').classList.add('show');
+        }
+
+        function renderAb1Sequence(d) {
+            const lines = [];
+            for (let i = 0; i < d.seq.length; i += 60) {
+                lines.push(String(i + 1).padStart(6) + '  ' + d.seq.substring(i, i + 60));
+            }
+            document.getElementById('previewContainer-ab1').textContent = lines.join('\n');
+        }
+
+        function setupAb1Viewer() {
+            const canvas = document.getElementById('ab1Canvas');
+            ab1Ctx = canvas.getContext('2d');
+            bindAb1Events(canvas);
+            resizeAb1Canvas();
+            ab1ResetView();
+            scheduleAb1Draw();
+        }
+
+        function ab1InitialView() {
+            const d = ab1Data;
+            const look = Math.min(90, Math.max(1, d.seq.length));
+            const firstPeak = (d.peaks && d.peaks.length) ? d.peaks[0] : 0;
+            const lastPeak = (d.peaks && d.peaks.length > look) ? d.peaks[look] : Math.min(d.traceLen, look * 12 + 100);
+            return { start: Math.max(0, firstPeak - 80), end: Math.min(d.traceLen, lastPeak + 80) };
+        }
+
+        function ab1ResetView() {
+            if (!ab1Data) return;
+            const v = ab1InitialView();
+            ab1View.start = Math.max(0, v.start);
+            ab1View.end = Math.min(ab1Data.traceLen, Math.max(v.end, ab1View.start + 50));
+            scheduleAb1Draw();
+        }
+
+        function ab1FitAll() {
+            if (!ab1Data) return;
+            ab1View.start = 0;
+            ab1View.end = ab1Data.traceLen;
+            scheduleAb1Draw();
+        }
+
+        function resizeAb1Canvas() {
+            const canvas = document.getElementById('ab1Canvas');
+            const w = canvas.parentElement.clientWidth || 800;
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = Math.round(w * dpr);
+            canvas.height = Math.round(AB1_LAYOUT.height * dpr);
+            ab1Ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+
+        function bindAb1Events(canvas) {
+            if (ab1EventsBound) return;
+            ab1EventsBound = true;
+
+            canvas.addEventListener('wheel', (e) => {
+                if (!ab1Data) return;
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const frac = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+                zoomAb1(frac, e.deltaY < 0 ? 0.75 : 1.33);
+            }, { passive: false });
+
+            let dragging = false, lastX = 0;
+            canvas.addEventListener('pointerdown', (e) => {
+                dragging = true;
+                lastX = e.clientX;
+                canvas.classList.add('dragging');
+                canvas.setPointerCapture(e.pointerId);
+            });
+            canvas.addEventListener('pointermove', (e) => {
+                if (!ab1Data) return;
+                if (dragging) {
+                    const rect = canvas.getBoundingClientRect();
+                    const ptsPerPx = (ab1View.end - ab1View.start) / rect.width;
+                    panAb1(-(e.clientX - lastX) * ptsPerPx);
+                    lastX = e.clientX;
+                }
+                updateAb1Readout(e);
+            });
+            canvas.addEventListener('pointerup', (e) => {
+                dragging = false;
+                canvas.classList.remove('dragging');
+                try { canvas.releasePointerCapture(e.pointerId); } catch (_) { }
+            });
+            canvas.addEventListener('pointerleave', () => {
+                document.getElementById('ab1Readout').innerHTML = '&nbsp;';
+            });
+
+            window.addEventListener('resize', () => {
+                if (ab1Data) {
+                    resizeAb1Canvas();
+                    scheduleAb1Draw();
+                }
+            });
+        }
+
+        function zoomAb1(anchorFrac, factor) {
+            const len = ab1Data.traceLen;
+            const span = ab1View.end - ab1View.start;
+            const newSpan = Math.min(Math.max(span * factor, 50), len);
+            const anchor = ab1View.start + span * anchorFrac;
+            let start = anchor - (anchor - ab1View.start) * (newSpan / span);
+            let end = start + newSpan;
+            if (start < 0) { start = 0; end = newSpan; }
+            if (end > len) { end = len; start = Math.max(0, len - newSpan); }
+            ab1View.start = start;
+            ab1View.end = end;
+            scheduleAb1Draw();
+        }
+
+        function panAb1(deltaPts) {
+            const len = ab1Data.traceLen;
+            const span = ab1View.end - ab1View.start;
+            let start = ab1View.start + deltaPts;
+            if (start < 0) start = 0;
+            if (start + span > len) start = Math.max(0, len - span);
+            ab1View.start = start;
+            ab1View.end = start + span;
+            scheduleAb1Draw();
+        }
+
+        function ab1ZoomIn() { if (ab1Data) zoomAb1(0.5, 0.6); }
+        function ab1ZoomOut() { if (ab1Data) zoomAb1(0.5, 1.6); }
+
+        function updateAb1Readout(e) {
+            const canvas = document.getElementById('ab1Canvas');
+            const rect = canvas.getBoundingClientRect();
+            const frac = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+            const scan = ab1View.start + (ab1View.end - ab1View.start) * frac;
+            const d = ab1Data;
+            const p = d.peaks;
+            let msg = 'scan ' + Math.round(Math.max(0, Math.min(d.traceLen, scan)));
+            if (p && p.length) {
+                let lo = 0, hi = p.length - 1;
+                while (lo < hi) {
+                    const mid = (lo + hi) >> 1;
+                    if (p[mid] < scan) lo = mid + 1; else hi = mid;
+                }
+                let idx = lo;
+                if (lo > 0 && Math.abs(p[lo - 1] - scan) < Math.abs(p[lo] - scan)) idx = lo - 1;
+                const q = d.quals[idx] === undefined ? '-' : d.quals[idx];
+                msg = 'Base ' + (idx + 1) + '/' + d.seq.length + ' · ' + (d.seq[idx] || 'N') +
+                    ' · Q' + q + ' · scan ' + p[idx];
+            }
+            document.getElementById('ab1Readout').textContent = msg;
+        }
+
+        function scheduleAb1Draw() {
+            if (ab1DrawQueued) return;
+            ab1DrawQueued = true;
+            requestAnimationFrame(() => {
+                ab1DrawQueued = false;
+                drawAb1();
+            });
+        }
+
+        function drawAb1() {
+            if (!ab1Data || !ab1Ctx) return;
+            const ctx = ab1Ctx;
+            const d = ab1Data;
+            const L = AB1_LAYOUT;
+            const canvas = document.getElementById('ab1Canvas');
+            const W = canvas.parentElement.clientWidth || 800;
+
+            ctx.clearRect(0, 0, W, L.height);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, W, L.height);
+
+            const s = ab1View.start, e = ab1View.end, span = Math.max(1, e - s);
+            const xOf = (pt) => (pt - s) / span * W;
+            const pxPerPt = W / span;
+            const pxPerBase = d.medSpacing * pxPerPt;
+            const i0 = Math.max(0, Math.floor(s));
+            const i1 = Math.min(d.traceLen - 1, Math.ceil(e));
+
+            // 10-base gridlines + ruler labels
+            if (d.peaks && d.peaks.length && pxPerBase >= 3) {
+                ctx.strokeStyle = '#ededed';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                for (let i = 9; i < d.peaks.length; i += 10) {
+                    const x = xOf(d.peaks[i]);
+                    if (x < -1 || x > W + 1) continue;
+                    ctx.moveTo(x, L.traceTop);
+                    ctx.lineTo(x, L.qBot);
+                }
+                ctx.stroke();
+                if (pxPerBase * 10 >= 42) {
+                    ctx.fillStyle = '#888888';
+                    ctx.font = '10px \'Courier New\', monospace';
+                    ctx.textAlign = 'center';
+                    for (let i = 9; i < d.peaks.length; i += 10) {
+                        const x = xOf(d.peaks[i]);
+                        if (x < 20 || x > W - 20) continue;
+                        ctx.fillText(String(i + 1), x, L.rulerY);
+                    }
+                }
+            }
+
+            // visible maximum across channels for y-scaling
+            let vmax = 10;
+            const step = Math.max(1, Math.floor((i1 - i0) / 3000));
+            for (const base in d.traces) {
+                const arr = d.traces[base];
+                for (let i = i0; i <= i1 && i < arr.length; i += step) {
+                    if (arr[i] > vmax) vmax = arr[i];
+                }
+            }
+            const yOf = (v) => L.traceBot - Math.max(0, v) / vmax * (L.traceBot - L.traceTop);
+
+            // the four dye traces
+            for (const base of ['A', 'C', 'G', 'T', 'N']) {
+                const arr = d.traces[base];
+                if (!arr || !arr.length) continue;
+                ctx.strokeStyle = AB1_BASE_COLORS[base] || '#666666';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                if (pxPerPt >= 1) {
+                    let started = false;
+                    for (let i = i0; i <= i1; i++) {
+                        if (i >= arr.length) break;
+                        const x = xOf(i), y = yOf(arr[i]);
+                        if (!started) { ctx.moveTo(x, y); started = true; }
+                        else ctx.lineTo(x, y);
+                    }
+                } else {
+                    // downsample: keep the max within each pixel column so peaks survive
+                    const ptsPerPx = 1 / pxPerPt;
+                    let started = false;
+                    for (let px = 0; px <= W; px++) {
+                        const a0 = Math.max(0, Math.floor(s + px * ptsPerPx));
+                        const a1 = Math.min(arr.length - 1, Math.floor(s + (px + 1) * ptsPerPx));
+                        let m = -1;
+                        for (let i = a0; i <= a1; i++) if (arr[i] > m) m = arr[i];
+                        if (m < 0) continue;
+                        if (!started) { ctx.moveTo(px, yOf(m)); started = true; }
+                        else ctx.lineTo(px, yOf(m));
+                    }
+                }
+                ctx.stroke();
+            }
+
+            // baseline under the traces
+            ctx.strokeStyle = '#d0d0d0';
+            ctx.beginPath();
+            ctx.moveTo(0, L.traceBot);
+            ctx.lineTo(W, L.traceBot);
+            ctx.stroke();
+
+            // called bases at their peak positions
+            if (d.peaks && d.seq) {
+                if (pxPerBase >= 6.5) {
+                    ctx.font = 'bold 13px \'Courier New\', monospace';
+                    ctx.textAlign = 'center';
+                    for (let i = 0; i < d.peaks.length && i < d.seq.length; i++) {
+                        const x = xOf(d.peaks[i]);
+                        if (x < -8 || x > W + 8) continue;
+                        const base = d.seq[i].toUpperCase();
+                        ctx.fillStyle = AB1_BASE_COLORS[base] || '#666666';
+                        ctx.fillText(base, x, L.lettersY);
+                    }
+                } else if (pxPerBase >= 2.5) {
+                    ctx.fillStyle = '#b8b8b8';
+                    for (let i = 0; i < d.peaks.length; i++) {
+                        const x = xOf(d.peaks[i]);
+                        if (x < -2 || x > W + 2) continue;
+                        ctx.fillRect(x - 0.75, L.lettersY - 9, 1.5, 9);
+                    }
+                }
+            }
+
+            // quality score bars
+            ctx.strokeStyle = '#d8d8d8';
+            ctx.beginPath();
+            ctx.moveTo(0, L.qTop - 4);
+            ctx.lineTo(W, L.qTop - 4);
+            ctx.stroke();
+            if (d.peaks && pxPerBase >= 2.2) {
+                const bw = Math.min(Math.max(pxPerBase * 0.55, 1), 6);
+                for (let i = 0; i < d.peaks.length; i++) {
+                    const x = xOf(d.peaks[i]);
+                    if (x < -5 || x > W + 5) continue;
+                    const q = d.quals[i] === undefined ? 0 : d.quals[i];
+                    const h = Math.min(60, Math.max(0, q)) / 60 * (L.qBot - L.qTop);
+                    ctx.fillStyle = q >= 40 ? '#34a853' : q >= 20 ? '#f9ab00' : '#ea4335';
+                    ctx.fillRect(x - bw / 2, L.qBot - h, bw, h);
+                }
+            }
+            // Q20 / Q40 reference lines
+            ctx.setLineDash([4, 3]);
+            ctx.strokeStyle = '#dddddd';
+            ctx.fillStyle = '#999999';
+            ctx.font = '9px \'Courier New\', monospace';
+            ctx.textAlign = 'left';
+            for (const q of [20, 40]) {
+                const y = L.qBot - q / 60 * (L.qBot - L.qTop);
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(W, y);
+                ctx.stroke();
+                ctx.fillText('Q' + q, 4, y - 2);
+            }
+            ctx.setLineDash([]);
+        }
+
+        function downloadAb1Text(kind) {
+            if (!ab1Data) return;
+            const d = ab1Data;
+            const baseName = d.fileName.replace(/\.[^.]+$/, '');
+            const title = d.sampleName || baseName;
+            let content, outName;
+            if (kind === 'fasta') {
+                const lines = ['>' + title + ' ' + d.seq.length + ' bp'];
+                for (let i = 0; i < d.seq.length; i += 60) lines.push(d.seq.substring(i, i + 60));
+                content = lines.join('\n');
+                outName = baseName + '.fasta';
+            } else {
+                const qstr = [];
+                for (let i = 0; i < d.seq.length; i++) {
+                    const q = d.quals[i] === undefined ? 0 : d.quals[i];
+                    qstr.push(String.fromCharCode(33 + Math.min(60, Math.max(0, q))));
+                }
+                content = '@' + title + '\n' + d.seq + '\n+\n' + qstr.join('');
+                outName = baseName + '.fastq';
+            }
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = outName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function resetAb1Viewer() {
+            ab1Data = null;
+            document.getElementById('ab1ViewerSection').classList.remove('show');
+            document.getElementById('ab1Readout').innerHTML = '&nbsp;';
+        }
+
+        // ========================================
+        // MODULE 17: INITIALIZATION
         // ========================================
         initFileUploaders();
 
