@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scheduling - Scientific Tools</title>
+    <meta name="description" content="Build month calendar tables with tasks that paste into OneNote as editable tables.">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-black: #0a0a0a;
+            --soft-black: #1a1a1a;
+            --pure-white: #ffffff;
+            --off-white: #f8f9fa;
+            --muted-blue: #4a90a4;
+            --light-blue: rgba(74, 144, 164, 0.1);
+            --border-color: rgba(74, 144, 164, 0.2);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--primary-black);
+            background: var(--pure-white);
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-black);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--primary-black);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--muted-blue);
+        }
+
+        /* Dropdown CSS */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: var(--pure-white);
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+            border-radius: 8px;
+            padding: 0.5rem 0;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .dropdown-content a {
+            color: var(--primary-black);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            text-align: left;
+        }
+
+        .dropdown-content a:hover {
+            background-color: var(--off-white);
+            color: var(--muted-blue);
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropbtn {
+            cursor: pointer;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding-top: 100px;
+            /* Space for fixed header */
+            min-height: 80vh;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--primary-black);
+        }
+
+        .section-header p {
+            font-size: 1.1rem;
+            color: rgba(10, 10, 10, 0.6);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Control panel */
+        .control-panel {
+            background: var(--off-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .control-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .control-field label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: rgba(10, 10, 10, 0.7);
+        }
+
+        .control-field select,
+        .control-field input {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            background: var(--pure-white);
+        }
+
+        .control-field input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        .checkbox-field {
+            flex-direction: row;
+            align-items: center;
+            gap: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+
+        .checkbox-field label {
+            font-size: 0.9rem;
+        }
+
+        .button-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .action-button {
+            padding: 0.75rem 1.5rem;
+            background: var(--muted-blue);
+            color: var(--pure-white);
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .action-button:hover {
+            background: #3d7a8c;
+        }
+
+        .action-button.secondary {
+            background: var(--pure-white);
+            color: var(--muted-blue);
+            border: 1px solid var(--muted-blue);
+        }
+
+        .action-button.secondary:hover {
+            background: var(--light-blue);
+        }
+
+        .action-button.small {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .action-button.danger {
+            background: var(--pure-white);
+            color: #b0353f;
+            border: 1px solid #b0353f;
+        }
+
+        .action-button.danger:hover {
+            background: rgba(176, 53, 63, 0.08);
+        }
+
+        /* Preview */
+        .preview-wrap {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            background: var(--pure-white);
+            overflow-x: auto;
+        }
+
+        .preview-wrap table {
+            width: 100%;
+        }
+
+        .preview-wrap td[data-date] {
+            cursor: pointer;
+        }
+
+        .preview-wrap td[data-date]:hover {
+            outline: 2px solid var(--muted-blue);
+            outline-offset: -2px;
+        }
+
+        /* Day editor modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 10, 10, 0.45);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal-overlay[hidden] {
+            display: none;
+        }
+
+        .modal-panel {
+            background: var(--pure-white);
+            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+            width: 100%;
+            max-width: 420px;
+            padding: 1.5rem;
+        }
+
+        .modal-panel h3 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .task-list {
+            list-style: none;
+            margin-bottom: 1rem;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .task-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.4rem 0.6rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 0.4rem;
+            background: var(--off-white);
+        }
+
+        .task-list .task-text {
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .task-remove {
+            background: none;
+            border: none;
+            color: #b0353f;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+        }
+
+        .task-remove:hover {
+            background: rgba(176, 53, 63, 0.12);
+        }
+
+        .task-input-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .task-input-row input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .modal-close-row {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 1rem;
+        }
+
+        .modal-hint {
+            font-size: 0.85rem;
+            color: rgba(10, 10, 10, 0.55);
+            margin-top: 0.75rem;
+        }
+
+        /* Help */
+        .help-box {
+            margin-top: 2rem;
+            background: var(--light-blue);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            font-size: 0.95rem;
+            color: rgba(10, 10, 10, 0.75);
+        }
+
+        .help-box summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--primary-black);
+        }
+
+        .help-box ol {
+            margin: 0.75rem 0 0 1.25rem;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--soft-black);
+            color: var(--pure-white);
+            padding: 3rem 0;
+            text-align: center;
+            margin-top: 4rem;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            color: var(--muted-blue);
+        }
+
+        .footer-section a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: var(--muted-blue);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 2rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .container {
+                padding: 0 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <nav class="container">
+            <a href="index.html" class="logo">Scientific Tools</a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropbtn">Tools ▾</a>
+                    <div class="dropdown-content">
+                        <a href="gelelectrophoresis.html">Gel Analysis</a>
+                        <a href="sequencer.html">Sequencer</a>
+                        <a href="calculations.html">Calculations</a>
+                        <a href="size_exclusion_graphing.html">Size Exclusion Graphing</a>
+                        <a href="timing.html">Timing</a>
+                        <a href="fileconversions.html">File Conversions</a>
+                        <a href="scheduling.html">Scheduling</a>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main-content container">
+        <div class="section-header">
+            <h1>Scheduling</h1>
+            <p>Build a calendar, click days to add tasks, then paste it into OneNote as an editable table.</p>
+        </div>
+
+        <div class="control-panel" id="controls">
+            <div class="control-field">
+                <label for="cal-month">Month</label>
+                <select id="cal-month"></select>
+            </div>
+            <div class="control-field">
+                <label for="cal-year">Year</label>
+                <input type="number" id="cal-year" min="1900" max="2200" step="1">
+            </div>
+            <div class="control-field">
+                <label for="cal-count">Months to include</label>
+                <select id="cal-count">
+                    <option value="1" selected>1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="6">6</option>
+                    <option value="12">12</option>
+                </select>
+            </div>
+            <div class="control-field">
+                <label for="cal-week-start">Week starts on</label>
+                <select id="cal-week-start">
+                    <option value="0" selected>Sunday</option>
+                    <option value="1">Monday</option>
+                </select>
+            </div>
+            <div class="control-field">
+                <label for="cal-lines">Blank lines per day</label>
+                <select id="cal-lines">
+                    <option value="0">0 (day numbers only)</option>
+                    <option value="1">1</option>
+                    <option value="2" selected>2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                </select>
+            </div>
+            <div class="control-field checkbox-field">
+                <input type="checkbox" id="cal-shade-weekends" checked>
+                <label for="cal-shade-weekends">Shade weekends</label>
+            </div>
+            <div class="control-field checkbox-field">
+                <input type="checkbox" id="cal-adjacent" checked>
+                <label for="cal-adjacent">Show adjacent-month days (gray)</label>
+            </div>
+        </div>
+
+        <div class="button-row">
+            <button class="action-button" onclick="copyCalendar()">Copy Calendar for OneNote</button>
+            <button class="action-button secondary" onclick="selectCalendar()">Select Table (manual copy)</button>
+            <button class="action-button secondary small" onclick="shiftMonth(-1)">◀ Prev Month</button>
+            <button class="action-button secondary small" onclick="shiftMonth(1)">Next Month ▶</button>
+            <button class="action-button danger small" onclick="clearAllTasks()">Clear All Tasks</button>
+        </div>
+
+        <div class="preview-wrap" id="calendar-preview"></div>
+
+        <details class="help-box">
+            <summary>How to use tasks and get this into OneNote</summary>
+            <ol>
+                <li>Set the month, year, and options above — the preview updates automatically.</li>
+                <li><b>Click any day cell</b> in the calendar to add tasks for that day. Tasks are saved in this browser and shown in the day's cell.</li>
+                <li>Click <b>Copy Calendar for OneNote</b>.</li>
+                <li>In OneNote, click on the page where you want the calendar and press <b>Ctrl+V</b>.</li>
+                <li>It pastes as a real OneNote table with your tasks in their days. Click any cell to keep typing more notes.</li>
+            </ol>
+            <p style="margin-top:0.75rem;">If the copy button fails (browser permissions), click <b>Select Table</b> and press Ctrl+C yourself, then paste into OneNote.</p>
+        </details>
+    </main>
+
+    <div class="modal-overlay" id="day-editor" hidden>
+        <div class="modal-panel" role="dialog" aria-modal="true">
+            <h3 id="day-editor-title">Tasks</h3>
+            <ul class="task-list" id="day-editor-list"></ul>
+            <div class="task-input-row">
+                <input type="text" id="day-editor-input" placeholder="New task..." maxlength="200">
+                <button class="action-button small" onclick="addTaskFromInput()">Add</button>
+            </div>
+            <p class="modal-hint">Press Enter to add. Tasks appear in this day's cell when you copy.</p>
+            <div class="modal-close-row">
+                <button class="action-button secondary small" onclick="closeDayEditor()">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <footer id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>CadeWardInc</h3>
+                    <a href="#">About Us</a>
+                    <a href="#">Contact</a>
+                </div>
+                <div class="footer-section">
+                    <h3>Tools</h3>
+                    <a href="gelelectrophoresis.html">Gel Analysis</a>
+                    <a href="sequencer.html">Sequencer</a>
+                    <a href="calculations.html">Calculations</a>
+                    <a href="size_exclusion_graphing.html">Size Exclusion Graphing</a>
+                    <a href="timing.html">Timing</a>
+                    <a href="fileconversions.html">File Conversions</a>
+                    <a href="scheduling.html">Scheduling</a>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2025 CadeWardInc. All rights reserved. | Built by Cade Ward.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'];
+        const DOW_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const NBSP = '\u00A0';
+        const STORAGE_KEY = 'schedulingCalendarTasks';
+
+        // Tasks keyed by date string "YYYY-MM-DD": array of task strings
+        let tasks = loadTasks();
+
+        function loadTasks() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                const parsed = raw ? JSON.parse(raw) : {};
+                return parsed && typeof parsed === 'object' ? parsed : {};
+            } catch (err) {
+                return {};
+            }
+        }
+
+        function saveTasks() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+            } catch (err) {
+                // Storage unavailable (private mode / file restrictions) — tasks last for this visit only
+            }
+        }
+
+        function dateKey(year, month, day) {
+            return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        }
+
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function getOptions() {
+            return {
+                weekStart: parseInt(document.getElementById('cal-week-start').value, 10),
+                lines: parseInt(document.getElementById('cal-lines').value, 10),
+                shadeWeekends: document.getElementById('cal-shade-weekends').checked,
+                adjacent: document.getElementById('cal-adjacent').checked
+            };
+        }
+
+        // Build the day grid for one month: array of {num, inMonth} laid out week by week
+        function buildGrid(year, month, weekStart) {
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const firstDow = new Date(year, month, 1).getDay(); // 0 = Sunday
+            const lead = (firstDow - weekStart + 7) % 7;
+            const weeks = Math.ceil((lead + daysInMonth) / 7);
+            const totalCells = weeks * 7;
+            const prevMonthDays = new Date(year, month, 0).getDate();
+
+            const cells = [];
+            for (let i = 0; i < totalCells; i++) {
+                if (i < lead) {
+                    cells.push({ num: prevMonthDays - lead + i + 1, inMonth: false });
+                } else if (i < lead + daysInMonth) {
+                    cells.push({ num: i - lead + 1, inMonth: true });
+                } else {
+                    cells.push({ num: i - lead - daysInMonth + 1, inMonth: false });
+                }
+            }
+            return cells;
+        }
+
+        function isWeekendColumn(colIdx, weekStart) {
+            if (weekStart === 0) return colIdx === 0 || colIdx === 6;
+            return colIdx === 5 || colIdx === 6;
+        }
+
+        // HTML built for OneNote: plain 7-column table, no merged cells,
+        // month title as its own paragraph, day cells hold tasks then blank lines.
+        // When forPreview is true, clickable cells carry data-date attributes.
+        function monthHtml(year, month, opts, forPreview) {
+            const cells = buildGrid(year, month, opts.weekStart);
+            let html = `<p style="margin:10px 0 4px 0; font-size:14pt;"><b>${MONTHS[month]} ${year}</b></p>`;
+            html += `<table border="1" style="border-collapse: collapse;"><tr>`;
+
+            for (let col = 0; col < 7; col++) {
+                const label = DOW_SHORT[(opts.weekStart + col) % 7];
+                const bg = opts.shadeWeekends && isWeekendColumn(col, opts.weekStart)
+                    ? ' background-color: #e8eef1;' : ' background-color: #f1f3f5;';
+                html += `<th style="padding: 5px; text-align: left; width: 110px;${bg}">${label}</th>`;
+            }
+            html += `</tr>`;
+
+            cells.forEach((cell, i) => {
+                if (i % 7 === 0) html += `<tr>`;
+                const col = i % 7;
+                const bg = opts.shadeWeekends && isWeekendColumn(col, opts.weekStart)
+                    ? ' background-color: #e8eef1;' : '';
+                const dateAttr = forPreview && cell.inMonth
+                    ? ` data-date="${dateKey(year, month, cell.num)}" title="Click to add tasks"` : '';
+                if (cell.inMonth || opts.adjacent) {
+                    const color = cell.inMonth ? '#000000' : '#999999';
+                    let content = `<span style="color: ${color};">${cell.num}</span>`;
+                    if (cell.inMonth) {
+                        const dayTasks = tasks[dateKey(year, month, cell.num)] || [];
+                        dayTasks.forEach(task => {
+                            content += `<br><span style="font-size:9pt;">${escapeHtml(task)}</span>`;
+                        });
+                    }
+                    content += `<br>${NBSP}`.repeat(opts.lines);
+                    html += `<td style="padding: 5px; vertical-align: top;${bg}"${dateAttr}>${content}</td>`;
+                } else {
+                    html += `<td style="padding: 5px; vertical-align: top;${bg}">${NBSP}</td>`;
+                }
+                if (i % 7 === 6) html += `</tr>`;
+            });
+
+            html += `</table>`;
+            return html;
+        }
+
+        // Tab-separated plain text, so the clipboard still forms a table in apps
+        // that ignore the HTML flavor
+        function monthPlainText(year, month, opts) {
+            const cells = buildGrid(year, month, opts.weekStart);
+            let text = `${MONTHS[month]} ${year}\n`;
+
+            for (let col = 0; col < 7; col++) {
+                text += DOW_SHORT[(opts.weekStart + col) % 7] + (col < 6 ? '\t' : '');
+            }
+            text += '\n';
+
+            cells.forEach((cell, i) => {
+                if (i > 0 && i % 7 === 0) text += '\n';
+                let content;
+                if (cell.inMonth) {
+                    const dayTasks = tasks[dateKey(year, month, cell.num)] || [];
+                    content = dayTasks.length > 0
+                        ? `${cell.num} — ${dayTasks.join('; ')}` : String(cell.num);
+                } else {
+                    content = opts.adjacent ? String(cell.num) : NBSP;
+                }
+                text += content + (i % 7 < 6 ? '\t' : '');
+            });
+
+            return text + '\n';
+        }
+
+        function buildCalendar(forPreview) {
+            const opts = getOptions();
+            const startMonth = parseInt(document.getElementById('cal-month').value, 10);
+            const startYear = parseInt(document.getElementById('cal-year').value, 10);
+            const count = parseInt(document.getElementById('cal-count').value, 10);
+
+            let html = '';
+            let plain = '';
+            for (let i = 0; i < count; i++) {
+                const m = (startMonth + i) % 12;
+                const y = startYear + Math.floor((startMonth + i) / 12);
+                if (i > 0) html += `<br>`;
+                html += monthHtml(y, m, opts, forPreview);
+                if (i > 0) plain += '\n';
+                plain += monthPlainText(y, m, opts);
+            }
+            return { html, plain };
+        }
+
+        function renderPreview() {
+            document.getElementById('calendar-preview').innerHTML = buildCalendar(true).html;
+        }
+
+        async function copyCalendar() {
+            const { html, plain } = buildCalendar(false);
+            try {
+                if (navigator.clipboard && window.ClipboardItem) {
+                    const htmlBlob = new Blob([html], { type: 'text/html' });
+                    const textBlob = new Blob([plain], { type: 'text/plain' });
+                    await navigator.clipboard.write([
+                        new ClipboardItem({
+                            'text/html': htmlBlob,
+                            'text/plain': textBlob
+                        })
+                    ]);
+                    alert('Calendar copied! Paste into OneNote with Ctrl+V.');
+                } else {
+                    await navigator.clipboard.writeText(plain);
+                    alert('Calendar copied as text (your browser does not support HTML clipboard).');
+                }
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+                alert('Failed to copy to clipboard (check browser permissions). Try the Select Table button instead.');
+            }
+        }
+
+        function selectCalendar() {
+            const preview = document.getElementById('calendar-preview');
+            const range = document.createRange();
+            range.selectNodeContents(preview);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            alert('Calendar selected — press Ctrl+C to copy, then paste into OneNote.');
+        }
+
+        function shiftMonth(delta) {
+            const monthSelect = document.getElementById('cal-month');
+            const yearInput = document.getElementById('cal-year');
+            let m = parseInt(monthSelect.value, 10) + delta;
+            let y = parseInt(yearInput.value, 10);
+            if (m < 0) { m += 12; y -= 1; }
+            if (m > 11) { m -= 12; y += 1; }
+            monthSelect.value = m;
+            yearInput.value = y;
+            renderPreview();
+        }
+
+        // ---- Day editor (add tasks to a day) ----
+
+        let editingDate = null;
+
+        function openDayEditor(dateStr) {
+            editingDate = dateStr;
+            const [y, m, d] = dateStr.split('-').map(Number);
+            document.getElementById('day-editor-title').textContent =
+                `Tasks — ${MONTHS[m - 1]} ${d}, ${y}`;
+            renderTaskList();
+            const overlay = document.getElementById('day-editor');
+            overlay.hidden = false;
+            document.getElementById('day-editor-input').focus();
+        }
+
+        function closeDayEditor() {
+            editingDate = null;
+            document.getElementById('day-editor').hidden = true;
+        }
+
+        function renderTaskList() {
+            const list = document.getElementById('day-editor-list');
+            list.innerHTML = '';
+            const dayTasks = tasks[editingDate] || [];
+            if (dayTasks.length === 0) {
+                const li = document.createElement('li');
+                li.textContent = 'No tasks yet.';
+                li.style.color = 'rgba(10,10,10,0.45)';
+                li.style.borderStyle = 'dashed';
+                list.appendChild(li);
+            } else {
+                dayTasks.forEach((task, index) => {
+                    const li = document.createElement('li');
+                    const span = document.createElement('span');
+                    span.className = 'task-text';
+                    span.textContent = task;
+                    const remove = document.createElement('button');
+                    remove.className = 'task-remove';
+                    remove.textContent = '✕';
+                    remove.setAttribute('aria-label', 'Remove task');
+                    remove.onclick = () => removeTask(index);
+                    li.appendChild(span);
+                    li.appendChild(remove);
+                    list.appendChild(li);
+                });
+            }
+        }
+
+        function addTaskFromInput() {
+            const input = document.getElementById('day-editor-input');
+            const text = input.value.trim();
+            if (text === '' || editingDate === null) return;
+            if (!tasks[editingDate]) tasks[editingDate] = [];
+            tasks[editingDate].push(text);
+            saveTasks();
+            input.value = '';
+            input.focus();
+            renderTaskList();
+            renderPreview();
+        }
+
+        function removeTask(index) {
+            if (editingDate === null || !tasks[editingDate]) return;
+            tasks[editingDate].splice(index, 1);
+            if (tasks[editingDate].length === 0) delete tasks[editingDate];
+            saveTasks();
+            renderTaskList();
+            renderPreview();
+        }
+
+        function clearAllTasks() {
+            const total = Object.values(tasks).reduce((sum, list) => sum + list.length, 0);
+            if (total === 0) {
+                alert('There are no tasks to clear.');
+                return;
+            }
+            if (confirm(`Remove all ${total} task(s) from every day?`)) {
+                tasks = {};
+                saveTasks();
+                renderPreview();
+            }
+        }
+
+        // Init controls with current month/year
+        (function init() {
+            const monthSelect = document.getElementById('cal-month');
+            const now = new Date();
+            MONTHS.forEach((name, i) => {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = name;
+                monthSelect.appendChild(option);
+            });
+            monthSelect.value = now.getMonth();
+            document.getElementById('cal-year').value = now.getFullYear();
+
+            document.getElementById('controls').addEventListener('input', renderPreview);
+            document.getElementById('controls').addEventListener('change', renderPreview);
+
+            const preview = document.getElementById('calendar-preview');
+            preview.addEventListener('click', event => {
+                const cell = event.target.closest('td[data-date]');
+                if (cell) openDayEditor(cell.dataset.date);
+            });
+
+            const overlay = document.getElementById('day-editor');
+            overlay.addEventListener('click', event => {
+                if (event.target === overlay) closeDayEditor();
+            });
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape' && !overlay.hidden) closeDayEditor();
+            });
+            document.getElementById('day-editor-input').addEventListener('keydown', event => {
+                if (event.key === 'Enter') addTaskFromInput();
+            });
+
+            renderPreview();
+        })();
+    </script>
+</body>
+
+</html>
