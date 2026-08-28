@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔬</text></svg>">
     <title>Size Exclusion Graphing - Scientific Tools</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
@@ -409,12 +412,202 @@
 
         /* Responsive Design */
         @media (max-width: 768px) {
+            .nav-toggle {
+                display: flex;
+            }
+
             .nav-links {
                 display: none;
             }
 
             .container {
                 padding: 0 1rem;
+            }
+
+            .main-content {
+                padding-top: 150px;
+            }
+
+            .section-header h1 {
+                font-size: 1.7rem;
+            }
+
+            .section-header {
+                margin-bottom: 2rem;
+            }
+
+            /* Center the floating instrument toggle so it clears the title */
+            .instrument-toggle {
+                top: 84px;
+                left: 50%;
+                right: auto;
+                transform: translateX(-50%);
+            }
+
+            .graph-container {
+                padding: 1rem;
+            }
+
+            /* Keep the chromatogram a reasonable height on small screens */
+            .graph-container > div[style*="height: 500px"] {
+                height: 360px !important;
+            }
+
+            footer {
+                padding: 2rem 0 calc(2rem + env(safe-area-inset-bottom));
+            }
+
+            /* Tighten vertical rhythm on small screens */
+            .section-header {
+                margin-bottom: 1.25rem;
+            }
+
+            .section-header p {
+                font-size: 1rem;
+            }
+
+            .controls-container {
+                gap: 1rem;
+                margin-bottom: 1.25rem;
+            }
+
+            .graph-container {
+                margin-bottom: 1.25rem;
+            }
+
+            .graph-container > div[style*="margin-bottom: 2rem"] {
+                margin-bottom: 1.25rem !important;
+            }
+
+            footer {
+                margin-top: 2rem;
+            }
+
+            .footer-content {
+                gap: 1.25rem;
+            }
+        }
+
+        /* ===== Shared mobile navigation & touch polish ===== */
+        html {
+            -webkit-text-size-adjust: 100%;
+        }
+
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button,
+        a,
+        input,
+        select,
+        textarea {
+            touch-action: manipulation;
+        }
+
+        :focus-visible {
+            outline: 3px solid rgba(74, 144, 164, 0.55);
+            outline-offset: 2px;
+        }
+
+        .dropdown.open .dropdown-content {
+            display: block;
+        }
+
+        .nav-toggle {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            gap: 5px;
+            width: 44px;
+            height: 40px;
+            padding: 0 10px;
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .nav-toggle span {
+            display: block;
+            height: 2px;
+            width: 100%;
+            border-radius: 2px;
+            background: var(--primary-black);
+            transition: transform 0.25s ease, opacity 0.25s ease;
+        }
+
+        .nav-toggle.open span:nth-child(1) {
+            transform: translateY(7px) rotate(45deg);
+        }
+
+        .nav-toggle.open span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .nav-toggle.open span:nth-child(3) {
+            transform: translateY(-7px) rotate(-45deg);
+        }
+
+        .mobile-nav {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: calc(100vh - 80px);
+            max-height: calc(100dvh - 80px);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            background: var(--pure-white);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+            padding: 0.5rem 0;
+        }
+
+        .mobile-nav.open {
+            display: block;
+        }
+
+        .mobile-nav a {
+            display: block;
+            padding: 0.85rem 1.5rem;
+            color: var(--primary-black);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .mobile-nav a:hover,
+        .mobile-nav a:active {
+            background: var(--light-blue);
+            color: var(--muted-blue);
+        }
+
+        .mobile-nav .mobile-nav-label {
+            padding: 0.6rem 1.5rem 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(10, 10, 10, 0.45);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        /* Show the hamburger below 768px (kept last so it wins over the base rule) */
+        @media (max-width: 768px) {
+            .nav-toggle {
+                display: flex;
             }
         }
     </style>
@@ -439,7 +632,22 @@
                     </div>
                 </li>
             </ul>
+            <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false"
+                aria-controls="mobileNav">
+                <span></span><span></span><span></span>
+            </button>
         </nav>
+        <div class="mobile-nav" id="mobileNav">
+            <a href="index.html">Home</a>
+            <div class="mobile-nav-label">Tools</div>
+            <a href="gelelectrophoresis.html">Gel Analysis</a>
+            <a href="sequencer.html">FASTQ Analyzer</a>
+            <a href="calculations.html">Calculations</a>
+            <a href="size_exclusion_graphing.html">Size Exclusion Graphing</a>
+            <a href="timing.html">Timing</a>
+            <a href="fileconversions.html">File Conversions</a>
+            <a href="scheduling.html">Scheduling</a>
+        </div>
     </header>
 
     <!-- Instrument Mode Toggle -->
@@ -1398,6 +1606,62 @@
                 container.appendChild(item);
             });
         }
+    </script>
+    <script>
+        // Mobile menu + tap-friendly Tools dropdown
+        (function () {
+            const toggle = document.getElementById('navToggle');
+            const panel = document.getElementById('mobileNav');
+
+            function closeMenu() {
+                if (!panel || !toggle) return;
+                panel.classList.remove('open');
+                toggle.classList.remove('open');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+
+            if (toggle && panel) {
+                toggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const open = panel.classList.toggle('open');
+                    toggle.classList.toggle('open', open);
+                    toggle.setAttribute('aria-expanded', String(open));
+                });
+                panel.addEventListener('click', (e) => {
+                    if (e.target.closest('a')) closeMenu();
+                });
+                document.addEventListener('click', (e) => {
+                    if (panel.classList.contains('open') && !panel.contains(e.target) && !toggle.contains(e.target)) {
+                        closeMenu();
+                    }
+                });
+            }
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeMenu();
+                    document.querySelectorAll('.dropdown.open').forEach(dd => dd.classList.remove('open'));
+                }
+            });
+
+            // The Tools menu opens on hover via CSS; let taps/clicks toggle it too.
+            document.querySelectorAll('.dropbtn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const dd = btn.closest('.dropdown');
+                    if (!dd) return;
+                    const willOpen = !dd.classList.contains('open');
+                    document.querySelectorAll('.dropdown.open').forEach(other => other.classList.remove('open'));
+                    dd.classList.toggle('open', willOpen);
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                document.querySelectorAll('.dropdown.open').forEach(dd => {
+                    if (!dd.contains(e.target)) dd.classList.remove('open');
+                });
+            });
+        })();
     </script>
 </body>
 
