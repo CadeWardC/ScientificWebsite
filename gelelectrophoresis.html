@@ -785,48 +785,78 @@
             color: #ff6b6b;
         }
 
-        /* Of Interest Marker (Right side) */
+        /* Bands of Interest overlay (leader-line annotations) */
         .of-interest-marker-container {
             position: absolute;
-            /* Position inside the preview container */
-            width: 50px;
-            height: 100%;
-            /* Span the full height of the image container */
             top: 0;
-            /* Start from the top */
-            right: 0;
-            /* Position on the right side */
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* Sized by adjustPreviewLayout to overlay the rendered image exactly */
             pointer-events: none;
-            /* Allow clicks to pass through empty space */
+            /* Container is click-through; interactive children re-enable */
+            overflow: visible;
+            /* Labels may extend past the image edge */
+            z-index: 5;
         }
 
-        .of-interest-marker {
+        .of-interest-marker-container .band-lines-svg {
             position: absolute;
-            left: 0.5rem;
-            /* Align to the left edge of the right container */
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+            pointer-events: none;
+        }
+
+        .band-line {
+            stroke: var(--band-color, #ed1c24);
+            stroke-width: 2;
+            stroke-linecap: round;
+            fill: none;
+        }
+
+        .band-anchor {
+            fill: var(--band-color, #ed1c24);
+            stroke: #ffffff;
+            stroke-width: 1.5;
+            pointer-events: auto;
+            cursor: grab;
+            /* Drag handles stay invisible so the preview matches the exported
+               figure; they fade in only while the cursor is over the gel or
+               while one is being dragged. */
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        .of-interest-marker-container:hover .band-anchor,
+        .band-anchor.dragging {
+            opacity: 1;
+        }
+
+        .band-anchor.dragging {
+            cursor: grabbing;
+        }
+
+        .band-label {
+            position: absolute;
             transform: translateY(-50%);
-            /* Vertically center the marker on its 'top' position */
-            font-size: 0.6rem;
-            color: var(--primary-black);
-            font-weight: 500;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--band-color, #ed1c24);
+            white-space: nowrap;
             cursor: grab;
             user-select: none;
-            /* Prevent text selection during drag */
-            padding: 1px 3px;
-            background-color: rgba(255, 220, 220, 0.8);
-            /* Light red background to distinguish from ladder */
+            padding: 1px 4px;
+            background-color: rgba(255, 255, 255, 0.78);
             border-radius: 3px;
-            transition: background-color 0.2s, box-shadow 0.2s, left 0.2s ease-out;
-            border: 1px solid #ff6b6b;
             pointer-events: auto;
-            /* Re-enable clicks on the marker itself */
         }
 
-        .of-interest-marker.dragging {
+        .band-label.dragging {
             cursor: grabbing;
             z-index: 10;
-            /* Bring to front while dragging */
-            background-color: rgba(255, 220, 220, 1);
+            background-color: #ffffff;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
@@ -1984,7 +2014,8 @@
         /* Draggable markers must own their touch gestures (touch drag shim) */
         .ladder-label-marker,
         .ladder-middle-handle,
-        .of-interest-marker,
+        .band-label,
+        .band-anchor,
         .splitter-line {
             touch-action: none;
         }
@@ -2186,7 +2217,7 @@
                         <p>📷 Drop gel images here or click to browse</p>
                         <span>Supports JPG, PNG, GIF • Add as many as you need</span>
                     </div>
-                    <input type="file" id="multiGelFileInput" accept="image/*" multiple style="display: none;">
+                    <input type="file" id="multiGelFileInput" accept="image/*,.tif,.tiff" multiple style="display: none;">
                     <div id="multiGelCount" class="multi-gel-count" style="display: none;"></div>
                     <div id="multiGelGallery" class="multi-gel-gallery"></div>
                     <div id="multiGelExportContainer" class="multi-gel-export-container" style="display: none;">
@@ -2270,11 +2301,10 @@
                     </div>
 
                     <div id="of-interest-container" class="of-interest-container">
-                        <h3>Biomolecule Marker</h3>
+                        <h3>Bands of Interest</h3>
                         <div class="of-interest-input-wrapper">
-                            <input type="text" id="ofInterestValue"
-                                placeholder="Enter biomolecule name (e.g., GFP, β-actin)" />
-                            <button class="add-interest-btn" onclick="addOfInterestMarker()">Add Marker</button>
+                            <input type="text" id="ofInterestValue" />
+                            <button class="add-interest-btn" onclick="addOfInterestMarker()">Add Band</button>
                         </div>
                         <ul id="biomarkerList" class="biomarker-list"></ul>
                         <div class="of-interest-toggle-wrapper">
@@ -2333,7 +2363,7 @@
                         <span>or</span>
                         <button id="chooseFileBtn" class="choose-file-btn">Choose File</button>
                     </div>
-                    <input type="file" id="imageUploadInput" accept="image/*" style="display: none;">
+                    <input type="file" id="imageUploadInput" accept="image/*,.tif,.tiff" style="display: none;">
                 </div>
 
             </div>
@@ -3022,14 +3052,34 @@
         }
 
         // ===== OF INTEREST LOGIC =====
-        // Multi-biomarker state: array of { id, name, topPct }
+        // ===== BANDS OF INTEREST (leader-line annotations) =====
+        // Each band is { id, name, xPct, yPct } where (xPct, yPct) is the anchor
+        // point on the gel image (percent of image width/height). Labels are
+        // auto-stacked beside the image and connected to anchors with leader lines.
+        const BAND_COLOR = '#ed1c24';
+
         let biomarkers = [];
+
+        function clampBandPct(v) {
+            v = (typeof v === 'number' && isFinite(v)) ? v : 50;
+            return Math.max(0, Math.min(100, v));
+        }
+
+        // Accept legacy entries that only stored a vertical position (topPct).
+        function normalizeBiomarker(b) {
+            return {
+                id: b.id,
+                name: b.name,
+                xPct: clampBandPct(typeof b.xPct === 'number' ? b.xPct : 100),
+                yPct: clampBandPct(typeof b.yPct === 'number' ? b.yPct : b.topPct)
+            };
+        }
 
         function addOfInterestMarker() {
             const input = document.getElementById('ofInterestValue');
             const value = input.value.trim();
             if (!value) {
-                alert('Please enter a biomolecule name for the marker.');
+                alert('Please enter a label for the band.');
                 return;
             }
 
@@ -3037,28 +3087,77 @@
                 ? crypto.randomUUID()
                 : String(Date.now()) + '-' + Math.random().toString(36).slice(2, 8);
 
-            biomarkers.push({ id: id, name: value, topPct: 50 });
+            biomarkers.push(normalizeBiomarker({ id: id, name: value, xPct: 100, yPct: 50 }));
             input.value = '';
             renderBiomarkers();
         }
 
+        // Stack label centers top-to-bottom starting from each anchor's Y so
+        // labels never overlap. Shared by the preview and the exporter so the
+        // exported figure matches what the user sees.
+        function computeBandAnnotationLayout(bands, imageHeight, labelHeight, minGap) {
+            if (minGap == null) minGap = labelHeight * 0.2;
+            const ordered = bands
+                .map(function(b) {
+                    return { band: b, anchorY: (clampBandPct(b.yPct) / 100) * imageHeight };
+                })
+                .sort(function(a, b) { return a.anchorY - b.anchorY; });
+
+            const minCenter = labelHeight / 2;
+            const maxCenter = imageHeight - labelHeight / 2;
+            let prevBottom = -Infinity;
+
+            ordered.forEach(function(e) {
+                const earliest = prevBottom === -Infinity ? minCenter : prevBottom + minGap + labelHeight / 2;
+                let center = Math.max(e.anchorY, earliest);
+                center = Math.min(maxCenter, Math.max(minCenter, center));
+                e.labelY = center;
+                prevBottom = center + labelHeight / 2;
+            });
+
+            return ordered;
+        }
+
         function renderBiomarkers() {
-            // Rebuild the preview markers
+            // Rebuild the preview overlay: one SVG (lines + anchor dots) and
+            // one draggable label per band.
             const container = document.getElementById('ofInterestMarkerContainer');
-            if (container) {
-                container.innerHTML = '';
-                biomarkers.forEach(function(b) {
-                    const markerDiv = document.createElement('div');
-                    markerDiv.className = 'of-interest-marker';
-                    markerDiv.textContent = b.name;
-                    markerDiv.style.top = b.topPct + '%';
-                    markerDiv.dataset.id = b.id;
-                    markerDiv.addEventListener('mousedown', function(e) {
-                        startOfInterestDrag(e, markerDiv, container);
-                    });
-                    container.appendChild(markerDiv);
-                });
-            }
+            if (!container) return;
+            container.innerHTML = '';
+
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('class', 'band-lines-svg');
+            container.appendChild(svg);
+
+            const labelsWrapper = document.createElement('div');
+            labelsWrapper.style.position = 'absolute';
+            labelsWrapper.style.inset = '0';
+            container.appendChild(labelsWrapper);
+
+            biomarkers.forEach(function(b) {
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('class', 'band-line');
+                line.dataset.id = b.id;
+                svg.appendChild(line);
+
+                const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                dot.setAttribute('class', 'band-anchor');
+                dot.setAttribute('r', '5');
+                dot.dataset.id = b.id;
+                dot.addEventListener('pointerdown', function(e) { startBandDrag(e, b, 'anchor'); });
+                svg.appendChild(dot);
+
+                const label = document.createElement('div');
+                label.className = 'band-label';
+                label.textContent = b.name;
+                label.dataset.id = b.id;
+                label.title = 'Drag to move the leader line to another band';
+                label.addEventListener('pointerdown', function(e) { startBandDrag(e, b, 'label'); });
+                labelsWrapper.appendChild(label);
+            });
+
+            // Full layout pass so the card's band-label gutter stays in sync
+            adjustPreviewLayout();
 
             // Rebuild the list in the card
             const list = document.getElementById('biomarkerList');
@@ -3092,6 +3191,85 @@
                 li.appendChild(removeBtn);
                 list.appendChild(li);
             });
+        }
+
+        // Recompute label stacking + leader-line geometry from the current
+        // container size. Cheap enough to call on every drag frame.
+        function layoutBandAnnotations() {
+            const container = document.getElementById('ofInterestMarkerContainer');
+            if (!container) return;
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+            if (!w || !h) return;
+
+            const side = container.dataset.labelSide === 'left' ? 'left' : 'right';
+            const edgeGap = 8, textGap = 4, labelH = 19, minGap = 4;
+
+            const placed = computeBandAnnotationLayout(biomarkers, h, labelH, minGap);
+            const byId = {};
+            placed.forEach(function(e) { byId[e.band.id] = e; });
+
+            container.querySelectorAll('.band-line').forEach(function(line) {
+                const e = byId[line.dataset.id];
+                if (!e) return;
+                line.setAttribute('x1', side === 'right' ? w + edgeGap : -edgeGap);
+                line.setAttribute('y1', e.labelY);
+                line.setAttribute('x2', (clampBandPct(e.band.xPct) / 100) * w);
+                line.setAttribute('y2', (clampBandPct(e.band.yPct) / 100) * h);
+            });
+
+            container.querySelectorAll('.band-anchor').forEach(function(dot) {
+                const e = byId[dot.dataset.id];
+                if (!e) return;
+                dot.setAttribute('cx', (clampBandPct(e.band.xPct) / 100) * w);
+                dot.setAttribute('cy', (clampBandPct(e.band.yPct) / 100) * h);
+            });
+
+            container.querySelectorAll('.band-label').forEach(function(label) {
+                const e = byId[label.dataset.id];
+                if (!e) return;
+                label.style.top = e.labelY + 'px';
+                if (side === 'right') {
+                    label.style.left = (w + edgeGap + textGap) + 'px';
+                    label.style.transform = 'translateY(-50%)';
+                } else {
+                    label.style.left = (-edgeGap - textGap) + 'px';
+                    label.style.transform = 'translateY(-50%) translateX(-100%)';
+                }
+            });
+        }
+
+        // mode 'anchor' moves the band pointer in X and Y (place it on the
+        // band); mode 'label' slides the anchor vertically from the label.
+        function startBandDrag(event, band, mode) {
+            event.preventDefault();
+            const container = document.getElementById('ofInterestMarkerContainer');
+            if (!container) return;
+
+            const targetEl = event.currentTarget;
+            targetEl.classList.add('dragging');
+            if (targetEl.setPointerCapture && event.pointerId != null) {
+                try { targetEl.setPointerCapture(event.pointerId); } catch (err) { /* pointer already released */ }
+            }
+
+            const rect = container.getBoundingClientRect();
+
+            const onMove = function(ev) {
+                const xPct = ((ev.clientX - rect.left) / rect.width) * 100;
+                const yPct = ((ev.clientY - rect.top) / rect.height) * 100;
+                if (mode === 'anchor') band.xPct = clampBandPct(xPct);
+                band.yPct = clampBandPct(yPct);
+                layoutBandAnnotations();
+            };
+            const onUp = function() {
+                targetEl.classList.remove('dragging');
+                document.removeEventListener('pointermove', onMove);
+                document.removeEventListener('pointerup', onUp);
+                document.removeEventListener('pointercancel', onUp);
+            };
+            document.addEventListener('pointermove', onMove);
+            document.addEventListener('pointerup', onUp);
+            document.addEventListener('pointercancel', onUp);
         }
 
         function startEditBiomarker(id) {
@@ -3131,45 +3309,30 @@
             renderBiomarkers();
         }
 
-        function startOfInterestDrag(event, marker, container) {
-            event.preventDefault();
-            marker.classList.add('dragging');
+        // Width needed inside the preview card to keep band labels on the
+        // white card instead of spilling onto the page background.
+        function getBandLabelGutterPx() {
+            if (!Array.isArray(biomarkers) || biomarkers.length === 0) return 0;
+            const labelPx = parseFloat(getComputedStyle(document.body).fontSize) * 0.7; // .band-label font
+            const measure = document.createElement('canvas').getContext('2d');
+            measure.font = '700 ' + labelPx + 'px sans-serif';
+            let maxW = 0;
+            biomarkers.forEach(function(b) {
+                const w = measure.measureText(b.name).width;
+                if (w > maxW) maxW = w;
+            });
+            return Math.min(220, Math.ceil(maxW + 28));
+        }
 
-            const initialMouseY = event.clientY;
-            const initialTop = marker.offsetTop;
-
-            const doDrag = (moveEvent) => {
-                const deltaY = moveEvent.clientY - initialMouseY;
-                let newTop = initialTop + deltaY;
-
-                // Allow dragging across the full vertical span of the image
-                const halfMarkerHeight = marker.offsetHeight / 2;
-                const minTop = 0;
-                const maxTop = container.offsetHeight - marker.offsetHeight;
-
-                newTop = Math.max(minTop, Math.min(newTop, maxTop));
-                marker.style.top = `${newTop}px`;
-            };
-
-            const stopDrag = () => {
-                marker.classList.remove('dragging');
-                // Commit final position as a percent of container height
-                const containerHeight = container.offsetHeight;
-                if (containerHeight > 0) {
-                    const topPx = parseFloat(marker.style.top);
-                    if (!isNaN(topPx)) {
-                        const pct = Math.max(0, Math.min(100, (topPx / containerHeight) * 100));
-                        const id = marker.dataset.id;
-                        const b = biomarkers.find(function(x) { return x.id === id; });
-                        if (b) b.topPct = pct;
-                    }
-                }
-                document.removeEventListener('mousemove', doDrag);
-                document.removeEventListener('mouseup', stopDrag);
-            };
-
-            document.addEventListener('mousemove', doDrag);
-            document.addEventListener('mouseup', stopDrag);
+        // Pending CSS transitions (e.g. from a global "transition: all" rule)
+        // override inline styles until they finish, which would freeze these
+        // layout-critical writes at their old values. Finish them immediately.
+        function settleTransitions(el) {
+            if (el && el.getAnimations) {
+                el.getAnimations().forEach(function(a) {
+                    try { a.finish(); } catch (err) { try { a.cancel(); } catch (e2) { /* already gone */ } }
+                });
+            }
         }
 
         // ===== LABEL PREVIEW LOGIC =====
@@ -3181,6 +3344,12 @@
 
             // Only run if the image preview is visible and has finished loading
             if (imagePreviewContainer.style.display !== 'none' && imagePreview.complete && imagePreview.naturalHeight !== 0) {
+
+                // Reserve the band-label gutter before measuring the image so
+                // the overlays below are computed against the final image rect.
+                const bandGutter = getBandLabelGutterPx();
+                imagePreviewContainer.style.paddingRight = bandGutter > 0 ? bandGutter + 'px' : '';
+                settleTransitions(imagePreviewContainer);
 
                 const containerWidth = imagePreview.offsetWidth;
                 const containerHeight = imagePreview.offsetHeight;
@@ -3257,27 +3426,20 @@
                     middleContainer.style.height = `${renderedImageHeight}px`;
                 }
 
-                // --- Adjust Biomolecule Marker Container ---
+                // --- Adjust Bands of Interest Container (overlays the image exactly) ---
                 const ofInterestContainer = document.getElementById('ofInterestMarkerContainer');
-                ofInterestContainer.style.height = `${renderedImageHeight}px`;
                 ofInterestContainer.style.top = `${imageOffsetTop + 105}px`; // Same offset as ladder
+                ofInterestContainer.style.left = `${imageOffsetLeft}px`;
+                ofInterestContainer.style.width = `${renderedImageWidth}px`;
+                ofInterestContainer.style.height = `${renderedImageHeight}px`;
 
-                // Swap side based on ladder position (Middle -> keep biomarker on right)
-                if (isLadderRight) {
-                    // Ladder Right -> Biomarker Left
-                    ofInterestContainer.style.left = '0px';
-                    ofInterestContainer.style.right = 'auto';
-                    if (imageOffsetLeft > 1) {
-                        ofInterestContainer.style.width = `${imageOffsetLeft}px`;
-                    } else {
-                        ofInterestContainer.style.width = '50px';
-                    }
-                } else {
-                    // Ladder Left or Middle -> Biomarker Right
-                    ofInterestContainer.style.left = 'auto';
-                    ofInterestContainer.style.right = '0px';
-                    ofInterestContainer.style.width = '50px';
-                }
+                // Labels sit opposite the ladder column (Middle -> keep bands on right)
+                ofInterestContainer.dataset.labelSide = isLadderRight ? 'left' : 'right';
+
+                [previewContainer, ladderContainer,
+                 document.getElementById('middleLaddersContainer'),
+                 ofInterestContainer].forEach(settleTransitions);
+                layoutBandAnnotations();
             }
         }
 
@@ -3483,30 +3645,95 @@
             removeImageBtn.addEventListener('click', resetImageUploader);
         }
 
-        function handleImageFile(file) {
-            if (file && file.type.startsWith('image/')) {
+        // TIFF files (microscopes and figure exporters love them) don't render
+        // in <img> on Chrome/Firefox, so decode them to a PNG blob with the
+        // bundled UTIF library before handing them to the crop flow.
+        function isTiffFile(file) {
+            if (!file) return false;
+            const name = (file.name || '').toLowerCase();
+            return file.type === 'image/tiff' || name.endsWith('.tif') || name.endsWith('.tiff');
+        }
+
+        async function decodeTiffFile(file) {
+            if (typeof UTIF === 'undefined') {
+                throw new Error('TIFF decoder not loaded (utif/UTIF.js is missing).');
+            }
+            const buffer = new Uint8Array(await file.arrayBuffer());
+            const pages = UTIF.decode(buffer);
+            if (!pages || pages.length === 0) {
+                throw new Error('no image found in the file.');
+            }
+            // Multi-page TIFFs often carry a small thumbnail first — use the
+            // largest page that successfully decodes.
+            let best = null;
+            for (const page of pages) {
+                try {
+                    UTIF.decodeImage(buffer, page, pages);
+                    if (!page.width || !page.height) continue;
+                    if (!best || page.width * page.height > best.width * best.height) best = page;
+                } catch (err) { /* skip undecodable pages */ }
+            }
+            if (!best) {
+                throw new Error('none of the pages could be decoded (unsupported compression?).');
+            }
+            const rgba = UTIF.toRGBA8(best);
+            const canvas = document.createElement('canvas');
+            canvas.width = best.width;
+            canvas.height = best.height;
+            canvas.getContext('2d').putImageData(
+                new ImageData(new Uint8ClampedArray(rgba), best.width, best.height), 0, 0);
+            return await new Promise(function(resolve, reject) {
+                canvas.toBlob(function(blob) {
+                    if (blob) resolve(blob);
+                    else reject(new Error('could not be converted.'));
+                }, 'image/png');
+            });
+        }
+
+        function readAsDataUrl(blob) {
+            return new Promise(function(resolve, reject) {
                 const reader = new FileReader();
-                const imageToCrop = document.getElementById('imageToCrop');
-                const modal = document.getElementById('cropModal');
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = () => reject(new Error('could not be read.'));
+                reader.readAsDataURL(blob);
+            });
+        }
 
-                reader.onload = (e) => {
-                    imageToCrop.src = e.target.result;
-                    modal.style.display = 'flex';
+        async function handleImageFile(file) {
+            const isImage = file && (file.type.startsWith('image/') || isTiffFile(file));
+            if (!isImage) {
+                alert('Please select a valid image file (e.g., JPG, PNG, GIF, TIFF).');
+                return;
+            }
 
-                    if (cropper) {
-                        cropper.destroy();
-                    }
+            const imageToCrop = document.getElementById('imageToCrop');
+            const modal = document.getElementById('cropModal');
 
-                    cropper = new Cropper(imageToCrop, {
-                        aspectRatio: NaN, // Use NaN for free ratio to ensure it works correctly
-                        viewMode: 1,
-                        background: false,
-                        autoCropArea: 0.8,
-                    });
-                };
-                reader.readAsDataURL(file);
-            } else {
-                alert('Please select a valid image file (e.g., JPG, PNG, GIF).');
+            const startCrop = (dataUrl) => {
+                imageToCrop.src = dataUrl;
+                modal.style.display = 'flex';
+
+                if (cropper) {
+                    cropper.destroy();
+                }
+
+                cropper = new Cropper(imageToCrop, {
+                    aspectRatio: NaN, // Use NaN for free ratio to ensure it works correctly
+                    viewMode: 1,
+                    background: false,
+                    autoCropArea: 0.8,
+                });
+            };
+
+            try {
+                if (isTiffFile(file)) {
+                    const pngBlob = await decodeTiffFile(file);
+                    startCrop(await readAsDataUrl(pngBlob));
+                } else {
+                    startCrop(await readAsDataUrl(file));
+                }
+            } catch (err) {
+                alert('Could not open this image: ' + (err && err.message ? err.message : 'unknown error.'));
             }
         }
 
@@ -3543,7 +3770,11 @@
 
             const imagePreview = document.getElementById('imagePreview');
             imagePreview.onload = () => {
-                // Use requestAnimationFrame to ensure layout is calculated after the image is painted
+                // Lay out synchronously first so geometry is correct even when
+                // requestAnimationFrame is throttled (hidden tab), then re-run
+                // post-paint for the final rendered size.
+                adjustPreviewLayout();
+                updateLabelPreview();
                 requestAnimationFrame(() => {
                     adjustPreviewLayout();
                     updateLabelPreview();
@@ -3817,20 +4048,34 @@
             const lines = annotationText ? wrapText(tempCtx, annotationText, imagePreview.naturalWidth) : [];
             const annotationHeight = annotationText ? (lines.length * annotationLineHeight) + PADDING : 0;
 
-            // Calculate biomolecule marker space needed on the right
+            // Calculate bands-of-interest gutter + leader-line geometry.
+            // Only reserves space (and draws) when the export toggle is on.
             const ofInterestToggle = document.getElementById('ofInterestToggle').checked;
-            const hasBiomarkers = Array.isArray(biomarkers) && biomarkers.length > 0;
+            const hasBands = Array.isArray(biomarkers) && biomarkers.length > 0;
+            const showBands = hasBands && ofInterestToggle;
             let biomoleculeMarkerWidth = 0;
+            let bandGeom = null;
 
-            if (hasBiomarkers) {
-                const tempCtx = document.createElement('canvas').getContext('2d');
-                tempCtx.font = `bold ${topLabelFontSize}px sans-serif`;
+            if (showBands) {
+                const labelFontPx = topLabelFontSize;
+                const edgeGap = baseFontSize * 0.5;
+                const textGap = labelFontPx * 0.3;
+                const measureCtx = document.createElement('canvas').getContext('2d');
+                measureCtx.font = `bold ${labelFontPx}px sans-serif`;
                 let maxTextWidth = 0;
                 biomarkers.forEach(function(b) {
-                    const w = tempCtx.measureText(b.name).width;
+                    const w = measureCtx.measureText(b.name).width;
                     if (w > maxTextWidth) maxTextWidth = w;
                 });
-                biomoleculeMarkerWidth = maxTextWidth + (baseFontSize * 2);
+                biomoleculeMarkerWidth = edgeGap + textGap + maxTextWidth + (baseFontSize * 1.5);
+                bandGeom = {
+                    labelFontPx: labelFontPx,
+                    edgeGap: edgeGap,
+                    textGap: textGap,
+                    lineWidth: Math.max(2, labelFontPx * 0.12),
+                    // Same stacking algorithm as the preview
+                    layout: computeBandAnnotationLayout(biomarkers, imgHeight, labelFontPx * 1.15, labelFontPx * 0.25)
+                };
             }
 
             // Define final LOGICAL canvas dimensions
@@ -3873,8 +4118,8 @@
                 imageX = sideLadderArea;
                 ladderUnitX = imageX + (baseFontSize * 0.5); // Units label near top-left of image
             } else if (isLadderRight) {
-                // Image starts at padding (left side) OR after biomarker if it exists
-                if (hasBiomarkers) {
+                // Image starts at padding (left side) OR after bands-of-interest gutter
+                if (showBands) {
                     imageX = biomoleculeMarkerWidth + (PADDING / 2);
                 } else {
                     imageX = PADDING / 2;
@@ -4053,26 +4298,46 @@
                 }
             }
 
-            // 3.5. Draw biomolecule markers (loop over all entries)
-            if (hasBiomarkers) {
-                ctx.font = `bold ${topLabelFontSize}px sans-serif`;
-                ctx.fillStyle = '#ff6b6b';
+            // 3.5. Draw bands of interest with leader lines (publication style).
+            // Anchor dots are preview-only drag handles and are never exported.
+            if (showBands && bandGeom) {
+                const side = isLadderRight ? 'left' : 'right';
+                const g = bandGeom;
+
+                ctx.save();
+                ctx.strokeStyle = BAND_COLOR;
+                ctx.fillStyle = BAND_COLOR;
+                ctx.lineWidth = g.lineWidth;
+                ctx.lineCap = 'round';
+                ctx.font = `bold ${g.labelFontPx}px sans-serif`;
                 ctx.textBaseline = 'middle';
 
-                let x;
-                if (isLadderRight) {
-                    ctx.textAlign = 'right';
-                    x = imageX - (baseFontSize * 1.5);
-                } else {
-                    ctx.textAlign = 'left';
-                    x = imageX + imagePreview.naturalWidth + (baseFontSize * 1.5);
-                }
+                g.layout.forEach(function(e) {
+                    const b = e.band;
+                    const anchorX = imageX + imgWidth * (clampBandPct(b.xPct) / 100);
+                    const anchorY = imageY + imgHeight * (clampBandPct(b.yPct) / 100);
+                    const labelY = imageY + e.labelY;
 
-                biomarkers.forEach(function(b) {
-                    const pct = (typeof b.topPct === 'number') ? b.topPct : 50;
-                    const y = imageY + (imagePreview.naturalHeight * (pct / 100));
-                    ctx.fillText(b.name, x, y);
+                    let lineX0, textX, textAlign;
+                    if (side === 'right') {
+                        textAlign = 'left';
+                        lineX0 = imageX + imgWidth + g.edgeGap;
+                        textX = lineX0 + g.textGap;
+                    } else {
+                        textAlign = 'right';
+                        lineX0 = imageX - g.edgeGap;
+                        textX = lineX0 - g.textGap;
+                    }
+
+                    ctx.beginPath();
+                    ctx.moveTo(lineX0, labelY);
+                    ctx.lineTo(anchorX, anchorY);
+                    ctx.stroke();
+
+                    ctx.textAlign = textAlign;
+                    ctx.fillText(b.name, textX, labelY);
                 });
+                ctx.restore();
             }
 
             // 4. Draw top labels
@@ -4820,30 +5085,35 @@
             });
         }
 
-        function handleMultiGelFiles(files) {
-            const fileArr = Array.from(files).filter(function(f) { return f && f.type.startsWith('image/'); });
+        async function handleMultiGelFiles(files) {
+            const fileArr = Array.from(files).filter(function(f) { return f && (f.type.startsWith('image/') || isTiffFile(f)); });
             if (fileArr.length === 0) return;
 
-            Promise.all(fileArr.map(function(f) {
-                return new Promise(function(resolve) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) { resolve({ file: f, dataUrl: e.target.result }); };
-                    reader.readAsDataURL(f);
+            const results = [];
+            for (const f of fileArr) {
+                try {
+                    // TIFFs are decoded to PNG first since <img> can't render them
+                    const blob = isTiffFile(f) ? await decodeTiffFile(f) : f;
+                    results.push({ file: f, dataUrl: await readAsDataUrl(blob) });
+                } catch (err) {
+                    alert('Could not open "' + (f.name || 'image') + '": ' +
+                        (err && err.message ? err.message : 'unknown error.'));
+                }
+            }
+            if (results.length === 0) return;
+
+            results.forEach(function(r) {
+                multiGelCropQueue.push({
+                    id: Date.now() + Math.random(),
+                    dataUrl: r.dataUrl,
+                    label: r.file.name.replace(/\.[^/.]+$/, ''),
+                    wells: 10,
+                    analysis: null
                 });
-            })).then(function(results) {
-                results.forEach(function(r) {
-                    multiGelCropQueue.push({
-                        id: Date.now() + Math.random(),
-                        dataUrl: r.dataUrl,
-                        label: r.file.name.replace(/\.[^/.]+$/, ''),
-                        wells: 10,
-                        analysis: null
-                    });
-                });
-                multiGelCropIndex = 0;
-                isMultiGelCropping = true;
-                openMultiGelCropperFor(0);
             });
+            multiGelCropIndex = 0;
+            isMultiGelCropping = true;
+            openMultiGelCropperFor(0);
         }
 
         function openMultiGelCropperFor(index) {
@@ -5204,7 +5474,7 @@
                     ? ladderMarkerYPercents.map(function(arr) { return Array.isArray(arr) ? arr.slice() : null; })
                     : null,
                 biomarkers: Array.isArray(biomarkers)
-                    ? biomarkers.map(function(b) { return { id: b.id, name: b.name, topPct: b.topPct }; })
+                    ? biomarkers.map(function(b) { return { id: b.id, name: b.name, xPct: b.xPct, yPct: b.yPct }; })
                     : [],
                 annotation: annotation,
                 includeDate: includeDate,
@@ -5239,7 +5509,7 @@
                 ? analysis.ladderMarkerYPercents.map(function(arr) { return Array.isArray(arr) ? arr.slice() : null; })
                 : null;
             biomarkers = Array.isArray(analysis.biomarkers)
-                ? analysis.biomarkers.map(function(b) { return { id: b.id, name: b.name, topPct: b.topPct }; })
+                ? analysis.biomarkers.map(normalizeBiomarker)
                 : [];
             renderBiomarkers();
             const savedPos = (analysis.ladderPosition === 'R' || analysis.ladderPosition === 'M') ? analysis.ladderPosition : 'L';
@@ -5397,6 +5667,8 @@
         }
 
     </script>
+    <script src="utif/pako.min.js"></script>
+    <script src="utif/UTIF.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script>
@@ -5455,11 +5727,12 @@
             });
         })();
 
-        // Touch support for the mouse-drag interactions (ladder labels, markers,
+        // Touch support for the mouse-drag interactions (ladder labels,
         // splitter lines): translate touch sequences into the mouse events the
         // existing drag handlers already listen for. Desktop is unaffected.
+        // Band annotations use pointer events and handle touch natively.
         (function () {
-            const DRAGGABLE = '.ladder-label-marker, .ladder-middle-handle, .of-interest-marker, .splitter-line';
+            const DRAGGABLE = '.ladder-label-marker, .ladder-middle-handle, .splitter-line';
             let active = false;
 
             function synthMouse(type, touchEvent) {

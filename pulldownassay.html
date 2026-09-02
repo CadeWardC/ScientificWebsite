@@ -1,0 +1,3244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔬</text></svg>">
+    <title>Pulldown Assay - Scientific Tools</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-black: #0a0a0a;
+            --soft-black: #1a1a1a;
+            --pure-white: #ffffff;
+            --off-white: #f8f9fa;
+            --muted-blue: #4a90a4;
+            --light-blue: rgba(74, 144, 164, 0.1);
+            --border-color: rgba(74, 144, 164, 0.2);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--primary-black);
+            background: var(--pure-white);
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-black);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--primary-black);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--muted-blue);
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: var(--pure-white);
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+            border-radius: 8px;
+            padding: 0.5rem 0;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .dropdown-content a {
+            color: var(--primary-black);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            text-align: left;
+        }
+
+        .dropdown-content a:hover {
+            background-color: var(--off-white);
+            color: var(--muted-blue);
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropbtn {
+            cursor: pointer;
+        }
+
+        .main-content {
+            padding-top: 100px;
+            /* Space for fixed header */
+            min-height: 80vh;
+            padding-bottom: 3rem;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--primary-black);
+        }
+
+        .section-header p {
+            font-size: 1.1rem;
+            color: rgba(10, 10, 10, 0.6);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Tool cards */
+        .tool-card {
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .tool-card h2 {
+            font-size: 1.35rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            background: var(--muted-blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #3a7a8c;
+        }
+
+        .btn:disabled {
+            background: #c2c8cc;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-secondary:disabled {
+            background: #c2c8cc;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        /* Upload */
+        .upload-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            background: var(--off-white);
+            transition: border-color 0.25s ease, background 0.25s ease;
+        }
+
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: var(--muted-blue);
+            background: var(--light-blue);
+        }
+
+        .upload-zone .upload-icon {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-zone p {
+            color: rgba(10, 10, 10, 0.65);
+        }
+
+        .file-name {
+            margin-top: 1rem;
+            font-size: 0.95rem;
+            color: rgba(10, 10, 10, 0.7);
+        }
+
+        .error-msg {
+            margin-top: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            background: #fdecea;
+            color: #8b2b22;
+            border: 1px solid #f5c6c2;
+            font-size: 0.95rem;
+        }
+
+        /* Viewer */
+        .viewer-wrap {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: #efefef;
+            overflow: auto;
+            /* Height is set by layout() so the whole image fits at 100% zoom. */
+            padding: 0.5rem;
+            display: flex;
+        }
+
+        #imageCanvas {
+            display: block;
+            /* auto margins centre the canvas without clipping it when zoomed in */
+            margin: auto;
+            touch-action: none;
+            cursor: crosshair;
+            background: #ffffff;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+        }
+
+        .hint {
+            font-size: 0.9rem;
+            color: rgba(10, 10, 10, 0.55);
+            margin-top: 0.75rem;
+        }
+
+        .hint kbd {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.82rem;
+            padding: 0.1rem 0.35rem;
+            border: 1px solid rgba(10, 10, 10, 0.2);
+            border-bottom-width: 2px;
+            border-radius: 4px;
+            background: var(--off-white);
+            color: var(--primary-black);
+        }
+
+        /* Controls */
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .field label {
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--soft-black);
+        }
+
+        .field input[type="number"],
+        .field select {
+            padding: 0.6rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            background: var(--pure-white);
+            transition: border-color 0.3s;
+        }
+
+        .field input[type="number"]:focus,
+        .field select:focus {
+            outline: none;
+            border-color: var(--muted-blue);
+        }
+
+        .field-inline {
+            flex-direction: row;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .field-inline label {
+            font-weight: normal;
+            cursor: pointer;
+        }
+
+        .field-inline input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+        }
+
+        .box-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .field-wide {
+            grid-column: span 2;
+        }
+
+        .field input[type="text"] {
+            padding: 0.6rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            background: var(--pure-white);
+            transition: border-color 0.3s;
+        }
+
+        .field input[type="text"]:focus {
+            outline: none;
+            border-color: var(--muted-blue);
+        }
+
+        /* Chart tabs */
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.5rem;
+        }
+
+        .tab {
+            padding: 0.5rem 0.9rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--pure-white);
+            color: rgba(10, 10, 10, 0.7);
+            font-size: 0.92rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+
+        .tab:hover {
+            border-color: var(--muted-blue);
+            color: var(--muted-blue);
+        }
+
+        .tab.active {
+            background: var(--light-blue);
+            border-color: var(--muted-blue);
+            color: var(--muted-blue);
+        }
+
+        .tab .tab-swatch {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+            flex: none;
+        }
+
+        .tab-input {
+            padding: 0.45rem 0.6rem;
+            border: 1px solid var(--muted-blue);
+            border-radius: 8px;
+            font-size: 0.92rem;
+            font-family: inherit;
+            width: 9rem;
+        }
+
+        /* Peak editor */
+        .peak-editor {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem 1.25rem 0.75rem;
+            margin-bottom: 1.5rem;
+            background: var(--off-white);
+        }
+
+        .peak-editor-head {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .peak-editor-head h3 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .btn-sm {
+            padding: 0.45rem 0.85rem;
+            font-size: 0.88rem;
+        }
+
+        .peak-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.4rem 0;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .peak-tag {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: none;
+        }
+
+        .peak-field {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.85rem;
+            color: rgba(10, 10, 10, 0.6);
+        }
+
+        .peak-field input {
+            width: 5.5rem;
+            padding: 0.35rem 0.45rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+
+        .peak-field input:focus {
+            outline: none;
+            border-color: var(--muted-blue);
+        }
+
+        .peak-area {
+            font-size: 0.88rem;
+            color: rgba(10, 10, 10, 0.65);
+            margin-left: auto;
+        }
+
+        .peak-delete {
+            border: 1px solid var(--border-color);
+            background: var(--pure-white);
+            color: rgba(10, 10, 10, 0.55);
+            border-radius: 6px;
+            width: 26px;
+            height: 26px;
+            font-size: 1rem;
+            line-height: 1;
+            cursor: pointer;
+            flex: none;
+        }
+
+        .peak-delete:hover {
+            border-color: #c0554a;
+            color: #c0554a;
+        }
+
+        /* Per-box area table */
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        .column-toggles {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+            margin: 1.5rem 0 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .column-toggles-label {
+            font-size: 0.78rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: rgba(10, 10, 10, 0.5);
+            font-weight: 600;
+        }
+
+        .column-toggles label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            color: rgba(10, 10, 10, 0.7);
+            cursor: pointer;
+        }
+
+        .column-toggles input {
+            cursor: pointer;
+        }
+
+        .ratio-switch {
+            display: inline-flex;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .ratio-option {
+            padding: 0.35rem 0.7rem;
+            border: none;
+            background: var(--pure-white);
+            color: rgba(10, 10, 10, 0.6);
+            font-size: 0.88rem;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .ratio-option + .ratio-option {
+            border-left: 1px solid var(--border-color);
+        }
+
+        .ratio-option:hover {
+            color: var(--muted-blue);
+        }
+
+        .ratio-option.active {
+            background: var(--light-blue);
+            color: var(--muted-blue);
+        }
+
+        .area-table .ratio-cell {
+            font-weight: 600;
+            color: var(--muted-blue);
+        }
+
+        .ratio-cell-inner {
+            display: inline-flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.4rem;
+        }
+
+        .ratio-cell-inner input {
+            cursor: pointer;
+        }
+
+        .area-table .ratio-reference {
+            color: var(--primary-black);
+        }
+
+        .area-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.92rem;
+        }
+
+        .area-table th,
+        .area-table td {
+            padding: 0.55rem 0.75rem;
+            text-align: right;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        .area-table th:first-child,
+        .area-table td:first-child {
+            text-align: left;
+        }
+
+        .area-table th {
+            font-size: 0.78rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: rgba(10, 10, 10, 0.5);
+            font-weight: 600;
+        }
+
+        .area-table tr.active-row td {
+            background: var(--light-blue);
+        }
+
+        .area-table .swatch {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+            margin-right: 0.5rem;
+        }
+
+        /* Stats */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .stat {
+            background: var(--off-white);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.9rem 1rem;
+        }
+
+        .stat .stat-label {
+            font-size: 0.78rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: rgba(10, 10, 10, 0.5);
+        }
+
+        .stat .stat-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary-black);
+        }
+
+        .empty-state {
+            color: rgba(10, 10, 10, 0.5);
+            font-style: italic;
+        }
+
+        .chart-wrap {
+            position: relative;
+            height: 380px;
+            width: 100%;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--soft-black);
+            color: var(--pure-white);
+            padding: 3rem 0;
+            text-align: center;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            color: var(--muted-blue);
+        }
+
+        .footer-section a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: var(--muted-blue);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 2rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* ===== Shared mobile navigation & touch polish ===== */
+        html {
+            -webkit-text-size-adjust: 100%;
+        }
+
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button,
+        a,
+        input,
+        select,
+        textarea {
+            touch-action: manipulation;
+        }
+
+        :focus-visible {
+            outline: 3px solid rgba(74, 144, 164, 0.55);
+            outline-offset: 2px;
+        }
+
+        .dropdown.open .dropdown-content {
+            display: block;
+        }
+
+        .nav-toggle {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            gap: 5px;
+            width: 44px;
+            height: 40px;
+            padding: 0 10px;
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .nav-toggle span {
+            display: block;
+            height: 2px;
+            width: 100%;
+            border-radius: 2px;
+            background: var(--primary-black);
+            transition: transform 0.25s ease, opacity 0.25s ease;
+        }
+
+        .nav-toggle.open span:nth-child(1) {
+            transform: translateY(7px) rotate(45deg);
+        }
+
+        .nav-toggle.open span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .nav-toggle.open span:nth-child(3) {
+            transform: translateY(-7px) rotate(-45deg);
+        }
+
+        .mobile-nav {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: calc(100vh - 80px);
+            max-height: calc(100dvh - 80px);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            background: var(--pure-white);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+            padding: 0.5rem 0;
+        }
+
+        .mobile-nav.open {
+            display: block;
+        }
+
+        .mobile-nav a {
+            display: block;
+            padding: 0.85rem 1.5rem;
+            color: var(--primary-black);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .mobile-nav a:hover,
+        .mobile-nav a:active {
+            background: var(--light-blue);
+            color: var(--muted-blue);
+        }
+
+        .mobile-nav .mobile-nav-label {
+            padding: 0.6rem 1.5rem 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(10, 10, 10, 0.45);
+        }
+
+        @media (max-width: 768px) {
+            .nav-toggle {
+                display: flex;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .container {
+                padding: 0 1rem;
+            }
+
+            .main-content {
+                padding-top: 84px;
+            }
+
+            .section-header h1 {
+                font-size: 1.9rem;
+            }
+
+            .section-header {
+                margin-bottom: 1.5rem;
+            }
+
+            .section-header p {
+                font-size: 1rem;
+            }
+
+            .tool-card {
+                padding: 1.25rem;
+            }
+
+            .box-inputs {
+                grid-template-columns: repeat(2, minmax(70px, 1fr));
+            }
+
+            .field-wide {
+                grid-column: span 2;
+            }
+
+            .chart-wrap {
+                height: 300px;
+            }
+
+            footer {
+                padding: 2rem 0 calc(2rem + env(safe-area-inset-bottom));
+            }
+
+            .footer-content {
+                gap: 1.25rem;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <nav class="container">
+            <a href="index.html" class="logo">Scientific Tools</a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropbtn">Tools ▾</a>
+                    <div class="dropdown-content">
+                        <a href="gelelectrophoresis.html">Gel Analysis</a>
+                        <a href="sequencer.html">Sequencer</a>
+                        <a href="calculations.html">Calculations</a>
+                        <a href="size_exclusion_graphing.html">Size Exclusion Graphing</a>
+                        <a href="timing.html">Timing</a>
+                        <a href="fileconversions.html">File Conversions</a>
+                        <a href="scheduling.html">Scheduling</a>
+                        <a href="pulldownassay.html">Pulldown Assay</a>
+                    </div>
+                </li>
+            </ul>
+            <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false"
+                aria-controls="mobileNav">
+                <span></span><span></span><span></span>
+            </button>
+        </nav>
+        <div class="mobile-nav" id="mobileNav">
+            <a href="index.html">Home</a>
+            <div class="mobile-nav-label">Tools</div>
+            <a href="gelelectrophoresis.html">Gel Analysis</a>
+            <a href="sequencer.html">FASTQ Analyzer</a>
+            <a href="calculations.html">Calculations</a>
+            <a href="size_exclusion_graphing.html">Size Exclusion Graphing</a>
+            <a href="timing.html">Timing</a>
+            <a href="fileconversions.html">File Conversions</a>
+            <a href="scheduling.html">Scheduling</a>
+            <a href="pulldownassay.html">Pulldown Assay</a>
+        </div>
+    </header>
+
+    <main class="main-content container">
+        <div class="section-header">
+            <h1>Pulldown Assay</h1>
+            <p>Upload a blot or gel image, drag a box over a band, and read the pixel intensity profile across it.</p>
+        </div>
+
+        <!-- 1. Upload -->
+        <div class="tool-card">
+            <h2>1. Load an image</h2>
+            <div class="upload-zone" id="uploadZone" role="button" tabindex="0"
+                aria-label="Upload an image file (JPG, PNG or TIFF)">
+                <span class="upload-icon">🖼️</span>
+                <p><strong>Click to choose a file</strong> or drag one here</p>
+                <p style="font-size: 0.9rem;">JPG, PNG, or TIFF</p>
+            </div>
+            <input type="file" id="fileInput" accept="image/*,.tif,.tiff" style="display: none;">
+            <div class="file-name" id="fileName"></div>
+            <div class="error-msg" id="errorMsg" style="display: none;"></div>
+        </div>
+
+        <!-- 2. Draw the box -->
+        <div class="tool-card" id="viewerCard" style="display: none;">
+            <h2>2. Draw the boxes</h2>
+            <div class="controls-grid">
+                <div class="field">
+                    <label for="zoomInput">Zoom: <span id="zoomLabel">Fit</span></label>
+                    <input type="range" id="zoomInput" min="50" max="400" step="5" value="100">
+                </div>
+                <div class="field">
+                    <label for="channelSelect">Intensity from</label>
+                    <select id="channelSelect">
+                        <option value="mean" selected>Mean of R, G, B</option>
+                        <option value="lum">Luminance (0.299R + 0.587G + 0.114B)</option>
+                        <option value="r">Red channel</option>
+                        <option value="g">Green channel</option>
+                        <option value="b">Blue channel</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="axisSelect">Profile direction</label>
+                    <select id="axisSelect">
+                        <option value="y" selected>Down the height (top → bottom)</option>
+                        <option value="x">Across the width (left → right)</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="smoothInput">Smoothing (px window)</label>
+                    <input type="number" id="smoothInput" min="1" max="99" step="2" value="1">
+                </div>
+            </div>
+
+            <div class="viewer-wrap" id="viewerWrap">
+                <canvas id="imageCanvas"></canvas>
+            </div>
+            <p class="hint">Drag on the image to draw a box; drag inside it to move it, or drag a handle to resize it.
+                Press <kbd>Ctrl</kbd>+<kbd>A</kbd> to add another box of the same size — added boxes are locked to the
+                same height level and slide sideways only, so lanes stay comparable. Click a box to select it,
+                <kbd>Delete</kbd> removes the selected one. Rename a box in the Box name field or by
+                double-clicking its tab below — after <kbd>Ctrl</kbd>+<kbd>A</kbd> the name field is already
+                focused, so type the name and press <kbd>Ctrl</kbd>+<kbd>A</kbd> again for the next box. Each point on the plot averages one pixel-wide line inside
+                the box, running perpendicular to the profile direction. Intensity is always inverted, so dark pixels
+                read as high signal.</p>
+
+            <div class="box-inputs" style="margin-top: 1.25rem;">
+                <div class="field field-wide">
+                    <label for="boxName">Box name</label>
+                    <input type="text" id="boxName" maxlength="40" placeholder="Box 1" disabled>
+                </div>
+                <div class="field">
+                    <label for="boxX">Selected box X (px)</label>
+                    <input type="number" id="boxX" min="0" step="1" value="0" disabled>
+                </div>
+                <div class="field">
+                    <label for="boxY">Row Y (px)</label>
+                    <input type="number" id="boxY" min="0" step="1" value="0" disabled>
+                </div>
+                <div class="field">
+                    <label for="boxW">Width (px)</label>
+                    <input type="number" id="boxW" min="1" step="1" value="0" disabled>
+                </div>
+                <div class="field">
+                    <label for="boxH">Height (px)</label>
+                    <input type="number" id="boxH" min="1" step="1" value="0" disabled>
+                </div>
+            </div>
+
+            <div class="button-row" style="margin-top: 1.25rem;">
+                <button class="btn" id="addBoxBtn" disabled>Add Box (Ctrl+A)</button>
+                <button class="btn btn-secondary" id="deleteBoxBtn" disabled>Delete Selected Box</button>
+                <button class="btn btn-secondary" id="selectAllBtn">Select Whole Image</button>
+                <button class="btn btn-secondary" id="clearBoxBtn">Clear Boxes</button>
+                <button class="btn btn-secondary" id="removeImageBtn">Remove Image</button>
+            </div>
+        </div>
+
+        <!-- 3. Profile -->
+        <div class="tool-card" id="profileCard" style="display: none;">
+            <h2>3. Intensity profile</h2>
+
+            <div class="controls-grid" id="baselineControls" style="display: none;">
+                <div class="field">
+                    <label for="baselineMode">Background baseline</label>
+                    <select id="baselineMode">
+                        <option value="auto" selected>Auto (rolling background)</option>
+                        <option value="linear">Straight line between the ends</option>
+                        <option value="flat">Flat (10th percentile)</option>
+                        <option value="none">None (integrate from zero)</option>
+                    </select>
+                </div>
+                <div class="field" id="baselineWindowField">
+                    <label for="baselineWindow">Background width: <span id="baselineWindowLabel">45% of profile</span></label>
+                    <input type="range" id="baselineWindow" min="5" max="100" step="5" value="45">
+                </div>
+                <div class="field">
+                    <label for="baselineOffset">Baseline nudge (intensity)</label>
+                    <input type="number" id="baselineOffset" value="0" step="1">
+                </div>
+            </div>
+
+            <div class="peak-editor" id="peakEditor" style="display: none;">
+                <div class="peak-editor-head">
+                    <h3 id="peakEditorTitle">Peaks</h3>
+                    <div class="button-row">
+                        <button class="btn btn-secondary btn-sm" id="addPeakBtn">+ Add Peak</button>
+                        <button class="btn btn-secondary btn-sm" id="autoPeakBtn">Re-detect Peaks</button>
+                    </div>
+                </div>
+                <div id="peakList"></div>
+                <p class="hint" id="peakHint">Each box finds its own peaks, wherever they sit in that lane. The
+                    shaded spans are what get integrated — drag any dashed edge on the plot, or type the offsets
+                    here. Windows re-detect themselves as you move a box until you adjust that box by hand.</p>
+            </div>
+
+            <div class="tabs" id="chartTabs" role="tablist" style="display: none;"></div>
+
+            <div class="chart-wrap" id="chartWrap" style="display: none;">
+                <canvas id="profileChart"></canvas>
+            </div>
+            <p class="empty-state" id="profileEmpty">Draw a box on the image to plot a profile.</p>
+            <p class="hint" id="statsFor" style="display: none;"></p>
+
+            <div class="stat-grid" id="statGrid" style="display: none;">
+                <div class="stat">
+                    <div class="stat-label">Points</div>
+                    <div class="stat-value" id="statPoints">–</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Mean</div>
+                    <div class="stat-value" id="statMean">–</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Min</div>
+                    <div class="stat-value" id="statMin">–</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Max</div>
+                    <div class="stat-value" id="statMax">–</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Peaks found</div>
+                    <div class="stat-value" id="statPeakCount">–</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Raw sum</div>
+                    <div class="stat-value" id="statSum">–</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Total peak area</div>
+                    <div class="stat-value" id="statArea">–</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Largest peak</div>
+                    <div class="stat-value" id="statBiggest">–</div>
+                </div>
+            </div>
+
+            <div id="areaTableWrap" style="display: none;">
+                <div class="column-toggles">
+                    <span class="column-toggles-label">Peak ratio</span>
+                    <div class="ratio-switch" id="ratioSwitch" role="group" aria-label="Peak ratio direction">
+                        <button type="button" class="ratio-option active" data-mode="first">#1/#2</button>
+                        <button type="button" class="ratio-option" data-mode="second">#2/#1</button>
+                    </div>
+                    <label><input type="checkbox" id="normalizeRatios"> Normalize to a lane</label>
+                    <span class="column-toggles-label" style="margin-left: 0.5rem;">Extra columns</span>
+                    <label><input type="checkbox" id="colWindow" checked> Window</label>
+                    <label><input type="checkbox" id="colApex"> Apex at</label>
+                    <label><input type="checkbox" id="colMax"> Max</label>
+                    <label><input type="checkbox" id="colPercent"> % of largest</label>
+                </div>
+                <div class="table-wrap">
+                <table class="area-table">
+                    <thead>
+                        <tr id="areaTableHead"></tr>
+                    </thead>
+                    <tbody id="areaTableBody"></tbody>
+                </table>
+                </div>
+            </div>
+
+            <div class="button-row" style="margin-top: 1.5rem;">
+                <button class="btn" id="downloadResultsBtn" disabled>Download CSV (Results)</button>
+                <button class="btn" id="downloadIntensitiesBtn" disabled>Download CSV (Intensities)</button>
+                <button class="btn btn-secondary" id="copyResultsBtn" disabled>Copy Results</button>
+                <button class="btn btn-secondary" id="copyIntensitiesBtn" disabled>Copy Intensities</button>
+                <button class="btn btn-secondary" id="downloadPlotBtn" disabled>Save Plot (PNG)</button>
+            </div>
+        </div>
+    </main>
+
+    <footer id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>CadeWardInc</h3>
+                    <a href="#">About Us</a>
+                    <a href="#">Contact</a>
+                </div>
+                <div class="footer-section">
+                    <h3>Tools</h3>
+                    <a href="gelelectrophoresis.html">Gel Analysis</a>
+                    <a href="sequencer.html">Sequencer</a>
+                    <a href="calculations.html">Calculations</a>
+                    <a href="size_exclusion_graphing.html">Size Exclusion Graphing</a>
+                    <a href="timing.html">Timing</a>
+                    <a href="fileconversions.html">File Conversions</a>
+                    <a href="scheduling.html">Scheduling</a>
+                    <a href="pulldownassay.html">Pulldown Assay</a>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2025 CadeWardInc. All rights reserved. | Built by Cade Ward.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="utif/pako.min.js"></script>
+    <script src="utif/UTIF.js"></script>
+    <script>
+        (function () {
+            'use strict';
+
+            // ---------- State ----------
+            let sourceCanvas = null;   // full-resolution copy of the image
+            let sourcePixels = null;   // Uint8ClampedArray RGBA of the whole image
+            let imgW = 0, imgH = 0;
+            let fitScale = 1;          // image px -> CSS px at 100% zoom
+            let zoom = 1;
+            // Every box shares one row level and one size — only the left edge
+            // differs — so lanes are always measured over identical windows.
+            let geom = null;           // { y, w, h } in image pixels
+            let boxXs = [];            // left edge of each box, in image pixels
+            let boxLabels = [];        // user-editable name per box
+            let nextBoxNumber = 1;     // keeps default names unique after deletes
+            let selected = 0;
+            let drag = null;           // active pointer interaction
+            let chart = null;
+            let chartMode = 'box';     // 'box' = one graph per box, 'all' = overlay
+            let ratioMode = 'first';   // 'first' = #1/#2, 'second' = #2/#1
+            let ratioReference = null; // box index every other ratio is divided by
+            // Integration windows, in offsets along each profile. Per box: bands
+            // sit at different heights in different lanes, and a lane can hold
+            // several. boxRanges[i] = { peaks: [{start, end}], n, manual }.
+            let boxRanges = [];
+            let rangeDrag = null;      // { peak, side } while dragging on the plot
+            let renamingIndex = null;  // tab currently being renamed inline
+            let lastProfiles = null;
+            let redrawQueued = false;
+
+            const HANDLE_HIT = 10;     // px (CSS) grab radius for resize handles
+            const MIN_BOX = 1;         // image px
+            const BOX_COLORS = ['#4a90a4', '#c0554a', '#5c8a3c', '#8a5cb8', '#c98a25', '#3d6fa8'];
+
+            // ---------- Elements ----------
+            const uploadZone = document.getElementById('uploadZone');
+            const fileInput = document.getElementById('fileInput');
+            const fileName = document.getElementById('fileName');
+            const errorMsg = document.getElementById('errorMsg');
+            const viewerCard = document.getElementById('viewerCard');
+            const profileCard = document.getElementById('profileCard');
+            const viewerWrap = document.getElementById('viewerWrap');
+            const canvas = document.getElementById('imageCanvas');
+            const ctx = canvas.getContext('2d');
+            const zoomInput = document.getElementById('zoomInput');
+            const zoomLabel = document.getElementById('zoomLabel');
+            const channelSelect = document.getElementById('channelSelect');
+            const axisSelect = document.getElementById('axisSelect');
+            const smoothInput = document.getElementById('smoothInput');
+            const addBoxBtn = document.getElementById('addBoxBtn');
+            const deleteBoxBtn = document.getElementById('deleteBoxBtn');
+            const boxName = document.getElementById('boxName');
+            const boxInputs = {
+                x: document.getElementById('boxX'),
+                y: document.getElementById('boxY'),
+                w: document.getElementById('boxW'),
+                h: document.getElementById('boxH')
+            };
+            const baselineControls = document.getElementById('baselineControls');
+            const baselineMode = document.getElementById('baselineMode');
+            const baselineWindow = document.getElementById('baselineWindow');
+            const baselineWindowField = document.getElementById('baselineWindowField');
+            const baselineWindowLabel = document.getElementById('baselineWindowLabel');
+            const baselineOffset = document.getElementById('baselineOffset');
+            const peakEditor = document.getElementById('peakEditor');
+            const peakEditorTitle = document.getElementById('peakEditorTitle');
+            const peakList = document.getElementById('peakList');
+            const addPeakBtn = document.getElementById('addPeakBtn');
+            const autoPeakBtn = document.getElementById('autoPeakBtn');
+            const chartCanvas = document.getElementById('profileChart');
+            const chartTabs = document.getElementById('chartTabs');
+            const profileEmpty = document.getElementById('profileEmpty');
+            const statsFor = document.getElementById('statsFor');
+            const statGrid = document.getElementById('statGrid');
+            const chartWrap = document.getElementById('chartWrap');
+            const areaTableWrap = document.getElementById('areaTableWrap');
+            const areaTableBody = document.getElementById('areaTableBody');
+            const areaTableHead = document.getElementById('areaTableHead');
+            const normalizeRatios = document.getElementById('normalizeRatios');
+            const downloadIntensitiesBtn = document.getElementById('downloadIntensitiesBtn');
+            const downloadResultsBtn = document.getElementById('downloadResultsBtn');
+            const copyResultsBtn = document.getElementById('copyResultsBtn');
+            const copyIntensitiesBtn = document.getElementById('copyIntensitiesBtn');
+            const downloadPlotBtn = document.getElementById('downloadPlotBtn');
+
+            // ---------- Box helpers ----------
+            function hasBoxes() {
+                return !!geom && boxXs.length > 0;
+            }
+
+            function boxAt(i) {
+                return { x: boxXs[i], y: geom.y, w: geom.w, h: geom.h };
+            }
+
+            function colorFor(i) {
+                return BOX_COLORS[i % BOX_COLORS.length];
+            }
+
+            function labelFor(i) {
+                const name = (boxLabels[i] || '').trim();
+                return name || 'Box ' + (i + 1);
+            }
+
+            function clamp(value, lo, hi) {
+                return Math.min(hi, Math.max(lo, value));
+            }
+
+            // Snap a free-form rectangle to whole pixels inside the image.
+            function normalizeRect(r) {
+                let x0 = clamp(Math.round(Math.min(r.x, r.x + r.w)), 0, imgW);
+                let x1 = clamp(Math.round(Math.max(r.x, r.x + r.w)), 0, imgW);
+                let y0 = clamp(Math.round(Math.min(r.y, r.y + r.h)), 0, imgH);
+                let y1 = clamp(Math.round(Math.max(r.y, r.y + r.h)), 0, imgH);
+                if (x1 - x0 < MIN_BOX) x1 = Math.min(imgW, x0 + MIN_BOX);
+                if (y1 - y0 < MIN_BOX) y1 = Math.min(imgH, y0 + MIN_BOX);
+                if (x1 - x0 < MIN_BOX) x0 = Math.max(0, x1 - MIN_BOX);
+                if (y1 - y0 < MIN_BOX) y0 = Math.max(0, y1 - MIN_BOX);
+                return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+            }
+
+            // Resizing changes the shared size, so every box has to stay in frame.
+            function clampAllX() {
+                boxXs = boxXs.map(function (x) { return clamp(x, 0, imgW - geom.w); });
+            }
+
+            function setSingleBox(rect) {
+                boxRanges = [];
+                geom = { y: rect.y, w: rect.w, h: rect.h };
+                boxXs = [rect.x];
+                boxLabels = ['Box 1'];
+                nextBoxNumber = 2;
+                selected = 0;
+                chartMode = 'box';
+            }
+
+            // Ctrl+A: another box the same size, on the same row, dropped in the
+            // first free spot beside the others.
+            function addBox() {
+                if (!hasBoxes()) return;
+                const gap = Math.max(4, Math.round(geom.w * 0.2));
+                const right = Math.max.apply(null, boxXs) + geom.w + gap;
+                const left = Math.min.apply(null, boxXs) - geom.w - gap;
+                let x;
+                if (right + geom.w <= imgW) x = right;
+                else if (left >= 0) x = left;
+                else x = clamp(Math.max.apply(null, boxXs) + Math.round(geom.w / 3), 0, imgW - geom.w);
+
+                boxXs.push(x);
+                boxRanges.push({ peaks: [], n: 0, manual: false });
+                boxLabels.push('Box ' + nextBoxNumber);
+                nextBoxNumber++;
+                selected = boxXs.length - 1;
+                chartMode = 'box';
+                afterBoxChange();
+
+                // Land the caret in the name field so the new box can just be typed over.
+                boxName.focus();
+                boxName.select();
+            }
+
+            function deleteSelectedBox() {
+                if (!hasBoxes()) return;
+                boxXs.splice(selected, 1);
+                boxRanges.splice(selected, 1);
+                boxLabels.splice(selected, 1);
+                if (boxXs.length === 0) {
+                    geom = null;
+                    selected = 0;
+                } else {
+                    selected = Math.min(selected, boxXs.length - 1);
+                }
+                afterBoxChange();
+            }
+
+            function clearBoxes() {
+                boxRanges = [];
+                geom = null;
+                boxXs = [];
+                boxLabels = [];
+                nextBoxNumber = 1;
+                selected = 0;
+                chartMode = 'box';
+                afterBoxChange();
+            }
+
+            function afterBoxChange() {
+                syncBoxInputs();
+                requestDraw();
+                updateProfile();
+            }
+
+            // ---------- File loading ----------
+            function showError(message) {
+                errorMsg.textContent = message;
+                errorMsg.style.display = 'block';
+            }
+
+            function clearError() {
+                errorMsg.style.display = 'none';
+                errorMsg.textContent = '';
+            }
+
+            function isTiffFile(file) {
+                if (!file) return false;
+                const name = (file.name || '').toLowerCase();
+                return file.type === 'image/tiff' || name.endsWith('.tif') || name.endsWith('.tiff');
+            }
+
+            // TIFFs don't render in <img> on Chrome/Firefox, so decode them to a
+            // PNG blob with the bundled UTIF library first.
+            async function decodeTiffFile(file) {
+                if (typeof UTIF === 'undefined') {
+                    throw new Error('TIFF decoder not loaded (utif/UTIF.js is missing).');
+                }
+                const buffer = new Uint8Array(await file.arrayBuffer());
+                const pages = UTIF.decode(buffer);
+                if (!pages || pages.length === 0) {
+                    throw new Error('no image found in the file.');
+                }
+                // Multi-page TIFFs often carry a small thumbnail first — use the
+                // largest page that successfully decodes.
+                let best = null;
+                for (const page of pages) {
+                    try {
+                        UTIF.decodeImage(buffer, page, pages);
+                        if (!page.width || !page.height) continue;
+                        if (!best || page.width * page.height > best.width * best.height) best = page;
+                    } catch (err) { /* skip undecodable pages */ }
+                }
+                if (!best) {
+                    throw new Error('none of the pages could be decoded (unsupported compression?).');
+                }
+                const rgba = UTIF.toRGBA8(best);
+                const tiffCanvas = document.createElement('canvas');
+                tiffCanvas.width = best.width;
+                tiffCanvas.height = best.height;
+                tiffCanvas.getContext('2d').putImageData(
+                    new ImageData(new Uint8ClampedArray(rgba), best.width, best.height), 0, 0);
+                return await new Promise(function (resolve, reject) {
+                    tiffCanvas.toBlob(function (blob) {
+                        if (blob) resolve(blob);
+                        else reject(new Error('could not be converted.'));
+                    }, 'image/png');
+                });
+            }
+
+            function loadImageFromBlob(blob) {
+                return new Promise(function (resolve, reject) {
+                    const url = URL.createObjectURL(blob);
+                    const img = new Image();
+                    img.onload = function () {
+                        URL.revokeObjectURL(url);
+                        resolve(img);
+                    };
+                    img.onerror = function () {
+                        URL.revokeObjectURL(url);
+                        reject(new Error('could not be read as an image.'));
+                    };
+                    img.src = url;
+                });
+            }
+
+            async function handleFile(file) {
+                if (!file) return;
+                const looksLikeImage = file.type.startsWith('image/') || isTiffFile(file);
+                if (!looksLikeImage) {
+                    showError('Please choose a JPG, PNG, or TIFF file.');
+                    return;
+                }
+                clearError();
+                fileName.textContent = 'Loading ' + file.name + '…';
+
+                try {
+                    const blob = isTiffFile(file) ? await decodeTiffFile(file) : file;
+                    const img = await loadImageFromBlob(blob);
+                    setImage(img);
+                    fileName.textContent = file.name + ' — ' + imgW + ' × ' + imgH + ' px';
+                } catch (err) {
+                    fileName.textContent = '';
+                    showError(file.name + ': ' + (err && err.message ? err.message : 'could not be loaded.'));
+                }
+            }
+
+            function setImage(img) {
+                imgW = img.naturalWidth || img.width;
+                imgH = img.naturalHeight || img.height;
+
+                sourceCanvas = document.createElement('canvas');
+                sourceCanvas.width = imgW;
+                sourceCanvas.height = imgH;
+                const sctx = sourceCanvas.getContext('2d', { willReadFrequently: true });
+                sctx.drawImage(img, 0, 0);
+                sourcePixels = sctx.getImageData(0, 0, imgW, imgH).data;
+
+                geom = null;
+                boxXs = [];
+                boxRanges = [];
+                boxLabels = [];
+                nextBoxNumber = 1;
+                selected = 0;
+                chartMode = 'box';
+                lastProfiles = null;
+                viewerCard.style.display = 'block';
+                profileCard.style.display = 'block';
+                zoomInput.value = 100;
+                zoom = 1;
+                syncBoxInputs();
+
+                layout();
+                updateProfile();
+            }
+
+            function resetImage() {
+                sourceCanvas = null;
+                sourcePixels = null;
+                imgW = imgH = 0;
+                geom = null;
+                boxXs = [];
+                boxRanges = [];
+                boxLabels = [];
+                nextBoxNumber = 1;
+                selected = 0;
+                lastProfiles = null;
+                fileInput.value = '';
+                fileName.textContent = '';
+                clearError();
+                viewerCard.style.display = 'none';
+                profileCard.style.display = 'none';
+                if (chart) { chart.destroy(); chart = null; }
+            }
+
+            // ---------- Layout & drawing ----------
+            // viewerWrap has a 1px border plus 0.5rem padding on each side.
+            const WRAP_CHROME = 18;
+
+            function viewerLimits() {
+                // offsetWidth ignores any scrollbar the zoomed image adds, so the
+                // fitted size doesn't jitter as scrollbars appear and disappear.
+                return {
+                    width: Math.max(120, viewerWrap.offsetWidth - WRAP_CHROME),
+                    // Cap the viewer at ~70% of the window so the image fits on
+                    // screen without the page or the viewer scrolling.
+                    height: Math.max(200, Math.round(window.innerHeight * 0.7) - WRAP_CHROME)
+                };
+            }
+
+            function layout() {
+                if (!sourceCanvas) return;
+                const limits = viewerLimits();
+                // Fit both dimensions at 100% zoom; never upscale past native pixels.
+                fitScale = Math.min(1, limits.width / imgW, limits.height / imgH);
+                const scale = fitScale * zoom;
+                const cssW = Math.max(1, Math.round(imgW * scale));
+                const cssH = Math.max(1, Math.round(imgH * scale));
+                const dpr = window.devicePixelRatio || 1;
+
+                // Shrink-wrap the viewer to the image, but never past the cap —
+                // beyond 100% zoom the box stays put and scrolls instead.
+                viewerWrap.style.height =
+                    Math.min(limits.height, cssH) + WRAP_CHROME + 'px';
+
+                canvas.style.width = cssW + 'px';
+                canvas.style.height = cssH + 'px';
+                canvas.width = Math.round(cssW * dpr);
+                canvas.height = Math.round(cssH * dpr);
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                updateZoomLabel();
+                draw();
+            }
+
+            function viewScale() {
+                // image px -> CSS px
+                return parseFloat(canvas.style.width) / imgW;
+            }
+
+            function viewRect(i) {
+                const scale = viewScale();
+                const b = boxAt(i);
+                return { x: b.x * scale, y: b.y * scale, w: b.w * scale, h: b.h * scale };
+            }
+
+            function requestDraw() {
+                if (redrawQueued) return;
+                redrawQueued = true;
+                requestAnimationFrame(function () {
+                    redrawQueued = false;
+                    draw();
+                });
+            }
+
+            function draw() {
+                if (!sourceCanvas) return;
+                const cssW = parseFloat(canvas.style.width);
+                const cssH = parseFloat(canvas.style.height);
+                const scale = viewScale();
+
+                ctx.clearRect(0, 0, cssW, cssH);
+                ctx.imageSmoothingEnabled = scale < 1;
+                ctx.drawImage(sourceCanvas, 0, 0, cssW, cssH);
+
+                if (!hasBoxes()) return;
+
+                // Dim everything outside the boxes so the selections read clearly.
+                ctx.save();
+                ctx.fillStyle = 'rgba(10, 10, 10, 0.35)';
+                ctx.beginPath();
+                ctx.rect(0, 0, cssW, cssH);
+                boxXs.forEach(function (_, i) {
+                    const r = viewRect(i);
+                    ctx.rect(r.x, r.y, r.w, r.h);
+                });
+                ctx.fill('evenodd');
+                ctx.restore();
+
+                boxXs.forEach(function (_, i) { drawBox(i); });
+            }
+
+            function drawBox(i) {
+                const r = viewRect(i);
+                const isSelected = i === selected;
+                const color = colorFor(i);
+
+                ctx.save();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = isSelected ? 3 : 1.5;
+                ctx.strokeRect(r.x, r.y, r.w, r.h);
+
+                // Dashed guide showing which way this box's profile is read.
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([5, 4]);
+                ctx.beginPath();
+                if (axisSelect.value === 'x') {
+                    ctx.moveTo(r.x, r.y + r.h / 2);
+                    ctx.lineTo(r.x + r.w, r.y + r.h / 2);
+                } else {
+                    ctx.moveTo(r.x + r.w / 2, r.y);
+                    ctx.lineTo(r.x + r.w / 2, r.y + r.h);
+                }
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Name badge, so a box lines up with its tab and plot series.
+                if (boxXs.length > 1) {
+                    const label = labelFor(i);
+                    ctx.font = '600 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+                    const padX = 5;
+                    const badgeW = Math.min(r.w + 60, ctx.measureText(label).width + padX * 2);
+                    const badgeH = 18;
+                    const bx = r.x;
+                    const by = Math.max(0, r.y - badgeH - 2);
+                    ctx.fillStyle = color;
+                    ctx.fillRect(bx, by, badgeW, badgeH);
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.rect(bx, by, badgeW, badgeH);
+                    ctx.clip();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(label, bx + padX, by + badgeH / 2 + 0.5);
+                    ctx.restore();
+                }
+
+                // Only the selected box shows handles — resizing it resizes them all.
+                if (isSelected) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 1.5;
+                    handlePoints(r.x, r.y, r.w, r.h).forEach(function (pt) {
+                        ctx.beginPath();
+                        ctx.rect(pt.x - 4, pt.y - 4, 8, 8);
+                        ctx.fill();
+                        ctx.stroke();
+                    });
+                }
+                ctx.restore();
+            }
+
+            function handlePoints(x, y, w, h) {
+                return [
+                    { dir: 'nw', x: x, y: y },
+                    { dir: 'n', x: x + w / 2, y: y },
+                    { dir: 'ne', x: x + w, y: y },
+                    { dir: 'e', x: x + w, y: y + h / 2 },
+                    { dir: 'se', x: x + w, y: y + h },
+                    { dir: 's', x: x + w / 2, y: y + h },
+                    { dir: 'sw', x: x, y: y + h },
+                    { dir: 'w', x: x, y: y + h / 2 }
+                ];
+            }
+
+            const CURSORS = {
+                nw: 'nwse-resize', se: 'nwse-resize',
+                ne: 'nesw-resize', sw: 'nesw-resize',
+                n: 'ns-resize', s: 'ns-resize',
+                e: 'ew-resize', w: 'ew-resize'
+            };
+
+            // ---------- Pointer interaction ----------
+            function eventToImagePoint(e) {
+                const rect = canvas.getBoundingClientRect();
+                const scale = viewScale();
+                return {
+                    x: (e.clientX - rect.left) / scale,
+                    y: (e.clientY - rect.top) / scale
+                };
+            }
+
+            function hitTest(e) {
+                if (!hasBoxes()) return null;
+                const rect = canvas.getBoundingClientRect();
+                const cx = e.clientX - rect.left;
+                const cy = e.clientY - rect.top;
+
+                // Handles belong to the selected box and win over any box body.
+                const sel = viewRect(selected);
+                for (const pt of handlePoints(sel.x, sel.y, sel.w, sel.h)) {
+                    if (Math.abs(cx - pt.x) <= HANDLE_HIT && Math.abs(cy - pt.y) <= HANDLE_HIT) {
+                        return { type: 'resize', dir: pt.dir, index: selected };
+                    }
+                }
+                // Topmost box first, so overlapping boxes pick the one drawn last.
+                for (let i = boxXs.length - 1; i >= 0; i--) {
+                    const r = viewRect(i);
+                    if (cx >= r.x && cx <= r.x + r.w && cy >= r.y && cy <= r.y + r.h) {
+                        return { type: 'move', index: i };
+                    }
+                }
+                return null;
+            }
+
+            canvas.addEventListener('pointerdown', function (e) {
+                if (!sourceCanvas || e.button !== 0) return;
+                e.preventDefault();
+                canvas.setPointerCapture(e.pointerId);
+                const point = eventToImagePoint(e);
+                const hit = hitTest(e);
+
+                if (hit && hit.type === 'move') {
+                    selected = hit.index;
+                    drag = {
+                        mode: 'move',
+                        index: hit.index,
+                        startX: point.x,
+                        startY: point.y,
+                        originX: boxXs[hit.index],
+                        originY: geom.y
+                    };
+                } else if (hit && hit.type === 'resize') {
+                    drag = { mode: 'resize', dir: hit.dir, index: hit.index, origin: boxAt(hit.index) };
+                } else {
+                    // Dragging on bare image starts over with a single box, but not
+                    // until the pointer actually moves.
+                    drag = { mode: 'new', startX: point.x, startY: point.y, pending: true };
+                }
+                syncBoxInputs();
+                requestDraw();
+            });
+
+            canvas.addEventListener('pointermove', function (e) {
+                if (!sourceCanvas) return;
+
+                if (!drag) {
+                    const hit = hitTest(e);
+                    canvas.style.cursor = !hit ? 'crosshair'
+                        : hit.type === 'resize' ? CURSORS[hit.dir]
+                            // Added boxes only slide sideways.
+                            : hit.index === 0 ? 'move' : 'ew-resize';
+                    return;
+                }
+
+                const point = eventToImagePoint(e);
+
+                if (drag.mode === 'new') {
+                    if (drag.pending) {
+                        const slop = 3 / viewScale();   // ~3 screen px of travel
+                        if (Math.abs(point.x - drag.startX) < slop &&
+                            Math.abs(point.y - drag.startY) < slop) return;
+                        drag.pending = false;
+                    }
+                    setSingleBox(normalizeRect({
+                        x: drag.startX,
+                        y: drag.startY,
+                        w: point.x - drag.startX,
+                        h: point.y - drag.startY
+                    }));
+                } else if (drag.mode === 'move') {
+                    const dx = point.x - drag.startX;
+                    boxXs[drag.index] = clamp(Math.round(drag.originX + dx), 0, imgW - geom.w);
+                    // The first box carries the row level; the rest are locked to it.
+                    if (drag.index === 0) {
+                        const dy = point.y - drag.startY;
+                        geom.y = clamp(Math.round(drag.originY + dy), 0, imgH - geom.h);
+                    }
+                } else if (drag.mode === 'resize') {
+                    const o = drag.origin;
+                    let left = o.x, top = o.y, right = o.x + o.w, bottom = o.y + o.h;
+                    if (drag.dir.indexOf('w') !== -1) left = point.x;
+                    if (drag.dir.indexOf('e') !== -1) right = point.x;
+                    if (drag.dir.indexOf('n') !== -1) top = point.y;
+                    if (drag.dir.indexOf('s') !== -1) bottom = point.y;
+                    const rect = normalizeRect({ x: left, y: top, w: right - left, h: bottom - top });
+                    geom = { y: rect.y, w: rect.w, h: rect.h };
+                    boxXs[drag.index] = rect.x;
+                    clampAllX();
+                }
+
+                scheduleLiveUpdate();
+            });
+
+            // Coalesce pointermove work into one update per animation frame.
+            let liveUpdateQueued = false;
+            function scheduleLiveUpdate() {
+                if (liveUpdateQueued) return;
+                liveUpdateQueued = true;
+                requestAnimationFrame(function () {
+                    liveUpdateQueued = false;
+                    draw();
+                    syncBoxInputs();
+                    updateProfile();
+                });
+            }
+
+            function endDrag(e) {
+                if (!drag) return;
+                drag = null;
+                if (canvas.hasPointerCapture && canvas.hasPointerCapture(e.pointerId)) {
+                    canvas.releasePointerCapture(e.pointerId);
+                }
+                afterBoxChange();
+            }
+
+            canvas.addEventListener('pointerup', endDrag);
+            canvas.addEventListener('pointercancel', endDrag);
+
+            // Double-click a box on the image to name it, same as double-clicking
+            // its tab.
+            canvas.addEventListener('dblclick', function (e) {
+                if (!sourceCanvas) return;
+                const hit = hitTest(e);
+                if (!hit) return;
+                e.preventDefault();
+                selected = hit.index;
+                syncBoxInputs();
+                requestDraw();
+                updateProfile();
+                boxName.focus();
+                boxName.select();
+            });
+
+            // ---------- Keyboard ----------
+            document.addEventListener('keydown', function (e) {
+                if (!sourceCanvas) return;
+
+                // Ctrl+A adds a box from anywhere, the name field included — that is
+                // how you leave a name you just typed and start the next box. It
+                // costs the browser's select-all on this page, which is the point.
+                if (e.ctrlKey && (e.key === 'A' || e.key === 'a')) {
+                    e.preventDefault();
+                    addBox();
+                    return;
+                }
+
+                const tag = (e.target && e.target.tagName || '').toLowerCase();
+                if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
+
+                if ((e.key === 'Delete' || e.key === 'Backspace') && hasBoxes()) {
+                    e.preventDefault();
+                    deleteSelectedBox();
+                }
+            });
+
+            // ---------- Box inputs ----------
+            function syncBoxInputs() {
+                const enabled = hasBoxes();
+                Object.values(boxInputs).forEach(function (input) { input.disabled = !enabled; });
+                boxName.disabled = !enabled;
+                addBoxBtn.disabled = !enabled;
+                deleteBoxBtn.disabled = !enabled;
+
+                if (!enabled) {
+                    boxInputs.x.value = boxInputs.y.value = boxInputs.w.value = boxInputs.h.value = '';
+                    boxName.value = '';
+                    return;
+                }
+                boxInputs.x.value = boxXs[selected];
+                boxInputs.y.value = geom.y;
+                boxInputs.w.value = geom.w;
+                boxInputs.h.value = geom.h;
+                // Don't fight the user while they are typing a name.
+                if (document.activeElement !== boxName) {
+                    boxName.value = boxLabels[selected] || '';
+                }
+                boxName.placeholder = 'Box ' + (selected + 1);
+            }
+
+            function readBoxInputs() {
+                if (!hasBoxes()) return;
+                const x = clamp(parseInt(boxInputs.x.value, 10) || 0, 0, Math.max(0, imgW - MIN_BOX));
+                const y = clamp(parseInt(boxInputs.y.value, 10) || 0, 0, Math.max(0, imgH - MIN_BOX));
+                const w = clamp(parseInt(boxInputs.w.value, 10) || MIN_BOX, MIN_BOX, imgW - x);
+                const h = clamp(parseInt(boxInputs.h.value, 10) || MIN_BOX, MIN_BOX, imgH - y);
+                geom = { y: y, w: w, h: h };
+                boxXs[selected] = x;
+                clampAllX();
+                afterBoxChange();
+            }
+
+            Object.values(boxInputs).forEach(function (input) {
+                input.addEventListener('change', readBoxInputs);
+            });
+
+            // Renaming only changes labels, so skip the (expensive) pixel pass.
+            boxName.addEventListener('input', function () {
+                if (!hasBoxes()) return;
+                boxLabels[selected] = boxName.value;
+                refreshLabels();
+            });
+
+            boxName.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === 'Escape') {
+                    e.preventDefault();
+                    boxName.blur();
+                }
+            });
+
+            function refreshLabels() {
+                if (lastProfiles) {
+                    lastProfiles.forEach(function (p) { p.label = labelFor(p.index); });
+                }
+                renderTabs();
+                renderAreaTable(lastProfiles);
+                requestDraw();
+                if (chart && lastProfiles) {
+                    renderChart(lastProfiles);
+                }
+            }
+
+            // ---------- Baseline ----------
+            // Expressed as a share of the profile so it keeps working whatever
+            // size the boxes are. It has to be wider than the widest band but
+            // narrower than the shading it is meant to follow.
+            function baselineRadius(n) {
+                const pct = clamp(parseInt(baselineWindow.value, 10) || 45, 1, 100);
+                return clamp(Math.round(n * pct / 100 / 2), 1, Math.max(1, Math.floor(n / 2)));
+            }
+
+            function runningMin(values, r) {
+                const n = values.length, out = new Array(n);
+                for (let i = 0; i < n; i++) {
+                    const lo = Math.max(0, i - r), hi = Math.min(n - 1, i + r);
+                    let m = Infinity;
+                    for (let j = lo; j <= hi; j++) if (values[j] < m) m = values[j];
+                    out[i] = m;
+                }
+                return out;
+            }
+
+            function runningMax(values, r) {
+                const n = values.length, out = new Array(n);
+                for (let i = 0; i < n; i++) {
+                    const lo = Math.max(0, i - r), hi = Math.min(n - 1, i + r);
+                    let m = -Infinity;
+                    for (let j = lo; j <= hi; j++) if (values[j] > m) m = values[j];
+                    out[i] = m;
+                }
+                return out;
+            }
+
+            function percentile(values, p) {
+                const sorted = values.slice().sort(function (a, b) { return a - b; });
+                const idx = clamp(Math.round((sorted.length - 1) * p), 0, sorted.length - 1);
+                return sorted[idx];
+            }
+
+            function mean(values) {
+                if (!values.length) return 0;
+                let sum = 0;
+                for (let i = 0; i < values.length; i++) sum += values[i];
+                return sum / values.length;
+            }
+
+            // The background under a band: a morphological opening (running min then
+            // running max) follows slow gel/membrane shading but ducks under peaks
+            // narrower than the window. Wider window = flatter, more forgiving
+            // background; narrower window = it hugs the data and eats into peaks.
+            function estimateBaseline(values) {
+                const n = values.length;
+                const mode = baselineMode.value;
+                const offset = parseFloat(baselineOffset.value) || 0;
+                let base;
+
+                if (mode === 'none') {
+                    base = new Array(n).fill(0);
+                } else if (mode === 'flat') {
+                    base = new Array(n).fill(percentile(values, 0.1));
+                } else if (mode === 'linear') {
+                    const k = baselineRadius(n);
+                    const head = mean(values.slice(0, k));
+                    const tail = mean(values.slice(n - k));
+                    base = new Array(n);
+                    for (let i = 0; i < n; i++) {
+                        base[i] = n > 1 ? head + (tail - head) * (i / (n - 1)) : head;
+                    }
+                } else {
+                    const r = baselineRadius(n);
+                    // Pre-smooth first: without it the running minimum latches onto
+                    // noise troughs, dragging the background down and inflating the
+                    // area (on a noisy synthetic lane that error ran to +23%).
+                    const pre = smooth(values, Math.max(3, Math.round(r / 6) | 1));
+                    base = smooth(runningMax(runningMin(pre, r), r), Math.max(3, Math.round(r / 3) | 1));
+                    // Never let the background sit above the curve it came from.
+                    base = base.map(function (v, i) { return Math.min(v, values[i]); });
+                }
+
+                return offset ? base.map(function (v) { return v + offset; }) : base;
+            }
+
+            // ---------- Peak windows ----------
+            // Each box keeps its own list of windows: bands sit at different heights
+            // in different lanes, and one lane can hold several.
+            const MAX_PEAKS = 12;
+
+            function rangesFor(i) {
+                return boxRanges[i] || (boxRanges[i] = { peaks: [], n: 0, manual: false });
+            }
+
+            function activeIndex(profiles) {
+                return Math.min(selected, profiles.length - 1);
+            }
+
+            // Signal above background, smoothed: on a raw noisy trace a single uptick
+            // two points down the flank stops the walk and the window collapses onto
+            // the summit (measured: 18% of the band instead of 94%).
+            function peakSignal(profile) {
+                const n = profile.values.length;
+                return smooth(profile.values.map(function (v, i) {
+                    return Math.max(0, v - profile.baseline[i]);
+                }), Math.max(3, Math.round(n / 25) | 1));
+            }
+
+            // Walk out from a summit until the signal has all but died away, or until
+            // it turns back up — that upturn is the valley before the next band.
+            function walkOut(signal, peak, taken) {
+                const n = signal.length;
+                const height = signal[peak];
+                const floor = height * 0.05;
+                const rise = height * 0.05;
+
+                let start = peak;
+                while (start > 0 && !taken[start - 1]) {
+                    if (signal[start - 1] < floor) break;
+                    if (signal[start - 1] > signal[start] + rise) break;
+                    start--;
+                }
+                let end = peak;
+                while (end < n - 1 && !taken[end + 1]) {
+                    if (signal[end + 1] < floor) break;
+                    if (signal[end + 1] > signal[end] + rise) break;
+                    end++;
+                }
+                return { start: start, end: end };
+            }
+
+            // Take the tallest unclaimed summit, carve its window out, repeat. Stops
+            // at peaks too short to be anything but noise.
+            function detectPeakRanges(profile) {
+                const n = profile.values.length;
+                if (!n) return [];
+                const signal = peakSignal(profile);
+
+                let tallest = 0;
+                for (let i = 0; i < n; i++) if (signal[i] > tallest) tallest = signal[i];
+                if (tallest <= 0) return [];
+
+                // 15% of the tallest peak keeps the small change in a busy lane out,
+                // and the absolute floor keeps an empty lane empty: where the
+                // background is slightly off it leaves a broad bump ~6 units tall,
+                // which is otherwise indistinguishable from a very faint band.
+                // Anything quieter than this has to be added by hand.
+                const minHeight = Math.max(tallest * 0.15, 8);
+                const taken = new Array(n).fill(false);
+                const peaks = [];
+
+                for (let round = 0; round < MAX_PEAKS; round++) {
+                    let summit = -1, best = 0;
+                    for (let i = 0; i < n; i++) {
+                        if (!taken[i] && signal[i] > best) { best = signal[i]; summit = i; }
+                    }
+                    if (summit < 0 || best < minHeight) break;
+
+                    const range = walkOut(signal, summit, taken);
+                    for (let i = range.start; i <= range.end; i++) taken[i] = true;
+                    peaks.push(range);
+                }
+
+                peaks.sort(function (a, b) { return a.start - b.start; });
+                return peaks;
+            }
+
+            // Windows track the peaks while a box moves, and freeze for that box
+            // alone once its edges are set by hand.
+            function ensureRanges(profiles) {
+                boxRanges.length = profiles.length;
+                profiles.forEach(function (p, i) {
+                    const entry = rangesFor(i);
+                    const n = p.values.length;
+                    if (!entry.manual) {
+                        entry.peaks = detectPeakRanges(p);
+                        entry.n = n;
+                        return;
+                    }
+                    if (entry.n !== n) {
+                        // The profile changed shape under hand-set windows: keep the
+                        // intent, just pull them back inside the new bounds.
+                        const last = Math.max(0, n - 1);
+                        entry.peaks = entry.peaks.map(function (r) {
+                            return { start: clamp(r.start, 0, last), end: clamp(r.end, 0, last) };
+                        });
+                        entry.n = n;
+                    }
+                });
+            }
+
+            function setPeakEdge(boxIndex, peakIndex, start, end) {
+                const entry = rangesFor(boxIndex);
+                const peak = entry.peaks[peakIndex];
+                if (!peak) return;
+                const last = Math.max(0, entry.n - 1);
+                let a = clamp(Math.round(start), 0, last);
+                let b = clamp(Math.round(end), 0, last);
+                if (a > b) { const t = a; a = b; b = t; }
+                peak.start = a;
+                peak.end = b;
+                entry.manual = true;
+            }
+
+            // Area is the integral between curve and background inside the windows
+            // only — integrating a whole profile would just measure the box height.
+            function computeAreas(profiles) {
+                if (!profiles) return;
+                profiles.forEach(function (p, i) {
+                    const entry = rangesFor(i);
+                    const last = p.values.length - 1;
+                    p.peaks = entry.peaks.map(function (r, k) {
+                        const lo = clamp(r.start, 0, last);
+                        const hi = clamp(r.end, 0, last);
+                        let area = 0, peakIndex = lo, peakValue = -Infinity;
+                        for (let j = lo; j <= hi; j++) {
+                            area += Math.max(0, p.values[j] - p.baseline[j]);
+                            if (p.values[j] > peakValue) { peakValue = p.values[j]; peakIndex = j; }
+                        }
+                        return {
+                            number: k + 1, start: lo, end: hi,
+                            area: area, peakIndex: peakIndex,
+                            max: peakValue === -Infinity ? 0 : peakValue
+                        };
+                    });
+                    p.area = p.peaks.reduce(function (sum, k) { return sum + k.area; }, 0);
+                });
+            }
+
+            // Add a window over the tallest spot no window covers yet.
+            function addPeak(boxIndex) {
+                if (!lastProfiles || !lastProfiles[boxIndex]) return;
+                const p = lastProfiles[boxIndex];
+                const entry = rangesFor(boxIndex);
+                const n = p.values.length;
+                if (!n || entry.peaks.length >= MAX_PEAKS) return;
+
+                const signal = peakSignal(p);
+                const taken = new Array(n).fill(false);
+                entry.peaks.forEach(function (r) {
+                    for (let i = r.start; i <= r.end; i++) taken[i] = true;
+                });
+
+                let summit = -1, best = -Infinity;
+                for (let i = 0; i < n; i++) {
+                    if (!taken[i] && signal[i] > best) { best = signal[i]; summit = i; }
+                }
+
+                let range;
+                if (summit < 0) {
+                    // Nothing left uncovered — drop a small window in the middle.
+                    const mid = Math.floor(n / 2);
+                    const half = Math.max(1, Math.round(n * 0.05));
+                    range = { start: clamp(mid - half, 0, n - 1), end: clamp(mid + half, 0, n - 1) };
+                } else {
+                    range = walkOut(signal, summit, taken);
+                }
+
+                entry.peaks.push(range);
+                entry.peaks.sort(function (a, b) { return a.start - b.start; });
+                entry.manual = true;
+                applyRangeChange();
+            }
+
+            function deletePeak(boxIndex, peakIndex) {
+                const entry = rangesFor(boxIndex);
+                entry.peaks.splice(peakIndex, 1);
+                entry.manual = true;
+                applyRangeChange();
+            }
+
+            function redetectPeaks(boxIndex) {
+                if (!lastProfiles || !lastProfiles[boxIndex]) return;
+                const entry = rangesFor(boxIndex);
+                entry.manual = false;
+                entry.peaks = detectPeakRanges(lastProfiles[boxIndex]);
+                entry.n = lastProfiles[boxIndex].values.length;
+                applyRangeChange();
+            }
+
+            // Moving a window only re-integrates cached values — no pixel re-read.
+            function applyRangeChange() {
+                if (!lastProfiles || !lastProfiles.length) return;
+                computeAreas(lastProfiles);
+                renderPeakEditor(lastProfiles);
+                renderStats(lastProfiles);
+                renderAreaTable(lastProfiles);
+                renderChart(lastProfiles);
+            }
+
+            // ---------- Peak editor ----------
+            function renderPeakEditor(profiles) {
+                peakList.textContent = '';
+                if (!profiles || !profiles.length) {
+                    peakEditor.style.display = 'none';
+                    return;
+                }
+                peakEditor.style.display = 'block';
+
+                const i = activeIndex(profiles);
+                const p = profiles[i];
+                peakEditorTitle.textContent = 'Peaks in ' + p.label;
+
+                if (!p.peaks || !p.peaks.length) {
+                    const empty = document.createElement('p');
+                    empty.className = 'empty-state';
+                    empty.textContent = 'No peak found in this box. Add one, or widen the box.';
+                    peakList.appendChild(empty);
+                    return;
+                }
+
+                p.peaks.forEach(function (peak, k) {
+                    const row = document.createElement('div');
+                    row.className = 'peak-row';
+
+                    const tag = document.createElement('span');
+                    tag.className = 'peak-tag';
+                    tag.style.background = colorFor(p.index);
+                    tag.textContent = String(peak.number);
+                    row.appendChild(tag);
+
+                    row.appendChild(makePeakInput('from', peak.start, function (value) {
+                        setPeakEdge(i, k, value, peak.end);
+                        applyRangeChange();
+                    }));
+                    row.appendChild(makePeakInput('to', peak.end, function (value) {
+                        setPeakEdge(i, k, peak.start, value);
+                        applyRangeChange();
+                    }));
+
+                    const area = document.createElement('span');
+                    area.className = 'peak-area';
+                    area.textContent = 'area ' + Math.round(peak.area).toLocaleString();
+                    row.appendChild(area);
+
+                    const remove = document.createElement('button');
+                    remove.type = 'button';
+                    remove.className = 'peak-delete';
+                    remove.title = 'Remove this peak';
+                    remove.textContent = '×';
+                    remove.addEventListener('click', function () { deletePeak(i, k); });
+                    row.appendChild(remove);
+
+                    peakList.appendChild(row);
+                });
+            }
+
+            function makePeakInput(labelText, value, onChange) {
+                const wrap = document.createElement('label');
+                wrap.className = 'peak-field';
+                wrap.appendChild(document.createTextNode(labelText));
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.min = '0';
+                input.step = '1';
+                input.value = value;
+                input.addEventListener('change', function () {
+                    onChange(parseInt(input.value, 10) || 0);
+                });
+                wrap.appendChild(input);
+                return wrap;
+            }
+
+            // ---------- Profile ----------
+            function pixelValue(index) {
+                const r = sourcePixels[index];
+                const g = sourcePixels[index + 1];
+                const b = sourcePixels[index + 2];
+                switch (channelSelect.value) {
+                    case 'mean': return (r + g + b) / 3;
+                    case 'r': return r;
+                    case 'g': return g;
+                    case 'b': return b;
+                    default: return 0.299 * r + 0.587 * g + 0.114 * b;
+                }
+            }
+
+            function smooth(values, window) {
+                const k = Math.max(1, Math.floor(window));
+                if (k <= 1 || values.length === 0) return values;
+                const half = Math.floor(k / 2);
+                const out = new Array(values.length);
+                for (let i = 0; i < values.length; i++) {
+                    const lo = Math.max(0, i - half);
+                    const hi = Math.min(values.length - 1, i + half);
+                    let sum = 0;
+                    for (let j = lo; j <= hi; j++) sum += values[j];
+                    out[i] = sum / (hi - lo + 1);
+                }
+                return out;
+            }
+
+            // While a box is being dragged the averaging dimension is subsampled so
+            // huge selections still track the pointer; the final value on pointerup
+            // averages every pixel.
+            const PREVIEW_SAMPLES = 256;
+
+            function computeProfiles(preview) {
+                if (!hasBoxes() || !sourcePixels) return null;
+                const axis = axisSelect.value;
+                const window = parseInt(smoothInput.value, 10) || 1;
+
+                return boxXs.map(function (_, i) {
+                    const b = boxAt(i);
+                    const raw = [];
+                    const depth = axis === 'x' ? b.h : b.w;
+                    const step = preview ? Math.max(1, Math.ceil(depth / PREVIEW_SAMPLES)) : 1;
+
+                    if (axis === 'x') {
+                        // One point per pixel column: average down the box height.
+                        for (let x = b.x; x < b.x + b.w; x++) {
+                            let sum = 0, n = 0;
+                            for (let y = b.y; y < b.y + b.h; y += step) {
+                                sum += pixelValue((y * imgW + x) * 4);
+                                n++;
+                            }
+                            // Always inverted: dark pixels read as high signal.
+                            raw.push(255 - sum / n);
+                        }
+                    } else {
+                        // One point per pixel row: average across the box width.
+                        for (let y = b.y; y < b.y + b.h; y++) {
+                            let sum = 0, n = 0;
+                            const rowStart = y * imgW;
+                            for (let x = b.x; x < b.x + b.w; x += step) {
+                                sum += pixelValue((rowStart + x) * 4);
+                                n++;
+                            }
+                            raw.push(255 - sum / n);
+                        }
+                    }
+
+                    const values = smooth(raw, window);
+                    const baseline = estimateBaseline(values);
+
+                    // Area and peak position come later, once the window is known.
+                    let min = Infinity, max = -Infinity, sum = 0;
+                    for (let k = 0; k < values.length; k++) {
+                        const v = values[k];
+                        sum += v;
+                        if (v < min) min = v;
+                        if (v > max) max = v;
+                    }
+
+                    return {
+                        index: i,
+                        label: labelFor(i),
+                        x: b.x,
+                        values: values,
+                        baseline: baseline,
+                        start: axis === 'x' ? b.x : b.y,
+                        axis: axis,
+                        min: values.length ? min : 0,
+                        max: values.length ? max : 0,
+                        sum: sum,
+                        area: 0,
+                        peakIndex: 0
+                    };
+                });
+            }
+
+            function updateProfile() {
+                const profiles = computeProfiles(!!drag);
+                lastProfiles = profiles;
+
+                const hasData = !!(profiles && profiles.length && profiles[0].values.length);
+                profileEmpty.style.display = hasData ? 'none' : 'block';
+                baselineControls.style.display = hasData ? 'grid' : 'none';
+                chartWrap.style.display = hasData ? 'block' : 'none';
+                statGrid.style.display = hasData ? 'grid' : 'none';
+                statsFor.style.display = hasData && profiles.length > 1 ? 'block' : 'none';
+                downloadIntensitiesBtn.disabled = !hasData;
+                downloadResultsBtn.disabled = !hasData;
+                copyIntensitiesBtn.disabled = !hasData;
+                copyResultsBtn.disabled = !hasData;
+                downloadPlotBtn.disabled = !hasData;
+                baselineWindowField.style.display =
+                    (baselineMode.value === 'auto' || baselineMode.value === 'linear') ? 'flex' : 'none';
+                baselineWindowLabel.textContent = baselineWindow.value + '% of profile' +
+                    (hasData ? ' (' + (baselineRadius(profiles[0].values.length) * 2) + ' px)' : '');
+
+                renderTabs();
+
+                if (!hasData) {
+                    areaTableWrap.style.display = 'none';
+                    peakEditor.style.display = 'none';
+                    boxRanges = [];
+                    if (chart) { chart.destroy(); chart = null; }
+                    return;
+                }
+
+                ensureRanges(profiles);
+                computeAreas(profiles);
+                renderPeakEditor(profiles);
+                renderStats(profiles);
+                renderAreaTable(profiles);
+                renderChart(profiles);
+            }
+
+            function renderStats(profiles) {
+                // Numbers describe the active box; the plot follows the chosen tab.
+                const active = profiles[activeIndex(profiles)];
+                const biggest = active.peaks.reduce(function (m, k) {
+                    return k.area > m.area ? k : m;
+                }, { area: -1, number: 0 });
+
+                statsFor.textContent = 'Statistics below are for ' + active.label +
+                    ' — use the tabs to switch boxes or overlay them all.';
+                document.getElementById('statPoints').textContent = active.values.length;
+                document.getElementById('statMean').textContent =
+                    (active.sum / active.values.length).toFixed(1);
+                document.getElementById('statMin').textContent = active.min.toFixed(1);
+                document.getElementById('statMax').textContent = active.max.toFixed(1);
+                document.getElementById('statSum').textContent = Math.round(active.sum).toLocaleString();
+                document.getElementById('statPeakCount').textContent = active.peaks.length;
+                document.getElementById('statArea').textContent = Math.round(active.area).toLocaleString();
+                document.getElementById('statBiggest').textContent = biggest.number
+                    ? '#' + biggest.number + ' (' + Math.round(biggest.area).toLocaleString() + ')'
+                    : '–';
+            }
+
+            // ---------- Tabs ----------
+            function renderTabs() {
+                // Rebuilding would blow away the inline rename field.
+                if (renamingIndex !== null) return;
+
+                chartTabs.textContent = '';
+                if (boxXs.length < 2) {
+                    chartTabs.style.display = 'none';
+                    return;
+                }
+                chartTabs.style.display = 'flex';
+
+                boxXs.forEach(function (_, i) {
+                    chartTabs.appendChild(makeTab(labelFor(i), colorFor(i),
+                        chartMode === 'box' && i === selected, function () {
+                            chartMode = 'box';
+                            selected = i;
+                            syncBoxInputs();
+                            requestDraw();
+                            updateProfile();
+                        }, i));
+                });
+
+                chartTabs.appendChild(makeTab('All in one', null, chartMode === 'all', function () {
+                    chartMode = 'all';
+                    updateProfile();
+                }, null));
+            }
+
+            function makeTab(text, color, isActive, onClick, renameIndex) {
+                const tab = document.createElement('button');
+                tab.type = 'button';
+                tab.className = 'tab' + (isActive ? ' active' : '');
+                tab.setAttribute('role', 'tab');
+                tab.setAttribute('aria-selected', String(isActive));
+
+                if (color) {
+                    const swatch = document.createElement('span');
+                    swatch.className = 'tab-swatch';
+                    swatch.style.background = color;
+                    tab.appendChild(swatch);
+                }
+                tab.appendChild(document.createTextNode(text));
+                tab.addEventListener('click', onClick);
+
+                if (renameIndex !== null) {
+                    tab.title = 'Double-click to rename';
+                    tab.addEventListener('dblclick', function (e) {
+                        e.preventDefault();
+                        startRename(renameIndex, tab);
+                    });
+                }
+                return tab;
+            }
+
+            // Double-clicking a tab swaps it for a text field — renaming there is the
+            // same as renaming in the Box name box.
+            function startRename(i, tab) {
+                renamingIndex = i;
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'tab-input';
+                input.maxLength = 40;
+                input.value = labelFor(i);
+                tab.replaceWith(input);
+                input.focus();
+                input.select();
+
+                let done = false;
+                function commit(save) {
+                    if (done) return;
+                    done = true;
+                    if (save) boxLabels[i] = input.value.trim();
+                    renamingIndex = null;
+                    if (selected === i) syncBoxInputs();
+                    refreshLabels();
+                }
+
+                input.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') { e.preventDefault(); commit(true); }
+                    else if (e.key === 'Escape') { e.preventDefault(); commit(false); }
+                });
+                input.addEventListener('blur', function () { commit(true); });
+            }
+
+            // ---------- Per-box area table ----------
+            // One definition drives the header and the cells, so a toggled column
+            // can never leave them out of step.
+            const AREA_COLUMNS = [
+                { label: 'Box', cell: function (p, peak) { return null; } },
+                { label: 'Peak', cell: function (p, peak) { return '#' + peak.number; } },
+                {
+                    label: 'Window (px)', toggle: 'colWindow',
+                    cell: function (p, peak) { return peak.start + '–' + peak.end; }
+                },
+                {
+                    label: 'Apex at', toggle: 'colApex',
+                    cell: function (p, peak) { return peak.peakIndex + ' px'; }
+                },
+                {
+                    label: 'Max', toggle: 'colMax',
+                    cell: function (p, peak) { return peak.max.toFixed(1); }
+                },
+                {
+                    label: 'Area',
+                    cell: function (p, peak) { return Math.round(peak.area).toLocaleString(); }
+                },
+                {
+                    // Only worth a column when some lane actually has a pair.
+                    label: function () {
+                        return 'Ratio ' + ratioLabel() + (normalizeOn() ? ' (normalised)' : '');
+                    },
+                    visible: function (profiles) {
+                        return profiles.some(function (p) { return p.peaks.length >= 2; });
+                    },
+                    className: 'ratio-cell',
+                    cell: function (p, peak, largest, profiles) { return ratioTextFor(p, peak, profiles); },
+                    render: function (cell, p, peak, largest, profiles) {
+                        const text = ratioTextFor(p, peak, profiles);
+                        if (!text) return;
+
+                        const wrap = document.createElement('span');
+                        wrap.className = 'ratio-cell-inner';
+
+                        // A radio only where there is a ratio to normalise against.
+                        if (normalizeOn() && rawRatio(p)) {
+                            const radio = document.createElement('input');
+                            radio.type = 'radio';
+                            radio.name = 'ratioReference';
+                            radio.checked = p.index === resolveReference(profiles);
+                            radio.title = 'Normalise every ratio to ' + p.label;
+                            radio.addEventListener('change', function () {
+                                ratioReference = p.index;
+                                if (lastProfiles) renderAreaTable(lastProfiles);
+                            });
+                            wrap.appendChild(radio);
+                            if (radio.checked) cell.classList.add('ratio-reference');
+                        }
+
+                        wrap.appendChild(document.createTextNode(text));
+                        cell.appendChild(wrap);
+                    }
+                },
+                {
+                    label: '% of largest', toggle: 'colPercent',
+                    cell: function (p, peak, largest) { return (peak.area / largest * 100).toFixed(1) + '%'; }
+                }
+            ];
+
+            function visibleColumns(profiles) {
+                return AREA_COLUMNS.filter(function (column) {
+                    if (column.visible && !column.visible(profiles)) return false;
+                    if (!column.toggle) return true;
+                    const box = document.getElementById(column.toggle);
+                    return !!(box && box.checked);
+                });
+            }
+
+            function ratioLabel() {
+                return ratioMode === 'first' ? '#1/#2' : '#2/#1';
+            }
+
+            function ratioNumeratorNumber() {
+                return ratioMode === 'first' ? 1 : 2;
+            }
+
+            // The lane's own ratio, before any normalising. null when it has no pair.
+            function rawRatio(p) {
+                if (!p.peaks || p.peaks.length < 2) return null;
+                const first = p.peaks[0].area;
+                const second = p.peaks[1].area;
+                const numerator = ratioMode === 'first' ? first : second;
+                const denominator = ratioMode === 'first' ? second : first;
+                if (!denominator) return null;
+                return numerator / denominator;
+            }
+
+            function normalizeOn() {
+                return !!(normalizeRatios && normalizeRatios.checked);
+            }
+
+            // Fall back to the first lane that has a ratio, so switching direction or
+            // deleting the chosen lane can't leave the column stranded.
+            function resolveReference(profiles) {
+                const usable = profiles.filter(function (p) { return rawRatio(p); });
+                if (!usable.length) return null;
+                const chosen = usable.filter(function (p) { return p.index === ratioReference; });
+                if (chosen.length) return ratioReference;
+                ratioReference = usable[0].index;
+                return ratioReference;
+            }
+
+            function referenceValue(profiles) {
+                const index = resolveReference(profiles);
+                if (index === null) return null;
+                const match = profiles.filter(function (p) { return p.index === index; })[0];
+                return match ? rawRatio(match) : null;
+            }
+
+            // The ratio is printed on whichever peak is on top of the fraction, and
+            // left blank on the other, so the row you read it from is the numerator.
+            function ratioTextFor(p, peak, profiles) {
+                if (peak.number !== ratioNumeratorNumber()) return '';
+                const value = rawRatio(p);
+                if (value === null) return p.peaks && p.peaks.length >= 2 ? '–' : '';
+
+                if (!normalizeOn()) return value.toFixed(2);
+
+                const reference = referenceValue(profiles || lastProfiles || []);
+                if (!reference) return value.toFixed(2);
+                return (value / reference).toFixed(2);
+            }
+
+            // One row per peak — a lane with three bands gets three rows.
+            function renderAreaTable(profiles) {
+                const rowCount = profiles
+                    ? profiles.reduce(function (n, p) { return n + (p.peaks ? p.peaks.length : 0); }, 0)
+                    : 0;
+                if (!profiles || rowCount < 2) {
+                    areaTableWrap.style.display = 'none';
+                    return;
+                }
+                areaTableWrap.style.display = 'block';
+                areaTableBody.textContent = '';
+                areaTableHead.textContent = '';
+
+                const columns = visibleColumns(profiles);
+                columns.forEach(function (column) {
+                    const th = document.createElement('th');
+                    th.textContent = typeof column.label === 'function' ? column.label() : column.label;
+                    areaTableHead.appendChild(th);
+                });
+
+                let largest = 0;
+                profiles.forEach(function (p) {
+                    p.peaks.forEach(function (k) { largest = Math.max(largest, k.area); });
+                });
+                largest = largest || 1;
+
+                profiles.forEach(function (p) {
+                    p.peaks.forEach(function (peak, k) {
+                        const row = document.createElement('tr');
+                        if (p.index === selected) row.className = 'active-row';
+
+                        columns.forEach(function (column, columnIndex) {
+                            const cell = document.createElement('td');
+                            if (columnIndex === 0) {
+                                // Name the lane once, on its first peak.
+                                if (k === 0) {
+                                    const swatch = document.createElement('span');
+                                    swatch.className = 'swatch';
+                                    swatch.style.background = colorFor(p.index);
+                                    cell.appendChild(swatch);
+                                    cell.appendChild(document.createTextNode(p.label));
+                                }
+                            } else {
+                                if (column.className) cell.className = column.className;
+                                if (column.render) {
+                                    column.render(cell, p, peak, largest, profiles);
+                                } else {
+                                    cell.textContent = column.cell(p, peak, largest, profiles);
+                                }
+                            }
+                            row.appendChild(cell);
+                        });
+
+                        areaTableBody.appendChild(row);
+                    });
+                });
+            }
+
+            // ---------- Chart ----------
+            function profileDataset(p, emphasised, fillTarget) {
+                const color = colorFor(p.index);
+                return {
+                    label: p.label,
+                    data: p.values.map(function (v, i) { return { x: i, y: v }; }),
+                    borderColor: color,
+                    backgroundColor: color + '33',
+                    borderWidth: emphasised ? 2.5 : 1.5,
+                    pointRadius: 0,
+                    tension: 0,
+                    fill: fillTarget === false
+                        ? false
+                        : { target: fillTarget, above: color + '33', below: 'transparent' }
+                };
+            }
+
+            function baselineDataset(p) {
+                const color = colorFor(p.index);
+                return {
+                    label: p.label + ' background',
+                    data: p.baseline.map(function (v, i) { return { x: i, y: v }; }),
+                    borderColor: color,
+                    borderWidth: 1.5,
+                    borderDash: [6, 4],
+                    pointRadius: 0,
+                    tension: 0,
+                    fill: false
+                };
+            }
+
+            // The shaded slice is drawn as its own pair of datasets: a clipped
+            // baseline to fill down to, and the clipped curve above it. Points
+            // outside the window are null so nothing is shaded there.
+            function windowDatasets(p) {
+                const color = colorFor(p.index);
+                const sets = [];
+                // One pair per window: a clipped baseline to fill down to, and the
+                // clipped curve above it. Points outside are null, so only the
+                // integrated spans get shaded.
+                (p.peaks || []).forEach(function (peak) {
+                    const inside = function (i) { return i >= peak.start && i <= peak.end; };
+                    sets.push({
+                        label: 'window base',
+                        hideInLegend: true,
+                        data: p.baseline.map(function (v, i) { return { x: i, y: inside(i) ? v : null }; }),
+                        borderWidth: 0,
+                        pointRadius: 0,
+                        fill: false
+                    }, {
+                        label: 'window fill',
+                        hideInLegend: true,
+                        data: p.values.map(function (v, i) {
+                            return { x: i, y: inside(i) ? Math.max(v, p.baseline[i]) : null };
+                        }),
+                        borderWidth: 0,
+                        pointRadius: 0,
+                        fill: { target: '-1', above: color + '55', below: 'transparent' }
+                    });
+                });
+                return sets;
+            }
+
+            // Dashed uprights at the window edges, with a grab tab at the top.
+            // Every window of the active box gets dashed uprights with a grab tab,
+            // and its number printed between them.
+            const peakEdgePlugin = {
+                id: 'peakEdges',
+                afterDatasetsDraw: function (c) {
+                    const peaks = activePeaks();
+                    if (!peaks.length) return;
+                    const area = c.chartArea;
+                    const xScale = c.scales.x;
+                    if (!xScale) return;
+                    const g = c.ctx;
+
+                    peaks.forEach(function (peak) {
+                        [peak.start, peak.end].forEach(function (value) {
+                            const px = xScale.getPixelForValue(value);
+                            if (px < area.left - 1 || px > area.right + 1) return;
+                            g.save();
+                            g.strokeStyle = 'rgba(10, 10, 10, 0.6)';
+                            g.lineWidth = 2;
+                            g.setLineDash([5, 4]);
+                            g.beginPath();
+                            g.moveTo(px, area.top);
+                            g.lineTo(px, area.bottom);
+                            g.stroke();
+                            g.setLineDash([]);
+                            g.fillStyle = 'rgba(10, 10, 10, 0.6)';
+                            g.fillRect(px - 4, area.top, 8, 12);
+                            g.restore();
+                        });
+
+                        const mid = (xScale.getPixelForValue(peak.start) +
+                            xScale.getPixelForValue(peak.end)) / 2;
+                        if (mid < area.left || mid > area.right) return;
+                        g.save();
+                        g.fillStyle = 'rgba(10, 10, 10, 0.6)';
+                        g.font = '600 11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+                        g.textAlign = 'center';
+                        g.fillText('#' + peak.number, mid, area.top + 22);
+                        g.restore();
+                    });
+                }
+            };
+
+            function activePeaks() {
+                if (!lastProfiles || !lastProfiles.length) return [];
+                const p = lastProfiles[activeIndex(lastProfiles)];
+                return p && p.peaks ? p.peaks : [];
+            }
+
+            // ---------- Dragging the window edges on the plot ----------
+            const EDGE_GRAB = 14; // px
+
+            // Nearest edge across every window of the active box.
+            function edgeAtPixel(px) {
+                if (!chart) return null;
+                const xScale = chart.scales.x;
+                if (!xScale) return null;
+                const peaks = activePeaks();
+
+                let best = null, bestDistance = EDGE_GRAB;
+                peaks.forEach(function (peak, k) {
+                    ['start', 'end'].forEach(function (side) {
+                        const distance = Math.abs(px - xScale.getPixelForValue(peak[side]));
+                        if (distance <= bestDistance) {
+                            bestDistance = distance;
+                            best = { peak: k, side: side };
+                        }
+                    });
+                });
+                return best;
+            }
+
+            function chartPixel(e) {
+                return e.clientX - chartCanvas.getBoundingClientRect().left;
+            }
+
+            chartCanvas.addEventListener('pointerdown', function (e) {
+                const edge = edgeAtPixel(chartPixel(e));
+                if (!edge) return;
+                e.preventDefault();
+                rangeDrag = edge;
+                chartCanvas.setPointerCapture(e.pointerId);
+            });
+
+            chartCanvas.addEventListener('pointermove', function (e) {
+                if (!rangeDrag) {
+                    chartCanvas.style.cursor = edgeAtPixel(chartPixel(e)) ? 'ew-resize' : 'default';
+                    return;
+                }
+                const xScale = chart.scales.x;
+                const value = Math.round(xScale.getValueForPixel(chartPixel(e)));
+                const peaks = activePeaks();
+                const peak = peaks[rangeDrag.peak];
+                if (!peak) return;
+                const box = activeIndex(lastProfiles);
+
+                // Dragging an edge past its partner hands the pointer that edge,
+                // instead of the window collapsing and fighting back.
+                if (rangeDrag.side === 'start') {
+                    if (value > peak.end) {
+                        setPeakEdge(box, rangeDrag.peak, peak.end, value);
+                        rangeDrag = { peak: rangeDrag.peak, side: 'end' };
+                    } else {
+                        setPeakEdge(box, rangeDrag.peak, value, peak.end);
+                    }
+                } else {
+                    if (value < peak.start) {
+                        setPeakEdge(box, rangeDrag.peak, value, peak.start);
+                        rangeDrag = { peak: rangeDrag.peak, side: 'start' };
+                    } else {
+                        setPeakEdge(box, rangeDrag.peak, peak.start, value);
+                    }
+                }
+                scheduleRangeUpdate();
+            });
+
+            function endRangeDrag(e) {
+                if (!rangeDrag) return;
+                rangeDrag = null;
+                if (chartCanvas.hasPointerCapture && chartCanvas.hasPointerCapture(e.pointerId)) {
+                    chartCanvas.releasePointerCapture(e.pointerId);
+                }
+                applyRangeChange();
+            }
+
+            chartCanvas.addEventListener('pointerup', endRangeDrag);
+            chartCanvas.addEventListener('pointercancel', endRangeDrag);
+
+            let rangeUpdateQueued = false;
+            function scheduleRangeUpdate() {
+                if (rangeUpdateQueued) return;
+                rangeUpdateQueued = true;
+                requestAnimationFrame(function () {
+                    rangeUpdateQueued = false;
+                    applyRangeChange();
+                });
+            }
+
+            function renderChart(profiles) {
+                const axis = profiles[0].axis;
+                const alongLabel = axis === 'x'
+                    ? 'Position across box width (px)'
+                    : 'Position down box height (px)';
+                const showBaseline = baselineMode.value !== 'none';
+
+                let datasets;
+                if (chartMode === 'all' && profiles.length > 1) {
+                    // Overlay: lines only, shading every lane would muddy it.
+                    datasets = profiles.map(function (p) {
+                        return profileDataset(p, p.index === selected, false);
+                    });
+                    if (showBaseline) {
+                        profiles.forEach(function (p) { datasets.push(baselineDataset(p)); });
+                    }
+                } else {
+                    const p = profiles[Math.min(selected, profiles.length - 1)];
+                    datasets = [profileDataset(p, true, false)];
+                    if (showBaseline) datasets.push(baselineDataset(p));
+                    // Shade only the slice being integrated.
+                    windowDatasets(p).forEach(function (d) { datasets.push(d); });
+                }
+
+                if (!chart) {
+                    chart = new Chart(document.getElementById('profileChart'), {
+                        type: 'line',
+                        data: { datasets: datasets },
+                        plugins: [peakEdgePlugin],
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: false,
+                            interaction: { mode: 'index', axis: 'x', intersect: false },
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'bottom',
+                                    labels: {
+                                        filter: function (item, data) {
+                                            return !data.datasets[item.datasetIndex].hideInLegend;
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    filter: function (item) {
+                                        return !item.dataset.hideInLegend;
+                                    },
+                                    callbacks: {
+                                        title: function (items) {
+                                            return 'Offset ' + items[0].parsed.x + ' px';
+                                        },
+                                        label: function (item) {
+                                            return item.dataset.label + ' — ' + item.parsed.y.toFixed(1);
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    type: 'linear',
+                                    title: { display: true, text: alongLabel }
+                                },
+                                y: {
+                                    title: { display: true, text: 'Inverted mean intensity (0–255, dark = high)' },
+                                    suggestedMin: 0,
+                                    suggestedMax: 255
+                                }
+                            }
+                        }
+                    });
+                    return;
+                }
+
+                chart.data.datasets = datasets;
+                chart.options.scales.x.title.text = alongLabel;
+                chart.update('none');
+            }
+
+            // ---------- Export ----------
+            function csvField(value) {
+                const text = String(value);
+                return /[",\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+            }
+
+            function buildIntensitiesCsv() {
+                if (!lastProfiles || !lastProfiles.length) return '';
+                const axis = lastProfiles[0].axis;
+                const rowCount = lastProfiles.reduce(function (n, p) {
+                    return Math.max(n, p.values.length);
+                }, 0);
+
+                const header = ['offset_px'];
+                // Down-the-height profiles all share one row level, so the image
+                // coordinate is meaningful for every column at once.
+                if (axis === 'y') header.push('image_y');
+                lastProfiles.forEach(function (p) {
+                    header.push(p.label, p.label + ' background');
+                });
+
+                const rows = [header.map(csvField).join(',')];
+                for (let i = 0; i < rowCount; i++) {
+                    const row = [i];
+                    if (axis === 'y') row.push(lastProfiles[0].start + i);
+                    lastProfiles.forEach(function (p) {
+                        row.push(i < p.values.length ? p.values[i].toFixed(3) : '');
+                        row.push(i < p.baseline.length ? p.baseline[i].toFixed(3) : '');
+                    });
+                    rows.push(row.join(','));
+                }
+                return rows.join('\n');
+            }
+
+            // Mirrors the table exactly: the columns you have toggled on are the
+            // columns you get, in the same order and with the same headings.
+            function buildResultsCsv() {
+                if (!lastProfiles || !lastProfiles.length) return '';
+
+                let largest = 0;
+                lastProfiles.forEach(function (p) {
+                    p.peaks.forEach(function (peak) { largest = Math.max(largest, peak.area); });
+                });
+                largest = largest || 1;
+
+                const columns = visibleColumns(lastProfiles);
+                const rows = [columns.map(function (column) {
+                    return csvField(typeof column.label === 'function' ? column.label() : column.label);
+                }).join(',')];
+
+                lastProfiles.forEach(function (p) {
+                    p.peaks.forEach(function (peak) {
+                        rows.push(columns.map(function (column, i) {
+                            // Unlike the table, the name repeats on every row — a CSV
+                            // row has to stand on its own once it is sorted or filtered.
+                            if (i === 0) return csvField(p.label);
+                            return csvField(column.cell(p, peak, largest, lastProfiles));
+                        }).join(','));
+                    });
+                });
+                return rows.join('\n');
+            }
+
+            function flashButton(button, message) {
+                const original = button.textContent;
+                button.textContent = message;
+                setTimeout(function () { button.textContent = original; }, 1500);
+            }
+
+            function copyText(text, button) {
+                if (!text) return;
+                navigator.clipboard.writeText(text).then(function () {
+                    flashButton(button, 'Copied!');
+                }).catch(function () {
+                    showError('Could not copy to the clipboard — use Download CSV instead.');
+                });
+            }
+
+            function downloadCsv(csv, filename) {
+                if (!csv) return;
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                link.click();
+                URL.revokeObjectURL(url);
+            }
+
+            // Results = the per-peak table as shown. Intensities = every point of
+            // every trace.
+            downloadResultsBtn.addEventListener('click', function () {
+                downloadCsv(buildResultsCsv(), 'pulldown_results.csv');
+            });
+
+            downloadIntensitiesBtn.addEventListener('click', function () {
+                downloadCsv(buildIntensitiesCsv(), 'pulldown_intensities.csv');
+            });
+
+            copyIntensitiesBtn.addEventListener('click', function () {
+                copyText(buildIntensitiesCsv(), copyIntensitiesBtn);
+            });
+
+            copyResultsBtn.addEventListener('click', function () {
+                copyText(buildResultsCsv(), copyResultsBtn);
+            });
+
+            downloadPlotBtn.addEventListener('click', function () {
+                if (!chart) return;
+                const link = document.createElement('a');
+                link.href = chart.toBase64Image();
+                link.download = 'pulldown_profile.png';
+                link.click();
+            });
+
+            // ---------- Control wiring ----------
+            uploadZone.addEventListener('click', function () { fileInput.click(); });
+            uploadZone.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    fileInput.click();
+                }
+            });
+            fileInput.addEventListener('change', function (e) {
+                handleFile(e.target.files && e.target.files[0]);
+            });
+
+            ['dragenter', 'dragover'].forEach(function (type) {
+                uploadZone.addEventListener(type, function (e) {
+                    e.preventDefault();
+                    uploadZone.classList.add('dragover');
+                });
+            });
+            ['dragleave', 'drop'].forEach(function (type) {
+                uploadZone.addEventListener(type, function (e) {
+                    e.preventDefault();
+                    uploadZone.classList.remove('dragover');
+                });
+            });
+            uploadZone.addEventListener('drop', function (e) {
+                const files = e.dataTransfer && e.dataTransfer.files;
+                if (files && files.length) handleFile(files[0]);
+            });
+
+            // 100% on the slider means "fits the viewer"; the suffix reports how
+            // that compares with the image's actual pixels.
+            function updateZoomLabel() {
+                const nativePct = Math.round(fitScale * zoom * 100);
+                zoomLabel.textContent = (zoom === 1 ? 'Fit' : Math.round(zoom * 100) + '%') +
+                    ' (' + nativePct + '% of actual size)';
+            }
+
+            zoomInput.addEventListener('input', function () {
+                zoom = (parseInt(zoomInput.value, 10) || 100) / 100;
+                layout();
+            });
+
+            channelSelect.addEventListener('change', updateProfile);
+            smoothInput.addEventListener('change', updateProfile);
+            axisSelect.addEventListener('change', function () {
+                requestDraw();
+                updateProfile();
+            });
+
+            baselineMode.addEventListener('change', updateProfile);
+            baselineWindow.addEventListener('input', updateProfile);
+            baselineOffset.addEventListener('input', updateProfile);
+
+            document.getElementById('ratioSwitch').addEventListener('click', function (e) {
+                const button = e.target.closest('.ratio-option');
+                if (!button) return;
+                ratioMode = button.dataset.mode;
+                document.querySelectorAll('.ratio-option').forEach(function (option) {
+                    option.classList.toggle('active', option === button);
+                });
+                if (lastProfiles) renderAreaTable(lastProfiles);
+            });
+
+            normalizeRatios.addEventListener('change', function () {
+                if (lastProfiles) renderAreaTable(lastProfiles);
+            });
+
+            ['colWindow', 'colApex', 'colMax', 'colPercent'].forEach(function (id) {
+                document.getElementById(id).addEventListener('change', function () {
+                    if (lastProfiles) renderAreaTable(lastProfiles);
+                });
+            });
+
+            addPeakBtn.addEventListener('click', function () {
+                if (lastProfiles && lastProfiles.length) addPeak(activeIndex(lastProfiles));
+            });
+            autoPeakBtn.addEventListener('click', function () {
+                if (lastProfiles && lastProfiles.length) redetectPeaks(activeIndex(lastProfiles));
+            });
+
+            addBoxBtn.addEventListener('click', addBox);
+            deleteBoxBtn.addEventListener('click', deleteSelectedBox);
+
+            document.getElementById('selectAllBtn').addEventListener('click', function () {
+                if (!sourceCanvas) return;
+                setSingleBox({ x: 0, y: 0, w: imgW, h: imgH });
+                afterBoxChange();
+            });
+
+            document.getElementById('clearBoxBtn').addEventListener('click', clearBoxes);
+            document.getElementById('removeImageBtn').addEventListener('click', resetImage);
+
+            let resizeTimer = null;
+            window.addEventListener('resize', function () {
+                if (!sourceCanvas) return;
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(layout, 120);
+            });
+        })();
+    </script>
+
+    <script>
+        // Mobile menu + tap-friendly Tools dropdown
+        (function () {
+            const toggle = document.getElementById('navToggle');
+            const panel = document.getElementById('mobileNav');
+
+            function closeMenu() {
+                if (!panel || !toggle) return;
+                panel.classList.remove('open');
+                toggle.classList.remove('open');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+
+            if (toggle && panel) {
+                toggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const open = panel.classList.toggle('open');
+                    toggle.classList.toggle('open', open);
+                    toggle.setAttribute('aria-expanded', String(open));
+                });
+                panel.addEventListener('click', (e) => {
+                    if (e.target.closest('a')) closeMenu();
+                });
+                document.addEventListener('click', (e) => {
+                    if (panel.classList.contains('open') && !panel.contains(e.target) && !toggle.contains(e.target)) {
+                        closeMenu();
+                    }
+                });
+            }
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeMenu();
+                    document.querySelectorAll('.dropdown.open').forEach(dd => dd.classList.remove('open'));
+                }
+            });
+
+            // The Tools menu opens on hover via CSS; let taps/clicks toggle it too.
+            document.querySelectorAll('.dropbtn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const dd = btn.closest('.dropdown');
+                    if (!dd) return;
+                    const willOpen = !dd.classList.contains('open');
+                    document.querySelectorAll('.dropdown.open').forEach(other => other.classList.remove('open'));
+                    dd.classList.toggle('open', willOpen);
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                document.querySelectorAll('.dropdown.open').forEach(dd => {
+                    if (!dd.contains(e.target)) dd.classList.remove('open');
+                });
+            });
+        })();
+    </script>
+</body>
+
+</html>

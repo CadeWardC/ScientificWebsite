@@ -1193,7 +1193,7 @@
                             <label style="display:block; margin-bottom:0.5rem; font-weight:500;">Save
                                 Calculation</label>
                             <div style="display:flex; flex-direction:column; gap:0.8rem;">
-                                <input type="text" id="dil-save-name" placeholder="Name this calculation"
+                                <input type="text" id="dil-save-name" placeholder="Chemical Name"
                                     style="padding:0.8rem; border:1px solid #ddd; border-radius:6px; width:100%;">
 
                                 <div style="display:flex; gap:0.5rem;">
@@ -1201,9 +1201,18 @@
                                         style="flex:1; padding:0.8rem; border:1px solid #ddd; border-radius:6px;">
                                         <option value="default">All Calculations</option>
                                     </select>
-                                    <button class="calc-btn" onclick="openCreateGroupModal('dilution')"
+                                    <button class="calc-btn" id="dil-group-add-btn" onclick="toggleNewGroupRow('dilution')"
                                         style="margin:0; padding:0 1rem; background:var(--muted-blue); opacity:0.8;"
                                         title="New Group">+</button>
+                                </div>
+
+                                <div id="dil-new-group-row" style="display:none; gap:0.5rem;">
+                                    <input type="text" id="dil-new-group-name" placeholder="FLAG Buffer 9.2 pH (200 mL)"
+                                        style="flex:1; padding:0.8rem; border:1px solid #ddd; border-radius:6px; min-width:0;"
+                                        onkeydown="handleNewGroupKey(event, 'dilution')">
+                                    <button class="calc-btn" onclick="createGroupInline('dilution')"
+                                        style="margin:0; padding:0 1rem; background:var(--muted-blue);"
+                                        title="Add Group">✓</button>
                                 </div>
 
                                 <div style="display:flex; gap:0.5rem;">
@@ -1275,7 +1284,7 @@
                             <label style="display:block; margin-bottom:0.5rem; font-weight:500;">Save
                                 Calculation</label>
                             <div style="display:flex; flex-direction:column; gap:0.8rem;">
-                                <input type="text" id="mol-save-name" placeholder="Name this calculation"
+                                <input type="text" id="mol-save-name" placeholder="Chemical Name"
                                     style="padding:0.8rem; border:1px solid #ddd; border-radius:6px; width:100%;">
 
                                 <div style="display:flex; gap:0.5rem;">
@@ -1283,9 +1292,18 @@
                                         style="flex:1; padding:0.8rem; border:1px solid #ddd; border-radius:6px;">
                                         <option value="default">All Calculations</option>
                                     </select>
-                                    <button class="calc-btn" onclick="openCreateGroupModal('molarity')"
+                                    <button class="calc-btn" id="mol-group-add-btn" onclick="toggleNewGroupRow('molarity')"
                                         style="margin:0; padding:0 1rem; background:var(--muted-blue); opacity:0.8;"
                                         title="New Group">+</button>
+                                </div>
+
+                                <div id="mol-new-group-row" style="display:none; gap:0.5rem;">
+                                    <input type="text" id="mol-new-group-name" placeholder="FLAG Buffer 9.2 pH (200 mL)"
+                                        style="flex:1; padding:0.8rem; border:1px solid #ddd; border-radius:6px; min-width:0;"
+                                        onkeydown="handleNewGroupKey(event, 'molarity')">
+                                    <button class="calc-btn" onclick="createGroupInline('molarity')"
+                                        style="margin:0; padding:0 1rem; background:var(--muted-blue);"
+                                        title="Add Group">✓</button>
                                 </div>
 
                                 <div style="display:flex; gap:0.5rem;">
@@ -1560,22 +1578,6 @@
         </div>
         </div>
 
-        <!-- Add Group Modal -->
-        <div id="groupModal" class="modal">
-            <div class="modal-content">
-                <h3>Create New Group</h3>
-                <div class="form-group" style="margin-top: 1rem;">
-                    <label>Group Name</label>
-                    <input type="text" id="new-group-name" placeholder="e.g., Week 1 Experiments">
-                </div>
-                <div class="modal-buttons">
-                    <button class="calc-btn" onclick="closeGroupModal()"
-                        style="margin:0; background:#6c757d;">Cancel</button>
-                    <button class="calc-btn" onclick="confirmCreateGroup()" style="margin:0;">Create</button>
-                </div>
-            </div>
-        </div>
-
         <script>
             // Unified State Management (Session Only)
             let appState = {
@@ -1584,8 +1586,7 @@
                     molarity: { mw: '', conc: '', vol: '', units: {} }
                 },
                 savedItems: [], // Array of { id, name, values, group, timestamp, type }
-                groups: [],     // Array of { id, name }
-                activeModal: null // 'dilution' or 'molarity' (used for triggering context)
+                groups: []      // Array of { id, name }
             };
 
             function init() {
@@ -1652,22 +1653,43 @@
 
             // ---- Unified Grouping Logic ----
 
-            function openCreateGroupModal(type) {
-                appState.activeModal = type;
-                document.getElementById('groupModal').classList.add('show');
-                document.getElementById('new-group-name').focus();
+            const GROUP_TYPES = ['dilution', 'molarity'];
+
+            function groupPrefix(type) {
+                return type === 'dilution' ? 'dil' : 'mol';
             }
 
-            function closeGroupModal() {
-                document.getElementById('groupModal').classList.remove('show');
-                document.getElementById('new-group-name').value = '';
-                appState.activeModal = null;
+            function toggleNewGroupRow(type) {
+                const row = document.getElementById(`${groupPrefix(type)}-new-group-row`);
+                const showing = row.style.display === 'none';
+                // Only one inline group input open at a time
+                GROUP_TYPES.forEach(t => {
+                    document.getElementById(`${groupPrefix(t)}-new-group-row`).style.display = 'none';
+                });
+                row.style.display = showing ? 'flex' : 'none';
+                if (showing) {
+                    const input = document.getElementById(`${groupPrefix(type)}-new-group-name`);
+                    input.value = '';
+                    input.focus();
+                }
             }
 
-            function confirmCreateGroup() {
-                const name = document.getElementById('new-group-name').value.trim();
+            function handleNewGroupKey(event, type) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    createGroupInline(type);
+                } else if (event.key === 'Escape') {
+                    document.getElementById(`${groupPrefix(type)}-new-group-row`).style.display = 'none';
+                }
+            }
 
-                if (!name) return;
+            function createGroupInline(type) {
+                const input = document.getElementById(`${groupPrefix(type)}-new-group-name`);
+                const name = input.value.trim();
+                if (!name) {
+                    input.focus();
+                    return;
+                }
 
                 const newGroup = {
                     id: 'g_' + Date.now(),
@@ -1675,16 +1697,14 @@
                 };
 
                 appState.groups.push(newGroup);
-
                 updateAllGroupSelects();
                 renderAllLists();
-                closeGroupModal();
 
-                // Select the new group in the active context
-                if (appState.activeModal) {
-                    const selectorId = appState.activeModal === 'dilution' ? 'dil-group-select' : 'mol-group-select';
-                    document.getElementById(selectorId).value = newGroup.id;
-                }
+                // Select the new group right away so the next save lands in it
+                document.getElementById(`${groupPrefix(type)}-group-select`).value = newGroup.id;
+
+                input.value = '';
+                document.getElementById(`${groupPrefix(type)}-new-group-row`).style.display = 'none';
             }
 
             function updateAllGroupSelects() {
