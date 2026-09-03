@@ -2389,6 +2389,11 @@
                             <button id="editGroupsBtn" onclick="openGroupModal()"
                                 style="display: none; background: none; border: none; color: var(--muted-blue); cursor: pointer; font-weight: bold; font-size: 0.9rem;">Edit</button>
                         </div>
+                        <div class="date-toggle-wrapper" id="recropWrapper"
+                            style="display: none; justify-content: center; gap: 1rem; border-top: none; padding-top: 0;">
+                            <button id="recropBtn" class="choose-file-btn" onclick="startRecrop()"
+                                title="Adjust the crop region on the original scan — the wells are then re-detected on your new crop">✂ Re-crop</button>
+                        </div>
                     </div>
 
                     <div id="imagePreviewContainer" class="image-preview-container" style="display: none;">
@@ -2545,6 +2550,9 @@
         try {
             isAutoMode = sessionStorage.getItem('gelAutoMode') === '1';
         } catch (e) { /* storage unavailable — stay in normal mode */ }
+        // Full original scan (pre-crop) kept in Auto Gel mode so the user can
+        // re-crop later; the wells are then re-detected on the new crop.
+        var autoGelOriginalSrc = null;
         if (isAutoMode) {
             applyAutoGelMode();
         }
@@ -2568,6 +2576,27 @@
                 sessionStorage.setItem('gelAutoMode', '1');
             } catch (e) { /* fall through — still reload */ }
             window.location.reload();
+        }
+
+        // Auto Gel: re-open the manual crop on the full original scan. When
+        // the user applies it, applyCrop re-detects the wells on whatever
+        // region they kept.
+        function startRecrop() {
+            if (!autoGelOriginalSrc) {
+                alert('The original scan is no longer in memory for this gel — re-upload it to re-crop.');
+                return;
+            }
+            const imageToCrop = document.getElementById('imageToCrop');
+            const modal = document.getElementById('cropModal');
+            imageToCrop.src = autoGelOriginalSrc;
+            modal.style.display = 'flex';
+            if (cropper) cropper.destroy();
+            cropper = new Cropper(imageToCrop, {
+                aspectRatio: NaN, // free ratio
+                viewMode: 1,
+                background: false,
+                autoCropArea: 0.8,
+            });
         }
 
         function exitAutoGelMode() {
@@ -3274,18 +3303,25 @@
                             }
                         }
                         if (cur) bands.push(cur);
-                        const fracs = bands.map(b => ((b.start + b.end + 1) / 2) / info.sh * 100);
-                        // The comb leaves horizontal lines above the first real
-                        // rung. Drop leading detections that sit far (more than
-                        // 1.5x the typical rung spacing) above the pack.
-                        while (fracs.length >= 2) {
-                            const rest = fracs.slice(1);
-                            const spacings = [];
-                            for (let i = 1; i < rest.length; i++) spacings.push(rest[i] - rest[i - 1]);
-                            spacings.sort((a, b) => a - b);
-                            const medianSpacing = spacings[Math.floor(spacings.length / 2)] || 0;
-                            if (rest[0] - fracs[0] > 1.5 * medianSpacing) fracs.shift();
-                            else break;
+                        let fracs = bands.map(b => ((b.start + b.end + 1) / 2) / info.sh * 100);
+                        // The comb above the gel leaves stray lines. Real rungs
+                        // form a dense, regular pack rising from the dye front,
+                        // so walking up from the bottom-most band, everything
+                        // beyond the first unusually large gap is comb, not
+                        // bands.
+                        if (fracs.length > 3) {
+                            const desc = fracs.slice().sort((a, b) => b - a);
+                            const allGaps = [];
+                            for (let i = 1; i < desc.length; i++) allGaps.push(desc[i - 1] - desc[i]);
+                            allGaps.sort((a, b) => a - b);
+                            const medGap = allGaps[Math.floor(allGaps.length / 2)] || 1;
+                            const limit = 1.75 * medGap;
+                            const kept = [desc[0]];
+                            for (let i = 1; i < desc.length; i++) {
+                                if (desc[i - 1] - desc[i] > limit) break;
+                                kept.push(desc[i]);
+                            }
+                            fracs = kept.reverse();
                         }
                         resolve(fracs.map(p => p / 100));
                     } catch (err) {
@@ -4010,8 +4046,12 @@
                 const dataUrl = await readAsDataUrl(blob);
                 // Auto Gel: detect the gel region by intensity and crop it
                 // automatically; fall back to the manual crop modal if the
-                // detection can't find a plausible gel.
-                if (isAutoMode && await autoCropGelFlow(dataUrl)) return;
+                // detection can't find a plausible gel. The full scan is kept
+                // around so the user can re-crop later.
+                if (isAutoMode) {
+                    autoGelOriginalSrc = dataUrl;
+                    if (await autoCropGelFlow(dataUrl)) return;
+                }
                 startCrop(dataUrl);
             } catch (err) {
                 alert('Could not open this image: ' + (err && err.message ? err.message : 'unknown error.'));
@@ -4026,15 +4066,33 @@
             if (!cropped) return false;
 
             clearGelPicturePrompt();
+            const applied = await applyAutoWells(cropped, true);
+            if (!applied) {
+                // Cut the wells where the gel's own intensity is quietest was
+                // not possible — fall back to even splits for the well count
+                // picked on the home screen.
+                if (currentWellCount > 1) {
+                    const positions = [];
+                    for (let i = 1; i < currentWellCount; i++) positions.push(i / currentWellCount);
+                    savedSplitState = { splitPositions: positions, removedIndices: [], addGaps: true };
+                    document.getElementById('splitImageToggle').checked = true;
+                }
+                const labelSectionTitle = document.getElementById('label-section-title');
+                if (labelSectionTitle) labelSectionTitle.textContent = `Auto Gel \u2014 ${currentWellCount} Wells`;
+                useCroppedImage(cropped);
+            }
+            autoAlignLadder();
+            return true;
+        }
 
-            // Cut the wells where the gel's own intensity is quietest (the
-            // white gaps between lanes). Lanes with no content are skipped, so
-            // the number of cuts follows what is actually on the gel. If the
-            // lanes can't be resolved, fall back to even splits for the
-            // well count picked on the home screen.
-            let work = cropped;
+        // Detect the lanes on a cropped gel and replace the well cuts with
+        // them (well count, label slots and ladder alignment follow). With
+        // allowTrim, empty margins are cropped away first. Renders the result
+        // via useCroppedImage. Returns false when no lanes were resolved.
+        async function applyAutoWells(croppedDataUrl, allowTrim) {
+            let work = croppedDataUrl;
             let laneInfo = await detectWellCuts(work, currentWellCount);
-            if (laneInfo && laneInfo.laneCount >= 2 && laneInfo.runs.length) {
+            if (allowTrim && laneInfo && laneInfo.laneCount >= 2 && laneInfo.runs.length) {
                 // Trim empty margins so the crop spans just the lanes that
                 // have content (plus a little padding), then re-detect the
                 // cuts on the final crop.
@@ -4059,24 +4117,15 @@
                     currentWellCount = laneInfo.laneCount;
                     const layoutType = laneInfo.laneCount <= 8 ? 'big' : 'small';
                     generateLabelSlots(laneInfo.laneCount, layoutType);
-                    const labelSectionTitle = document.getElementById('label-section-title');
-                    const labelSectionDescription = document.getElementById('label-section-description');
-                    if (labelSectionTitle) labelSectionTitle.textContent = `Auto Gel \u2014 ${laneInfo.laneCount} Wells Detected`;
-                    if (labelSectionDescription) labelSectionDescription.textContent = `Configure your ${laneInfo.laneCount} label slots`;
                 }
-            } else {
-                laneInfo = null;
-                if (currentWellCount > 1) {
-                    const positions = [];
-                    for (let i = 1; i < currentWellCount; i++) positions.push(i / currentWellCount);
-                    savedSplitState = { splitPositions: positions, removedIndices: [], addGaps: true };
-                    document.getElementById('splitImageToggle').checked = true;
-                }
+                const labelSectionTitle = document.getElementById('label-section-title');
+                const labelSectionDescription = document.getElementById('label-section-description');
+                if (labelSectionTitle) labelSectionTitle.textContent = `Auto Gel \u2014 ${laneInfo.laneCount} Wells`;
+                if (labelSectionDescription) labelSectionDescription.textContent = `Label your wells below. Use \u201CAdjust Wells\u201D to remove wells you don't need.`;
+                useCroppedImage(work);
+                return true;
             }
-
-            useCroppedImage(work);
-            autoAlignLadder();
-            return true;
+            return false;
         }
 
         // Shared pixel-work helper: draw an image (optionally shrinking it)
@@ -4251,8 +4300,29 @@
                 const mid = flat[Math.floor(flat.length / 2)];
                 cuts.push((mid + 0.5) / sw);
             }
+
+            // Never cut through a real lane to reach the picked well count:
+            // fill only subdivides spans that contain no detected lane (and
+            // never the first segment), so any wells the user doesn't want
+            // are theirs to remove — not the automation's to delete.
+            if (targetCount && cuts.length < targetCount - 1) {
+                const laneSpans = all.map(r => ({ s: r.start / sw, e: (r.end + 1) / sw }));
+                const isFree = (a, b) => !laneSpans.some(l => l.s < b && l.e > a);
+                const bounds = [0, ...cuts, 1];
+                while (cuts.length < targetCount - 1) {
+                    let bi = -1, bw = -1;
+                    for (let i = 1; i + 1 < bounds.length; i++) {
+                        const w = bounds[i + 1] - bounds[i];
+                        if (w > bw && isFree(bounds[i], bounds[i + 1])) { bw = w; bi = i; }
+                    }
+                    if (bi < 0) break; // every span holds a lane — stop honestly
+                    const mid = (bounds[bi] + bounds[bi + 1]) / 2;
+                    bounds.splice(bi + 1, 0, mid);
+                    cuts.splice(bi, 0, mid);
+                }
+            }
             return {
-                laneCount: all.length,
+                laneCount: cuts.length + 1,
                 cuts,
                 // Lane spans as fractions of the image width — used to trim
                 // empty margins off the crop.
@@ -4477,7 +4547,7 @@
             return out;
         }
 
-        function applyCrop() {
+        async function applyCrop() {
             if (isMultiGelCropping) {
                 applyCropMultiGel();
                 return;
@@ -4501,6 +4571,19 @@
             document.getElementById('editGroupsBtn').style.display = 'none';
 
             useCroppedImage(croppedCanvas.toDataURL('image/png'));
+
+            // Auto Gel: a manual re-crop replaces the wells — re-detect them
+            // on the region the user kept (the crop itself stays as adjusted).
+            if (isAutoMode && autoGelOriginalSrc) {
+                const applied = await applyAutoWells(originalCroppedImageSrc, false);
+                if (!applied && currentWellCount > 1) {
+                    const positions = [];
+                    for (let i = 1; i < currentWellCount; i++) positions.push(i / currentWellCount);
+                    savedSplitState = { splitPositions: positions, removedIndices: [], addGaps: true };
+                    document.getElementById('splitImageToggle').checked = true;
+                    renderPreview();
+                }
+            }
             autoAlignLadder();
         }
 
@@ -4512,6 +4595,8 @@
             alignedLadderData = null; // new image — ladder must re-align
 
             document.getElementById('imageControls').style.display = 'flex';
+            const recropWrapper = document.getElementById('recropWrapper');
+            if (recropWrapper) recropWrapper.style.display = isAutoMode ? 'flex' : 'none';
 
             // Render the preview (this will set imagePreview.src and trigger onload)
             renderPreview();
@@ -4561,6 +4646,9 @@
             document.getElementById('imageUploadInput').value = ''; // Reset file input
             document.getElementById('exportSection').style.display = 'none'; // Hide export button
             alignedLadderData = null;
+            autoGelOriginalSrc = null;
+            const recropWrapper = document.getElementById('recropWrapper');
+            if (recropWrapper) recropWrapper.style.display = 'none';
 
             // Reset split controls
             document.getElementById('imageControls').style.display = 'none';
@@ -5411,11 +5499,17 @@
             // Wait for image to load to get dimensions
             imageToSplit.onload = () => {
                 const rect = imageToSplit.getBoundingClientRect();
-                // We need (N-1) lines to separate N wells
-                const numLines = currentWellCount > 1 ? currentWellCount - 1 : 0;
+                // Start from the saved split when there is one (e.g. Auto
+                // Gel's detected cuts) so removing wells here never loses the
+                // automation; fall back to even lines for the picked count.
+                const positions = (savedSplitState && Array.isArray(savedSplitState.splitPositions) && savedSplitState.splitPositions.length)
+                    ? savedSplitState.splitPositions.slice().sort((a, b) => a - b)
+                    : null;
+                const numSegments = positions ? positions.length + 1 : Math.max(1, currentWellCount);
+                const numLines = positions ? positions.length : (currentWellCount > 1 ? currentWellCount - 1 : 0);
 
                 // Create segments first (N segments)
-                for (let i = 0; i < currentWellCount; i++) {
+                for (let i = 0; i < numSegments; i++) {
                     const segment = document.createElement('div');
                     segment.className = 'splitter-segment';
                     segment.dataset.index = i;
@@ -5427,14 +5521,21 @@
                     splitterSegments.push(segment);
                 }
 
+                // Restore wells the user removed in a previous pass
+                if (positions && Array.isArray(savedSplitState.removedIndices)) {
+                    savedSplitState.removedIndices.forEach(i => {
+                        if (splitterSegments[i]) splitterSegments[i].classList.add('removed');
+                    });
+                }
+
                 if (numLines > 0) {
-                    const step = rect.width / currentWellCount;
+                    const step = rect.width / numSegments;
 
                     for (let i = 1; i <= numLines; i++) {
                         const line = document.createElement('div');
                         line.className = 'splitter-line';
-                        // Initial position
-                        const leftPos = step * i;
+                        // Position: saved fraction, or even spacing fallback
+                        const leftPos = positions ? positions[i - 1] * rect.width : step * i;
                         line.style.left = `${leftPos}px`;
 
                         line.addEventListener('mousedown', startDragLine);
