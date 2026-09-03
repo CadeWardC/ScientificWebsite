@@ -4085,42 +4085,43 @@
             return true;
         }
 
-        // Detect the lanes on a cropped gel and replace the well cuts with
-        // them (well count, label slots and ladder alignment follow). With
+        // Detect the lanes on a cropped gel and place that many well cuts on
+        // it. The well count picked on the home screen is never changed here \u2014
+        // the gel always splits into exactly that many separate wells, and
+        // surplus wells are the user's to remove under "Adjust Wells". With
         // allowTrim, empty margins are cropped away first. Renders the result
         // via useCroppedImage. Returns false when no lanes were resolved.
         async function applyAutoWells(croppedDataUrl, allowTrim) {
             let work = croppedDataUrl;
             let laneInfo = await detectWellCuts(work, currentWellCount);
-            if (allowTrim && laneInfo && laneInfo.laneCount >= 2 && laneInfo.runs.length) {
+            if (allowTrim && laneInfo && laneInfo.runs.length) {
                 // Trim empty margins so the crop spans just the lanes that
-                // have content (plus a little padding), then re-detect the
-                // cuts on the final crop.
-                const pad = 0.02;
-                const startF = Math.max(0, laneInfo.runs[0].start - pad);
-                const endF = Math.min(1, laneInfo.runs[laneInfo.runs.length - 1].end + pad);
-                if (startF > 0.005 || endF < 0.995) {
+                // have content, then re-detect the cuts on the final crop.
+                // Padding is a share of the lane pitch rather than a fixed
+                // fraction of the width, so a wide scan and a tight one both
+                // keep the same visual breathing room.
+                const runs = laneInfo.runs;
+                const laneSpan = runs[runs.length - 1].end - runs[0].start;
+                const pad = Math.min(0.03, Math.max(0.004, 0.15 * laneSpan / Math.max(1, runs.length)));
+                const startF = Math.max(0, runs[0].start - pad);
+                const endF = Math.min(1, runs[runs.length - 1].end + pad);
+                if ((startF > 0.005 || endF < 0.995) && endF - startF > 0.2) {
                     const trimmed = await cropRegion(work, startF, endF);
                     if (trimmed) {
                         const redetected = await detectWellCuts(trimmed, currentWellCount);
-                        if (redetected && redetected.laneCount >= 2) {
+                        if (redetected && redetected.laneCount >= 1) {
                             work = trimmed;
                             laneInfo = redetected;
                         }
                     }
                 }
             }
-            if (laneInfo && laneInfo.laneCount >= 2) {
+            if (currentWellCount >= 2 && laneInfo && laneInfo.cuts.length === currentWellCount - 1) {
                 savedSplitState = { splitPositions: laneInfo.cuts, removedIndices: [], addGaps: true };
                 document.getElementById('splitImageToggle').checked = true;
-                if (laneInfo.laneCount !== currentWellCount) {
-                    currentWellCount = laneInfo.laneCount;
-                    const layoutType = laneInfo.laneCount <= 8 ? 'big' : 'small';
-                    generateLabelSlots(laneInfo.laneCount, layoutType);
-                }
                 const labelSectionTitle = document.getElementById('label-section-title');
                 const labelSectionDescription = document.getElementById('label-section-description');
-                if (labelSectionTitle) labelSectionTitle.textContent = `Auto Gel \u2014 ${laneInfo.laneCount} Wells`;
+                if (labelSectionTitle) labelSectionTitle.textContent = `Auto Gel \u2014 ${currentWellCount} Wells`;
                 if (labelSectionDescription) labelSectionDescription.textContent = `Label your wells below. Use \u201CAdjust Wells\u201D to remove wells you don't need.`;
                 useCroppedImage(work);
                 return true;
@@ -4185,25 +4186,65 @@
             });
         }
 
+        // Auto Gel: place the well cuts on a cropped gel. The picked well
+        // count is a promise — detection decides *where* the cuts go, never
+        // how many wells come back — and every well is clamped to a sane
+        // share of the width, so a scratch can't become a sliver and two
+        // lanes can't collapse into one block.
         function detectWellCutsFromImage(img, targetCount) {
             const info = getImageGrayData(img, 1400);
             if (!info) return null;
             const { sw, sh, gray, bg } = info;
+            const N = Math.max(1, Math.round(targetCount) || 0);
+            if (N < 2) return { laneCount: 1, cuts: [], runs: [{ start: 0, end: 1 }] };
 
-            const colFrac = new Float32Array(sw);
+            // Column profile: two signals, both measured against the scanner
+            // background. Mean darkness catches faint low-contrast lanes; the
+            // dark-pixel fraction catches sharp bands on a washed-out lane.
+            // Each is scaled to its own maximum so neither drowns the other.
+            const ink = new Float32Array(sw);
+            const hit = new Float32Array(sw);
+            let inkMax = 0, hitMax = 0;
             for (let x = 0; x < sw; x++) {
-                let sum = 0;
-                for (let y = 0; y < sh; y++) sum += gray[y * sw + x] < bg - 30 ? 1 : 0;
-                colFrac[x] = sum / sh;
+                let sumInk = 0, sumHit = 0;
+                for (let y = 0; y < sh; y++) {
+                    const d = bg - gray[y * sw + x];
+                    if (d > 0) sumInk += d;
+                    if (d > 30) sumHit++;
+                }
+                ink[x] = sumInk / (sh * 255);
+                hit[x] = sumHit / sh;
+                if (ink[x] > inkMax) inkMax = ink[x];
+                if (hit[x] > hitMax) hitMax = hit[x];
             }
-            const cols = smoothProfile(colFrac);
+            if (inkMax <= 0 && hitMax <= 0) return null;
+            const raw = new Float32Array(sw);
+            for (let x = 0; x < sw; x++) {
+                raw[x] = 0.5 * (inkMax ? ink[x] / inkMax : 0) + 0.5 * (hitMax ? hit[x] / hitMax : 0);
+            }
+            // Smooth over a fraction of the expected pitch: enough to erase
+            // dust and scanner noise, never enough to merge two lanes.
+            const cols = boxSmooth(raw, Math.max(1, Math.round(0.12 * (sw / N))));
+
             let colMax = 0;
             for (let x = 0; x < sw; x++) if (cols[x] > colMax) colMax = cols[x];
+            const sortedCols = Float32Array.prototype.slice.call(cols).sort();
+            const baseline = sortedCols[Math.floor(sortedCols.length * 0.15)] || 0;
+            const span = Math.max(1e-4, colMax - baseline);
 
-            const T_HIGH = Math.max(0.06, 0.10 * colMax);  // definite lanes
-            const mergeGap = Math.max(1, Math.round(0.004 * sw));
-            const minLaneWidth = Math.max(2, Math.round(0.025 * sw));
-            const minSideGap = Math.max(2, Math.round(0.012 * sw));
+            // Lane pitch is measured on the content, not on the whole crop:
+            // a crop that still carries blank margins would otherwise inflate
+            // every width clamp below.
+            const edgeT = baseline + 0.15 * span;
+            let cStart = 0, cEnd = sw - 1;
+            while (cStart < sw && cols[cStart] < edgeT) cStart++;
+            while (cEnd > cStart && cols[cEnd] < edgeT) cEnd--;
+            // A blank scan has no content edge — fall back to the whole crop.
+            if (cEnd - cStart + 1 < 3) { cStart = 0; cEnd = sw - 1; }
+            const pitch = Math.max(3, (cEnd - cStart + 1) / N);
+            const minLaneW = Math.max(2, Math.round(0.30 * pitch));
+            const maxLaneW = Math.max(minLaneW + 2, Math.round(1.55 * pitch));
+            const mergeGap = Math.max(1, Math.round(0.05 * pitch));
 
             function runsAbove(threshold) {
                 const runs = [];
@@ -4219,115 +4260,187 @@
                     }
                 }
                 if (cur) runs.push(cur);
-                // Narrower than a real lane → edge lines and scratches.
-                return runs.filter(r => (r.end - r.start + 1) >= minLaneWidth);
+                // Narrower than a third of a lane — an edge line or a scratch.
+                return runs.filter(r => (r.end - r.start + 1) >= minLaneW);
             }
 
-            // Accept faint candidate runs that sit between established lanes
-            // with a real gap on both flanks (and on each other) — keeps lane
-            // smears from faking cuts while still catching quiet single-band
-            // wells.
-            function acceptWeak(existing, candidates) {
-                const anchors = existing.slice().sort((a, b) => a.start - b.start);
-                const accepted = [];
-                for (let i = 0; i <= anchors.length; i++) {
-                    const zoneStart = i === 0 ? 0 : anchors[i - 1].end + 1;
-                    const zoneEnd = i === anchors.length ? sw - 1 : anchors[i].start - 1;
-                    if (zoneEnd - zoneStart + 1 < minLaneWidth) continue;
-                    const inZone = candidates
-                        .filter(r => r.start >= zoneStart && r.end <= zoneEnd)
-                        .sort((a, b) => a.start - b.start);
-                    let prevEnd = zoneStart - 1;
-                    for (const w of inZone) {
-                        if (w.start - prevEnd - 1 >= minSideGap && zoneEnd - w.end >= minSideGap) {
-                            accepted.push(w);
-                            prevEnd = w.end;
+            // A run wider than one pitch is lanes that ran together. Cut the
+            // widest piece at its quietest internal column until the run is
+            // as many pieces as its width says it should be.
+            function splitWide(runs) {
+                const out = [];
+                for (const r of runs) {
+                    const w = r.end - r.start + 1;
+                    if (w <= maxLaneW) { out.push(r); continue; }
+                    const parts = Math.min(N, Math.max(2, Math.round(w / pitch)));
+                    const pieces = [r];
+                    while (pieces.length < parts) {
+                        pieces.sort((a, b) => (b.end - b.start) - (a.end - a.start));
+                        const p = pieces.shift();
+                        let vx = -1, vv = Infinity;
+                        for (let x = p.start + minLaneW; x <= p.end - minLaneW; x++) {
+                            if (cols[x] < vv) { vv = cols[x]; vx = x; }
                         }
+                        if (vx < 0) { pieces.push(p); break; }
+                        pieces.push({ start: p.start, end: vx - 1, peak: p.peak },
+                            { start: vx + 1, end: p.end, peak: p.peak });
                     }
+                    out.push(...pieces);
                 }
-                return accepted;
+                return out.sort((a, b) => a.start - b.start);
             }
 
-            let all = runsAbove(T_HIGH);
-            // Faint lanes only cross lower floors. Relax in steps: the picked
-            // well count is the target, but only runs with real signal are
-            // ever accepted — background never becomes a well.
-            const floors = [
-                Math.max(0.025, 0.035 * colMax),
-                Math.max(0.015, 0.02 * colMax),
-                Math.max(0.01, 0.012 * colMax)
-            ];
-            for (const floor of floors) {
-                if (targetCount && all.length >= targetCount) break;
-                const candidates = runsAbove(floor)
-                    .filter(r => !all.some(l => l.start < r.end && l.end > r.start));
-                const found = acceptWeak(all, candidates);
-                if (found.length) all = all.concat(found).sort((a, b) => a.start - b.start);
+            // Sweep the threshold and keep the level that reads closest to the
+            // picked count. One fixed threshold either misses the faint lanes
+            // or promotes every scratch; scoring whole segmentations finds the
+            // level at which this gel actually reads as N lanes.
+            let best = null;
+            for (let s = 0; s <= 24; s++) {
+                const runs = splitWide(runsAbove(baseline + span * (0.04 + s * 0.02)));
+                if (!runs.length) continue;
+                const score = Math.abs(runs.length - N);
+                if (!best || score < best.score) best = { score, runs };
+                if (score === 0) break;
             }
-            if (all.length < 2) return null;
+            if (!best) return null;
+            let all = best.runs;
 
-            // Clamp lane width: an unusually wide run is likely two wells
-            // loaded side by side — split it at its quietest internal column
-            // when that valley is clearly quieter than the lane.
-            const widths = all.map(r => r.end - r.start + 1).sort((a, b) => a - b);
-            const medianWidth = widths[Math.floor(widths.length / 2)] || 1;
-            const maxLaneWidth = Math.max(Math.round(2.2 * medianWidth), Math.round(0.09 * sw));
-            for (let i = all.length - 1; i >= 0; i--) {
-                const r = all[i];
-                if (r.end - r.start + 1 <= maxLaneWidth) continue;
-                const inset = Math.max(1, minLaneWidth);
-                let valleyX = -1, valleyVal = Infinity;
-                for (let x = r.start + inset; x <= r.end - inset; x++) {
-                    if (cols[x] < valleyVal) { valleyVal = cols[x]; valleyX = x; }
-                }
-                if (valleyX > 0 && valleyVal <= 0.5 * r.peak) {
-                    all.splice(i, 1,
-                        { start: r.start, end: valleyX - 1, peak: r.peak },
-                        { start: valleyX + 1, end: r.end, peak: r.peak });
-                }
+            // Too many lanes: drop the weakest. A sliver at the crop edge or a
+            // scratch carries little ink over little width, so ranking by mass
+            // sorts those out ahead of any real well.
+            if (all.length > N) {
+                const keepSet = new Set(all
+                    .map((r, i) => ({ i, mass: (r.peak - baseline) * Math.min(r.end - r.start + 1, pitch) }))
+                    .sort((a, b) => b.mass - a.mass)
+                    .slice(0, N)
+                    .map(s => s.i));
+                all = all.filter((r, i) => keepSet.has(i));
             }
-            all.sort((a, b) => a.start - b.start);
 
-            const cuts = [];
+            // Cuts sit at the quietest stretch between neighbouring lanes (the
+            // midpoint of the flat minimum when the whole gap is equally
+            // quiet), so a cut never lands on a band.
+            let cuts = [];
             for (let i = 0; i + 1 < all.length; i++) {
                 const a = all[i].end, b = all[i + 1].start;
-                // Cut at the lowest-intensity stretch of the gap (midpoint of
-                // the flat minimum when the whole gap is equally quiet).
                 let minVal = Infinity;
                 for (let x = a; x <= b; x++) if (cols[x] < minVal) minVal = cols[x];
                 const flat = [];
                 for (let x = a; x <= b; x++) if (cols[x] <= minVal + 0.01) flat.push(x);
-                const mid = flat[Math.floor(flat.length / 2)];
+                const mid = flat.length ? flat[Math.floor(flat.length / 2)] : (a + b) >> 1;
                 cuts.push((mid + 0.5) / sw);
             }
 
-            // Never cut through a real lane to reach the picked well count:
-            // fill only subdivides spans that contain no detected lane (and
-            // never the first segment), so any wells the user doesn't want
-            // are theirs to remove — not the automation's to delete.
-            if (targetCount && cuts.length < targetCount - 1) {
+            // Too few lanes: fill from the widest lane-free span first, so a
+            // fill cut can never slice through a well's bands.
+            if (cuts.length < N - 1) {
                 const laneSpans = all.map(r => ({ s: r.start / sw, e: (r.end + 1) / sw }));
-                const isFree = (a, b) => !laneSpans.some(l => l.s < b && l.e > a);
-                const bounds = [0, ...cuts, 1];
-                while (cuts.length < targetCount - 1) {
-                    let bi = -1, bw = -1;
-                    for (let i = 1; i + 1 < bounds.length; i++) {
-                        const w = bounds[i + 1] - bounds[i];
-                        if (w > bw && isFree(bounds[i], bounds[i + 1])) { bw = w; bi = i; }
+                const bounds = [0].concat(cuts, [1]);
+                for (const relaxed of [false, true]) {
+                    const minPart = relaxed
+                        ? Math.max(0.015, 0.15 / N)
+                        : Math.max(0.025, 0.25 / N);
+                    let guard = 0;
+                    while (bounds.length < N + 1 && guard < 4 * N) {
+                        guard++;
+                        // widest lane-free sub-span across all segments
+                        let pick = null;
+                        for (let i = 0; i + 1 < bounds.length; i++) {
+                            const a = bounds[i], b = bounds[i + 1];
+                            let cursor = a;
+                            const freeSpans = [];
+                            for (const l of laneSpans) {
+                                if (l.e <= cursor) continue;
+                                if (l.s >= b) break;
+                                if (l.s > cursor) freeSpans.push([cursor, Math.min(l.s, b)]);
+                                cursor = Math.max(cursor, l.e);
+                                if (cursor >= b) break;
+                            }
+                            if (b > cursor) freeSpans.push([cursor, b]);
+                            for (const [fs, fe] of freeSpans) {
+                                if (fe - fs < 2 * minPart) continue;
+                                if (!pick || fe - fs > pick.fe - pick.fs) pick = { fs, fe };
+                            }
+                        }
+                        if (!pick) break; // nothing quiet and wide enough left
+                        const mid = (pick.fs + pick.fe) / 2;
+                        let idx = 0;
+                        while (idx < bounds.length && bounds[idx] < mid) idx++;
+                        bounds.splice(idx, 0, mid);
                     }
-                    if (bi < 0) break; // every span holds a lane — stop honestly
-                    const mid = (bounds[bi] + bounds[bi + 1]) / 2;
-                    bounds.splice(bi + 1, 0, mid);
-                    cuts.splice(bi, 0, mid);
+                    if (bounds.length >= N + 1) break;
                 }
+                cuts = bounds.slice(1, -1);
             }
+            // Nothing quiet left to cut on — space the rest evenly across the
+            // content rather than hand back the wrong well count.
+            if (cuts.length < N - 1) {
+                const s = cStart / sw, e = (cEnd + 1) / sw;
+                cuts = [];
+                for (let i = 1; i < N; i++) cuts.push(s + (e - s) * i / N);
+            }
+
+            cuts.sort((a, b) => a - b);
+            // Move cuts off the lanes, clamp the well widths, then move any
+            // cut the clamp pushed back onto a lane — this second pass only
+            // takes moves that keep the wells wide enough, so the clamp still
+            // has the last word on width.
+            const finalLanes = all.map(r => ({ s: r.start / sw, e: (r.end + 1) / sw }));
+            cuts = nudgeCutsOffLanes(cuts, finalLanes, 1 / sw);
+            cuts = clampWellWidths(cuts, N);
+            cuts = nudgeCutsOffLanes(cuts, finalLanes, 0.5 / N);
             return {
                 laneCount: cuts.length + 1,
                 cuts,
                 // Lane spans as fractions of the image width — used to trim
                 // empty margins off the crop.
-                runs: all.map(r => ({ start: r.start / sw, end: (r.end + 1) / sw }))
+                runs: finalLanes.map(l => ({ start: l.s, end: l.e }))
             };
+        }
+
+        // Clamp every well to a sane share of the image: no slivers, no double
+        // lanes. The mean well is always 1/n of the width, so the window below
+        // reads as "between about half and about 1.6x the average well". Two
+        // monotone passes push each boundary into the range its neighbours
+        // allow, which keeps the cuts sorted and inside (0, 1).
+        function clampWellWidths(cuts, n) {
+            if (n < 2) return [];
+            const lo = 0.55 / n, hi = 1.65 / n;
+            const b = [0].concat(cuts.slice(0, n - 1), [1]);
+            for (let i = 1; i < n; i++) {
+                b[i] = Math.min(Math.max(b[i], b[i - 1] + lo), b[i - 1] + hi);
+            }
+            for (let i = n - 1; i >= 1; i--) {
+                b[i] = Math.max(Math.min(b[i], b[i + 1] - lo), b[i + 1] - hi);
+            }
+            // The backward pass can undo the forward pass's minimum where the
+            // two windows disagree; one more forward pass settles it, capped
+            // so the wells still to come keep room of their own.
+            for (let i = 1; i < n; i++) {
+                b[i] = Math.min(Math.max(b[i], b[i - 1] + lo), 1 - (n - i) * lo);
+            }
+            return b.slice(1, n);
+        }
+
+        // Push any cut that landed inside a lane out to the nearer edge of
+        // that lane, so a cut never slices a well's bands in half. A move is
+        // only taken when both neighbouring wells stay at least minWidth
+        // wide, which keeps the order strict and lets the caller run this
+        // after the width clamp without undoing it.
+        function nudgeCutsOffLanes(cuts, laneSpans, minWidth) {
+            const out = cuts.slice();
+            const floor = Math.max(minWidth, 1e-6);
+            for (let i = 0; i < out.length; i++) {
+                for (const l of laneSpans) {
+                    if (out[i] <= l.s || out[i] >= l.e) continue;
+                    const left = i === 0 ? 0 : out[i - 1];
+                    const right = i === out.length - 1 ? 1 : out[i + 1];
+                    const target = (out[i] - l.s) < (l.e - out[i]) ? l.s : l.e;
+                    if (target - left >= floor && right - target >= floor) out[i] = target;
+                    break;
+                }
+            }
+            return out;
         }
 
         // Crop a data-URL image to a horizontal fraction range [startF, endF].
@@ -4535,6 +4648,25 @@
             }
             if (cur && (!best || (cur.end - cur.start) > (best.end - best.start))) best = cur;
             return best;
+        }
+
+        // Moving average over a window of ±radius, used where the amount of
+        // smoothing has to scale with the lane pitch rather than being fixed
+        // at one pixel either side.
+        function boxSmooth(arr, radius) {
+            const n = arr.length;
+            const out = new Float32Array(n);
+            if (radius < 1) { out.set(arr); return out; }
+            let sum = 0;
+            for (let i = 0; i <= Math.min(n - 1, radius); i++) sum += arr[i];
+            for (let i = 0; i < n; i++) {
+                const lo = Math.max(0, i - radius), hi = Math.min(n - 1, i + radius);
+                out[i] = sum / (hi - lo + 1);
+                const drop = i - radius, add = i + radius + 1;
+                if (drop >= 0) sum -= arr[drop];
+                if (add < n) sum += arr[add];
+            }
+            return out;
         }
 
         function smoothProfile(arr) {
