@@ -321,6 +321,24 @@
             box-shadow: 0 4px 15px rgba(74, 144, 164, 0.3);
         }
 
+        .automate-btn {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #6a4c93, #9a031e);
+            color: var(--pure-white);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-left: 0.75rem;
+        }
+
+        .automate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(154, 3, 30, 0.35);
+        }
+
         /* Results Section */
         .results-section {
             display: none;
@@ -1106,6 +1124,25 @@
             background: rgba(74, 144, 164, 0.2);
         }
 
+        /* Auto Gel mode: pulsing highlight asking the user for the gel picture */
+        .drop-zone.auto-prompt {
+            border-color: var(--muted-blue);
+            background: rgba(74, 144, 164, 0.2);
+            animation: autoPromptPulse 1.4s ease-in-out infinite;
+        }
+
+        @keyframes autoPromptPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(74, 144, 164, 0.45);
+            }
+
+            50% {
+                box-shadow: 0 0 0 14px rgba(74, 144, 164, 0);
+            }
+        }
+
         .drop-zone p {
             font-size: 1.1rem;
             color: var(--primary-black);
@@ -1647,6 +1684,15 @@
 
             .custom-wells-container {
                 padding: 1.25rem;
+            }
+
+            .custom-wells-container input {
+                margin-right: 0.5rem;
+            }
+
+            .automate-btn {
+                margin-left: 0.5rem;
+                margin-top: 0.5rem;
             }
 
             .results-section {
@@ -2208,6 +2254,9 @@
                         <label for="wellCount">Number of wells (1-20):</label>
                         <input type="number" id="wellCount" min="1" max="20" value="8" />
                         <button class="apply-custom-wells-btn" onclick="applyCustomWells()">Apply</button>
+                        <button class="automate-btn" onclick="startAutoGel()"
+                            title="Reload in Auto Gel mode: pick a well count, upload your gel picture, and it is cropped automatically">⚡
+                            Automate</button>
                     </div>
                 </div>
 
@@ -2285,10 +2334,10 @@
                         </div>
                         <div class="select-wrapper">
                             <select id="ladderType" name="ladderType">
-                                <option value="none">None</option>
-                                <option value="100bp" selected>100 BP Ladder</option>
+                                <option value="none">No Ladder</option>
+                                <option value="100bp">100 BP Ladder</option>
                                 <option value="1kbp">1K BP Ladder</option>
-                                <option value="protein">Protein Ladder</option>
+                                <option value="protein" selected>Protein Ladder</option>
                             </select>
                         </div>
                         <div class="date-toggle-wrapper">
@@ -2488,6 +2537,77 @@
         var multiGelCropIndex = 0;
         var isMultiGelCropping = false;
 
+        // ===== AUTO GEL MODE =====
+        // Entered from the "⚡ Automate" button: the page reloads fresh with the
+        // Auto Gel title, asks for the picture after a well count is picked, and
+        // auto-detects the gel region instead of showing the crop modal.
+        var isAutoMode = false;
+        try {
+            isAutoMode = sessionStorage.getItem('gelAutoMode') === '1';
+        } catch (e) { /* storage unavailable — stay in normal mode */ }
+        if (isAutoMode) {
+            applyAutoGelMode();
+        }
+
+        function applyAutoGelMode() {
+            document.title = 'Auto Gel';
+            const heroTitle = document.getElementById('heroTitle');
+            const modeIndicator = document.getElementById('modeIndicator');
+            const heroDescription = document.getElementById('heroDescription');
+            const heroH1 = document.getElementById('heroH1');
+            if (heroTitle) heroTitle.textContent = 'Auto Gel';
+            if (modeIndicator) modeIndicator.textContent = '\u25BC Click to switch to Size Selection';
+            if (heroDescription) heroDescription.textContent = 'Pick your well count, then upload your gel picture \u2014 Auto Gel crops it and splits your wells for you.';
+            if (heroH1) heroH1.title = 'Click to exit Auto Gel';
+            const dropZoneText = document.querySelector('#dropZone p');
+            if (dropZoneText) dropZoneText.textContent = '\uD83D\uDCF7 Upload your gel picture';
+        }
+
+        function startAutoGel() {
+            try {
+                sessionStorage.setItem('gelAutoMode', '1');
+            } catch (e) { /* fall through — still reload */ }
+            window.location.reload();
+        }
+
+        function exitAutoGelMode() {
+            isAutoMode = false;
+            try {
+                sessionStorage.removeItem('gelAutoMode');
+            } catch (e) { /* ignore */ }
+            document.title = 'Gel Electrophoresis Analysis Tool';
+            document.getElementById('heroTitle').textContent = 'Size Selection';
+            document.getElementById('modeIndicator').textContent = '\u25BC Click to switch to Multiple Gels';
+            document.getElementById('heroDescription').textContent = 'Choose well count for your gel.';
+            document.getElementById('heroH1').title = 'Click to toggle Multiple Gels mode';
+            const dropZoneText = document.querySelector('#dropZone p');
+            if (dropZoneText) dropZoneText.textContent = 'Drag & drop image here';
+            clearGelPicturePrompt();
+        }
+
+        function promptForGelPicture() {
+            const section = document.getElementById('imageUploaderSection');
+            const dropZone = document.getElementById('dropZone');
+            if (!section || !dropZone) return;
+            dropZone.classList.add('auto-prompt');
+            // Let the results-section scroll settle first, then bring the
+            // upload zone into view so the "ask" is visible.
+            setTimeout(() => {
+                section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 250);
+            // Open the file picker directly — the click that landed here counts
+            // as user activation. If the browser blocks it, the pulsing drop
+            // zone still asks for the picture.
+            try {
+                document.getElementById('imageUploadInput').click();
+            } catch (e) { /* picker blocked — visible prompt remains */ }
+        }
+
+        function clearGelPicturePrompt() {
+            const dropZone = document.getElementById('dropZone');
+            if (dropZone) dropZone.classList.remove('auto-prompt');
+        }
+
         // ===== UI HANDLERS =====
         // Handle button selection
         function handleSelection(size) {
@@ -2569,6 +2689,12 @@
                 }, 100);
             }
 
+            // In Auto Gel mode, picking a well count leads straight to the
+            // picture upload (unless one is already loaded).
+            if (isAutoMode && currentWellCount > 0 && !originalCroppedImageSrc) {
+                promptForGelPicture();
+            }
+
             // Remove selection animation after animation completes
             const targetElement = event.target;
             setTimeout(() => {
@@ -2635,6 +2761,12 @@
                     block: 'start'
                 });
             }, 100);
+
+            // In Auto Gel mode, applying a custom well count leads straight to
+            // the picture upload (unless one is already loaded).
+            if (isAutoMode && !originalCroppedImageSrc) {
+                promptForGelPicture();
+            }
         }
 
         // Generate label slots dynamically
@@ -2692,6 +2824,10 @@
                 textHeader.textContent = input.placeholder;
                 textHeader.style.color = 'var(--muted-blue)'; // Restore accent color
             }
+
+            // Naming a well "ladder" (or clearing it) re-snap the ladder
+            // labels to that well's bands.
+            scheduleAutoLadderAlign();
         }
 
         function handleSlotKey(event, input) {
@@ -2718,6 +2854,8 @@
             ladderMarkerYPercents = null;
             updateLadderPreview();
             if (getLadderPosition() === 'M') renderMiddleLadders();
+            // A ladder-named well re-snaps the new ladder type to its bands.
+            autoAlignLadder();
         }
 
         // Middle-mode ladder state
@@ -2945,79 +3083,217 @@
         }
 
         function updateLadderPreview() {
-            const selection = document.getElementById('ladderType').value;
             const ladderContainer = document.getElementById('ladderLabelsContainer');
             ladderContainer.innerHTML = ''; // Clear previous ladder
 
-            let ladderMarkers = [];
-
-            // Define markers with their relative positions (percentages)
-            if (selection === '100bp') {
-                ladderMarkers = [
-                    { text: '1,500', pos: 10.0 },
-                    { text: '1,000', pos: 22.0 },
-                    { text: '900', pos: 25.5 },
-                    { text: '800', pos: 29.0 },
-                    { text: '700', pos: 32.5 },
-                    { text: '600', pos: 37.0 },
-                    { text: '500', pos: 42.5 },
-                    { text: '400', pos: 49.0 },
-                    { text: '300', pos: 57.5 },
-                    { text: '200', pos: 69.5 },
-                    { text: '100', pos: 90.0 }
-                ];
-            } else if (selection === '1kbp') {
-                ladderMarkers = [
-                    { text: '10,000', pos: 10.0 }, // 10kb
-                    { text: '8,000', pos: 15.0 },
-                    { text: '6,000', pos: 21.0 },
-                    { text: '5,000', pos: 25.0 },
-                    { text: '4,000', pos: 30.0 },
-                    { text: '3,000', pos: 36.0 },
-                    { text: '2,000', pos: 40.0 },
-                    { text: '1,500', pos: 45.0 },
-                    { text: '1,200', pos: 51.0 },
-                    { text: '1,000', pos: 60.0 },
-                    { text: '900', pos: 66.0 },
-                    { text: '800', pos: 75.0 },
-                    { text: '700', pos: 90.0 }
-                ];
-            } else if (selection === 'protein') {
-                ladderMarkers = [
-                    { text: '245', pos: 5.0 },
-                    { text: '180', pos: 14.0 },
-                    { text: '135', pos: 22.0 },
-                    { text: '100', pos: 31.0 },
-                    { text: '75', pos: 39.0 },
-                    { text: '63', pos: 44.0 },
-                    { text: '48', pos: 52.0 },
-                    { text: '35', pos: 61.0 },
-                    { text: '25', pos: 71.0 },
-                    { text: '20', pos: 77.0 },
-                    { text: '17', pos: 82.0 },
-                    { text: '11', pos: 95.0 }
-                ];
-            }
+            // Marker positions are the hand-tuned defaults from getLadderMarkerData
+            const ladderMarkers = getLadderMarkerData(document.getElementById('ladderType').value);
 
             // Generate markers
             ladderMarkers.forEach((item) => {
-                const markerDiv = document.createElement('div');
-                markerDiv.className = 'ladder-label-marker';
-                markerDiv.textContent = item.text;
+                addLadderMarkerTo(ladderContainer, item, item.pos);
+            });
+        }
 
-                // Set initial vertical position
-                markerDiv.style.top = `${item.pos}%`;
+        // Create one draggable ladder marker inside the ladder column.
+        // topPercent is the position within the marker column (0-100).
+        function addLadderMarkerTo(ladderContainer, item, topPercent) {
+            const markerDiv = document.createElement('div');
+            markerDiv.className = 'ladder-label-marker';
+            markerDiv.textContent = item.text;
 
-                // Add drag handler
-                markerDiv.addEventListener('mousedown', (e) => startDrag(e, markerDiv, ladderContainer));
+            // Set initial vertical position
+            markerDiv.style.top = `${topPercent}%`;
 
-                // Add right-click handler to remove
-                markerDiv.addEventListener('contextmenu', (e) => {
-                    e.preventDefault();
-                    markerDiv.remove();
-                });
+            // Add drag handler
+            markerDiv.addEventListener('mousedown', (e) => startDrag(e, markerDiv, ladderContainer));
 
-                ladderContainer.appendChild(markerDiv);
+            // Add right-click handler to remove
+            markerDiv.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                markerDiv.remove();
+            });
+
+            ladderContainer.appendChild(markerDiv);
+            return markerDiv;
+        }
+
+        // ===== LADDER AUTO-ALIGN =====
+        // When a well is named "ladder", the ladder labels snap to that well's
+        // actual bands: rows of high intensity inside the well, ordered
+        // top-down. If the gel shows fewer bands than the ladder has labels,
+        // the small labels that do not fit are dropped.
+        let alignedLadderData = null; // { markers, bands } while auto-aligned
+        let ladderAlignTimer = null;
+
+        function scheduleAutoLadderAlign() {
+            if (ladderAlignTimer) clearTimeout(ladderAlignTimer);
+            ladderAlignTimer = setTimeout(() => {
+                ladderAlignTimer = null;
+                autoAlignLadder();
+            }, 400);
+        }
+
+        function findLadderWellIndex() {
+            const inputs = document.querySelectorAll('.label-slot-input');
+            for (let i = 0; i < inputs.length; i++) {
+                if (/\bladder\b/i.test(inputs[i].value)) return i;
+            }
+            return -1;
+        }
+
+        // x-range (fractions of the cropped image width) of a well segment
+        function getWellSourceRange(index) {
+            if (!originalCroppedImageSrc) return null;
+            let bounds;
+            if (savedSplitState) {
+                bounds = [0, ...savedSplitState.splitPositions, 1];
+            } else {
+                const n = Math.max(1, currentWellCount);
+                bounds = [];
+                for (let k = 0; k <= n; k++) bounds.push(k / n);
+            }
+            if (index < 0 || index + 1 >= bounds.length) return null;
+            return { start: bounds[index], end: bounds[index + 1] };
+        }
+
+        function autoAlignLadder(retry) {
+            if (!originalCroppedImageSrc) return;
+            if (getLadderPosition() === 'M') return; // middle columns are manual
+            const ladderContainer = document.getElementById('ladderLabelsContainer');
+            if (!ladderContainer) return;
+
+            const ladderIndex = findLadderWellIndex();
+            if (ladderIndex < 0) {
+                // No well named ladder anymore — restore the default layout if
+                // we had aligned it.
+                if (alignedLadderData) {
+                    alignedLadderData = null;
+                    updateLadderPreview();
+                }
+                return;
+            }
+
+            // The marker column is laid out by adjustPreviewLayout; wait for a
+            // real height once before giving up on this pass.
+            if (ladderContainer.getBoundingClientRect().height < 50 && !retry) {
+                setTimeout(() => autoAlignLadder(true), 300);
+                return;
+            }
+
+            const range = getWellSourceRange(ladderIndex);
+            if (!range) return;
+
+            detectLadderBands(originalCroppedImageSrc, range.start, range.end).then((bands) => {
+                if (!bands || !bands.length) return;
+                const markers = getLadderMarkerData(document.getElementById('ladderType').value);
+                if (!markers.length) return;
+
+                let usedMarkers = markers;
+                let usedBands = bands;
+                if (bands.length < markers.length) {
+                    // Not every rung is visible: drop the small labels that
+                    // do not fit and keep the large ones top-down.
+                    usedMarkers = markers.slice(0, bands.length);
+                } else if (bands.length > markers.length) {
+                    usedBands = bands.slice(0, markers.length);
+                }
+                alignedLadderData = { markers: usedMarkers, bands: usedBands };
+                renderAlignedLadder();
+            });
+        }
+
+        // Render the auto-aligned ladder from alignedLadderData. Positions are
+        // recomputed from the live layout on every call — adjustPreviewLayout
+        // re-invokes this after re-flows, so the labels stay glued to the
+        // bands however the preview is laid out.
+        function renderAlignedLadder() {
+            if (!alignedLadderData) return;
+            const ladderContainer = document.getElementById('ladderLabelsContainer');
+            const imagePreview = document.getElementById('imagePreview');
+            if (!ladderContainer || !imagePreview) return;
+            const cRect = ladderContainer.getBoundingClientRect();
+            const iRect = imagePreview.getBoundingClientRect();
+            ladderContainer.innerHTML = '';
+            const { markers, bands } = alignedLadderData;
+            markers.forEach((item, i) => {
+                let topPercent = item.pos;
+                if (iRect.height > 50 && cRect.height > 50) {
+                    // Live offset between the marker column and the rendered
+                    // image, so band positions map exactly no matter how the
+                    // preview is laid out.
+                    const topDeltaPx = cRect.top - iRect.top;
+                    topPercent = ((bands[i] * iRect.height - topDeltaPx) / cRect.height) * 100;
+                    topPercent = Math.max(0, Math.min(100, topPercent));
+                }
+                addLadderMarkerTo(ladderContainer, item, topPercent);
+            });
+        }
+
+        // Find horizontal band rows inside one well: fraction of dark pixels
+        // per row within the well's x-range, then the runs above a threshold
+        // are the bands. Returns band centers as height fractions, top-down.
+        function detectLadderBands(dataUrl, startFrac, endFrac) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    try {
+                        const info = getImageGrayData(img, 1400);
+                        if (!info) {
+                            resolve(null);
+                            return;
+                        }
+                        const x0 = Math.max(0, Math.round(startFrac * info.sw));
+                        const x1 = Math.max(x0 + 1, Math.min(info.sw, Math.round(endFrac * info.sw)));
+                        // Gentle pixel threshold: ladder rungs are often much
+                        // lighter than sample bands, and the faint top rungs
+                        // matter as much as the dark ones.
+                        const pixelT = info.bg - 20;
+                        const rowDark = new Float32Array(info.sh);
+                        for (let y = 0; y < info.sh; y++) {
+                            let sum = 0;
+                            const off = y * info.sw;
+                            for (let x = x0; x < x1; x++) sum += info.gray[off + x] < pixelT ? 1 : 0;
+                            rowDark[y] = sum / (x1 - x0);
+                        }
+                        const rows = smoothProfile(rowDark);
+                        let rmax = 0;
+                        for (let y = 0; y < info.sh; y++) if (rows[y] > rmax) rmax = rows[y];
+                        const threshold = Math.max(0.05, 0.10 * rmax);
+                        const mergeY = Math.max(2, Math.round(0.01 * info.sh));
+                        const bands = [];
+                        let cur = null, gap = 0;
+                        for (let y = 0; y < info.sh; y++) {
+                            if (rows[y] >= threshold) {
+                                if (!cur) cur = { start: y, end: y };
+                                else cur.end = y;
+                                gap = 0;
+                            } else if (cur) {
+                                gap++;
+                                if (gap > mergeY) { bands.push(cur); cur = null; }
+                            }
+                        }
+                        if (cur) bands.push(cur);
+                        const fracs = bands.map(b => ((b.start + b.end + 1) / 2) / info.sh * 100);
+                        // The comb leaves horizontal lines above the first real
+                        // rung. Drop leading detections that sit far (more than
+                        // 1.5x the typical rung spacing) above the pack.
+                        while (fracs.length >= 2) {
+                            const rest = fracs.slice(1);
+                            const spacings = [];
+                            for (let i = 1; i < rest.length; i++) spacings.push(rest[i] - rest[i - 1]);
+                            spacings.sort((a, b) => a - b);
+                            const medianSpacing = spacings[Math.floor(spacings.length / 2)] || 0;
+                            if (rest[0] - fracs[0] > 1.5 * medianSpacing) fracs.shift();
+                            else break;
+                        }
+                        resolve(fracs.map(p => p / 100));
+                    } catch (err) {
+                        resolve(null);
+                    }
+                };
+                img.onerror = () => resolve(null);
+                img.src = dataUrl;
             });
         }
 
@@ -3440,6 +3716,10 @@
                  document.getElementById('middleLaddersContainer'),
                  ofInterestContainer].forEach(settleTransitions);
                 layoutBandAnnotations();
+
+                // Keep the auto-aligned ladder labels glued to their bands
+                // after any re-flow of the preview.
+                if (alignedLadderData) renderAlignedLadder();
             }
         }
 
@@ -3726,15 +4006,475 @@
             };
 
             try {
-                if (isTiffFile(file)) {
-                    const pngBlob = await decodeTiffFile(file);
-                    startCrop(await readAsDataUrl(pngBlob));
-                } else {
-                    startCrop(await readAsDataUrl(file));
-                }
+                const blob = isTiffFile(file) ? await decodeTiffFile(file) : file;
+                const dataUrl = await readAsDataUrl(blob);
+                // Auto Gel: detect the gel region by intensity and crop it
+                // automatically; fall back to the manual crop modal if the
+                // detection can't find a plausible gel.
+                if (isAutoMode && await autoCropGelFlow(dataUrl)) return;
+                startCrop(dataUrl);
             } catch (err) {
                 alert('Could not open this image: ' + (err && err.message ? err.message : 'unknown error.'));
             }
+        }
+
+        // Auto Gel: detect the gel bounds, split the wells at the detected
+        // lanes, and show the result. Returns false when detection failed so
+        // the caller can fall back to the manual crop modal.
+        async function autoCropGelFlow(dataUrl) {
+            const cropped = await autoCropGelImage(dataUrl);
+            if (!cropped) return false;
+
+            clearGelPicturePrompt();
+
+            // Cut the wells where the gel's own intensity is quietest (the
+            // white gaps between lanes). Lanes with no content are skipped, so
+            // the number of cuts follows what is actually on the gel. If the
+            // lanes can't be resolved, fall back to even splits for the
+            // well count picked on the home screen.
+            let work = cropped;
+            let laneInfo = await detectWellCuts(work, currentWellCount);
+            if (laneInfo && laneInfo.laneCount >= 2 && laneInfo.runs.length) {
+                // Trim empty margins so the crop spans just the lanes that
+                // have content (plus a little padding), then re-detect the
+                // cuts on the final crop.
+                const pad = 0.02;
+                const startF = Math.max(0, laneInfo.runs[0].start - pad);
+                const endF = Math.min(1, laneInfo.runs[laneInfo.runs.length - 1].end + pad);
+                if (startF > 0.005 || endF < 0.995) {
+                    const trimmed = await cropRegion(work, startF, endF);
+                    if (trimmed) {
+                        const redetected = await detectWellCuts(trimmed, currentWellCount);
+                        if (redetected && redetected.laneCount >= 2) {
+                            work = trimmed;
+                            laneInfo = redetected;
+                        }
+                    }
+                }
+            }
+            if (laneInfo && laneInfo.laneCount >= 2) {
+                savedSplitState = { splitPositions: laneInfo.cuts, removedIndices: [], addGaps: true };
+                document.getElementById('splitImageToggle').checked = true;
+                if (laneInfo.laneCount !== currentWellCount) {
+                    currentWellCount = laneInfo.laneCount;
+                    const layoutType = laneInfo.laneCount <= 8 ? 'big' : 'small';
+                    generateLabelSlots(laneInfo.laneCount, layoutType);
+                    const labelSectionTitle = document.getElementById('label-section-title');
+                    const labelSectionDescription = document.getElementById('label-section-description');
+                    if (labelSectionTitle) labelSectionTitle.textContent = `Auto Gel \u2014 ${laneInfo.laneCount} Wells Detected`;
+                    if (labelSectionDescription) labelSectionDescription.textContent = `Configure your ${laneInfo.laneCount} label slots`;
+                }
+            } else {
+                laneInfo = null;
+                if (currentWellCount > 1) {
+                    const positions = [];
+                    for (let i = 1; i < currentWellCount; i++) positions.push(i / currentWellCount);
+                    savedSplitState = { splitPositions: positions, removedIndices: [], addGaps: true };
+                    document.getElementById('splitImageToggle').checked = true;
+                }
+            }
+
+            useCroppedImage(work);
+            autoAlignLadder();
+            return true;
+        }
+
+        // Shared pixel-work helper: draw an image (optionally shrinking it)
+        // and return grayscale values plus the scanner background level.
+        function getImageGrayData(img, maxDim) {
+            const w = img.naturalWidth, h = img.naturalHeight;
+            if (!w || !h) return null;
+            const scale = Math.min(1, maxDim / Math.max(w, h));
+            const sw = Math.max(1, Math.round(w * scale));
+            const sh = Math.max(1, Math.round(h * scale));
+            const canvas = document.createElement('canvas');
+            canvas.width = sw;
+            canvas.height = sh;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(img, 0, 0, sw, sh);
+            let pixels;
+            try {
+                pixels = ctx.getImageData(0, 0, sw, sh).data;
+            } catch (err) {
+                return null; // tainted canvas — shouldn't happen with data URLs
+            }
+            const total = sw * sh;
+            const gray = new Uint8Array(total);
+            const hist = new Float32Array(256);
+            for (let i = 0, p = 0; i < total; i++, p += 4) {
+                const g = (pixels[p] * 299 + pixels[p + 1] * 587 + pixels[p + 2] * 114) / 1000 | 0;
+                gray[i] = g;
+                hist[g]++;
+            }
+            // Background level = brightest strong peak of the histogram
+            let bg = 255, peakCount = -1;
+            for (let v = 130; v <= 254; v++) {
+                const s = hist[v - 1] + hist[v] + hist[v + 1];
+                if (s > peakCount) {
+                    peakCount = s;
+                    bg = v;
+                }
+            }
+            return { sw, sh, gray, bg };
+        }
+
+        // Auto Gel: locate the lane boundaries in a cropped gel. Cuts go at
+        // the lowest-intensity stretch between lanes; lanes without content
+        // are skipped so the cut count follows what is actually on the gel.
+        function detectWellCuts(dataUrl, targetCount) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    try {
+                        resolve(detectWellCutsFromImage(img, targetCount));
+                    } catch (err) {
+                        resolve(null);
+                    }
+                };
+                img.onerror = () => resolve(null);
+                img.src = dataUrl;
+            });
+        }
+
+        function detectWellCutsFromImage(img, targetCount) {
+            const info = getImageGrayData(img, 1400);
+            if (!info) return null;
+            const { sw, sh, gray, bg } = info;
+
+            const colFrac = new Float32Array(sw);
+            for (let x = 0; x < sw; x++) {
+                let sum = 0;
+                for (let y = 0; y < sh; y++) sum += gray[y * sw + x] < bg - 30 ? 1 : 0;
+                colFrac[x] = sum / sh;
+            }
+            const cols = smoothProfile(colFrac);
+            let colMax = 0;
+            for (let x = 0; x < sw; x++) if (cols[x] > colMax) colMax = cols[x];
+
+            const T_HIGH = Math.max(0.06, 0.10 * colMax);  // definite lanes
+            const mergeGap = Math.max(1, Math.round(0.004 * sw));
+            const minLaneWidth = Math.max(2, Math.round(0.025 * sw));
+            const minSideGap = Math.max(2, Math.round(0.012 * sw));
+
+            function runsAbove(threshold) {
+                const runs = [];
+                let cur = null, gap = 0;
+                for (let x = 0; x < sw; x++) {
+                    if (cols[x] >= threshold) {
+                        if (!cur) cur = { start: x, end: x, peak: cols[x] };
+                        else { cur.end = x; cur.peak = Math.max(cur.peak, cols[x]); }
+                        gap = 0;
+                    } else if (cur) {
+                        gap++;
+                        if (gap > mergeGap) { runs.push(cur); cur = null; }
+                    }
+                }
+                if (cur) runs.push(cur);
+                // Narrower than a real lane → edge lines and scratches.
+                return runs.filter(r => (r.end - r.start + 1) >= minLaneWidth);
+            }
+
+            // Accept faint candidate runs that sit between established lanes
+            // with a real gap on both flanks (and on each other) — keeps lane
+            // smears from faking cuts while still catching quiet single-band
+            // wells.
+            function acceptWeak(existing, candidates) {
+                const anchors = existing.slice().sort((a, b) => a.start - b.start);
+                const accepted = [];
+                for (let i = 0; i <= anchors.length; i++) {
+                    const zoneStart = i === 0 ? 0 : anchors[i - 1].end + 1;
+                    const zoneEnd = i === anchors.length ? sw - 1 : anchors[i].start - 1;
+                    if (zoneEnd - zoneStart + 1 < minLaneWidth) continue;
+                    const inZone = candidates
+                        .filter(r => r.start >= zoneStart && r.end <= zoneEnd)
+                        .sort((a, b) => a.start - b.start);
+                    let prevEnd = zoneStart - 1;
+                    for (const w of inZone) {
+                        if (w.start - prevEnd - 1 >= minSideGap && zoneEnd - w.end >= minSideGap) {
+                            accepted.push(w);
+                            prevEnd = w.end;
+                        }
+                    }
+                }
+                return accepted;
+            }
+
+            let all = runsAbove(T_HIGH);
+            // Faint lanes only cross lower floors. Relax in steps: the picked
+            // well count is the target, but only runs with real signal are
+            // ever accepted — background never becomes a well.
+            const floors = [
+                Math.max(0.025, 0.035 * colMax),
+                Math.max(0.015, 0.02 * colMax),
+                Math.max(0.01, 0.012 * colMax)
+            ];
+            for (const floor of floors) {
+                if (targetCount && all.length >= targetCount) break;
+                const candidates = runsAbove(floor)
+                    .filter(r => !all.some(l => l.start < r.end && l.end > r.start));
+                const found = acceptWeak(all, candidates);
+                if (found.length) all = all.concat(found).sort((a, b) => a.start - b.start);
+            }
+            if (all.length < 2) return null;
+
+            // Clamp lane width: an unusually wide run is likely two wells
+            // loaded side by side — split it at its quietest internal column
+            // when that valley is clearly quieter than the lane.
+            const widths = all.map(r => r.end - r.start + 1).sort((a, b) => a - b);
+            const medianWidth = widths[Math.floor(widths.length / 2)] || 1;
+            const maxLaneWidth = Math.max(Math.round(2.2 * medianWidth), Math.round(0.09 * sw));
+            for (let i = all.length - 1; i >= 0; i--) {
+                const r = all[i];
+                if (r.end - r.start + 1 <= maxLaneWidth) continue;
+                const inset = Math.max(1, minLaneWidth);
+                let valleyX = -1, valleyVal = Infinity;
+                for (let x = r.start + inset; x <= r.end - inset; x++) {
+                    if (cols[x] < valleyVal) { valleyVal = cols[x]; valleyX = x; }
+                }
+                if (valleyX > 0 && valleyVal <= 0.5 * r.peak) {
+                    all.splice(i, 1,
+                        { start: r.start, end: valleyX - 1, peak: r.peak },
+                        { start: valleyX + 1, end: r.end, peak: r.peak });
+                }
+            }
+            all.sort((a, b) => a.start - b.start);
+
+            const cuts = [];
+            for (let i = 0; i + 1 < all.length; i++) {
+                const a = all[i].end, b = all[i + 1].start;
+                // Cut at the lowest-intensity stretch of the gap (midpoint of
+                // the flat minimum when the whole gap is equally quiet).
+                let minVal = Infinity;
+                for (let x = a; x <= b; x++) if (cols[x] < minVal) minVal = cols[x];
+                const flat = [];
+                for (let x = a; x <= b; x++) if (cols[x] <= minVal + 0.01) flat.push(x);
+                const mid = flat[Math.floor(flat.length / 2)];
+                cuts.push((mid + 0.5) / sw);
+            }
+            return {
+                laneCount: all.length,
+                cuts,
+                // Lane spans as fractions of the image width — used to trim
+                // empty margins off the crop.
+                runs: all.map(r => ({ start: r.start / sw, end: (r.end + 1) / sw }))
+            };
+        }
+
+        // Crop a data-URL image to a horizontal fraction range [startF, endF].
+        function cropRegion(dataUrl, startF, endF) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    try {
+                        const w = img.naturalWidth, h = img.naturalHeight;
+                        const left = Math.max(0, Math.round(startF * w));
+                        const right = Math.min(w, Math.round(endF * w));
+                        const canvas = document.createElement('canvas');
+                        canvas.width = Math.max(1, right - left);
+                        canvas.height = h;
+                        canvas.getContext('2d').drawImage(img, left, 0, canvas.width, h, 0, 0, canvas.width, h);
+                        resolve(canvas.toDataURL('image/png'));
+                    } catch (err) {
+                        resolve(null);
+                    }
+                };
+                img.onerror = () => resolve(null);
+                img.src = dataUrl;
+            });
+        }
+
+        function autoCropGelImage(dataUrl) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    try {
+                        const box = detectGelBounds(img);
+                        if (!box) {
+                            resolve(null);
+                            return;
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = box.width;
+                        canvas.height = box.height;
+                        canvas.getContext('2d').drawImage(img, box.left, box.top, box.width, box.height, 0, 0, box.width, box.height);
+                        resolve(canvas.toDataURL('image/png'));
+                    } catch (err) {
+                        resolve(null);
+                    }
+                };
+                img.onerror = () => resolve(null);
+                img.src = dataUrl;
+            });
+        }
+
+        // Find the gel within a scan: the gel slab is a large contiguous block
+        // of pixels darker than the scanner's white background. Row/column
+        // profiles of "content" pixels locate its bounds, with small gaps
+        // tolerated so white space between lanes doesn't split the region.
+        function detectGelBounds(img) {
+            const MAXDIM = 1400;
+            const w = img.naturalWidth, h = img.naturalHeight;
+            if (!w || !h) return null;
+
+            const scale = Math.min(1, MAXDIM / Math.max(w, h));
+            const sw = Math.max(1, Math.round(w * scale));
+            const sh = Math.max(1, Math.round(h * scale));
+            const canvas = document.createElement('canvas');
+            canvas.width = sw;
+            canvas.height = sh;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(img, 0, 0, sw, sh);
+            let pixels;
+            try {
+                pixels = ctx.getImageData(0, 0, sw, sh).data;
+            } catch (err) {
+                return null; // tainted canvas — shouldn't happen with data URLs
+            }
+
+            const total = sw * sh;
+            const gray = new Uint8Array(total);
+            const hist = new Float32Array(256);
+            for (let i = 0, p = 0; i < total; i++, p += 4) {
+                const g = (pixels[p] * 299 + pixels[p + 1] * 587 + pixels[p + 2] * 114) / 1000 | 0;
+                gray[i] = g;
+                hist[g]++;
+            }
+
+            // Background level = brightest strong peak of the histogram
+            let bg = 255, peakCount = -1;
+            for (let v = 130; v <= 254; v++) {
+                const s = hist[v - 1] + hist[v] + hist[v + 1];
+                if (s > peakCount) {
+                    peakCount = s;
+                    bg = v;
+                }
+            }
+
+            const threshold = bg - 30;
+            const mask = new Uint8Array(total);
+            for (let i = 0; i < total; i++) mask[i] = gray[i] < threshold ? 1 : 0;
+
+            const rowFrac = new Float32Array(sh);
+            for (let y = 0; y < sh; y++) {
+                let sum = 0;
+                const off = y * sw;
+                for (let x = 0; x < sw; x++) sum += mask[off + x];
+                rowFrac[y] = sum / sw;
+            }
+
+            const gapY = Math.max(2, Math.round(0.05 * sh));
+            const gapX = Math.max(2, Math.round(0.04 * sw));
+
+            let run = findBestRun(smoothProfile(rowFrac), 0.15, gapY);
+            if (!run) return null;
+            let r0 = run.start, r1 = run.end;
+
+            const colFrac = new Float32Array(sw);
+            for (let x = 0; x < sw; x++) {
+                let sum = 0;
+                for (let y = r0; y <= r1; y++) sum += mask[y * sw + x];
+                colFrac[x] = sum / (r1 - r0 + 1);
+            }
+            const colFracSm = smoothProfile(colFrac);
+            run = findBestRun(colFracSm, 0.15, gapX);
+            if (!run) return null;
+            let c0 = run.start, c1 = run.end;
+
+            // Refine rows over the strong lane columns only — measuring across
+            // the full slab width would dilute faint rows (comb teeth) and cut
+            // them out of the crop.
+            let colMax = 0;
+            for (let x = 0; x < sw; x++) {
+                if (colFracSm[x] > colMax) colMax = colFracSm[x];
+            }
+            let strongCount = 0;
+            for (let x = c0; x <= c1; x++) {
+                if (colFracSm[x] >= 0.5 * colMax) strongCount++;
+            }
+            const rowFrac2 = new Float32Array(sh);
+            for (let y = 0; y < sh; y++) {
+                let sum = 0;
+                const off = y * sw;
+                for (let x = c0; x <= c1; x++) {
+                    if (colFracSm[x] >= 0.5 * colMax) sum += mask[off + x];
+                }
+                rowFrac2[y] = strongCount ? sum / strongCount : sum / (c1 - c0 + 1);
+            }
+            run = findBestRun(smoothProfile(rowFrac2), 0.15, gapY);
+            if (!run) return null;
+            r0 = run.start;
+            r1 = run.end;
+
+            // Extend the bounds over faint structure the lane-column pass
+            // dilutes away — the comb teeth at the top, low-mass bands at the
+            // bottom. Walk outward on the full-width profile, stopping at a
+            // sustained white gap so dust above the gel isn't swept in.
+            let lastContentY = r0;
+            for (let y = r0 - 1; y >= 0; y--) {
+                if (rowFrac[y] >= 0.04) lastContentY = y;
+                else if (lastContentY - y > gapY) break;
+            }
+            r0 = lastContentY;
+            lastContentY = r1;
+            for (let y = r1 + 1; y < sh; y++) {
+                if (rowFrac[y] >= 0.04) lastContentY = y;
+                else if (y - lastContentY > gapY) break;
+            }
+            r1 = lastContentY;
+
+            const padX = Math.round(0.01 * sw), padY = Math.round(0.01 * sh);
+            r0 = Math.max(0, r0 - padY);
+            r1 = Math.min(sh - 1, r1 + padY);
+            c0 = Math.max(0, c0 - padX);
+            c1 = Math.min(sw - 1, c1 + padX);
+
+            const left = Math.round(c0 * w / sw);
+            const top = Math.round(r0 * h / sh);
+            const right = Math.round((c1 + 1) * w / sw);
+            const bottom = Math.round((r1 + 1) * h / sh);
+            const boxW = right - left, boxH = bottom - top;
+
+            // Reject implausible detections (e.g. a blank scan) — the caller
+            // falls back to the manual crop modal.
+            if (boxW < 0.15 * w || boxH < 0.15 * h) return null;
+            return { left, top, width: boxW, height: boxH };
+        }
+
+        // Longest merged run of indices above a relative cutoff, tolerating
+        // gaps up to gapTol (lane-to-lane white space). Returns {start, end}
+        // inclusive, or null.
+        function findBestRun(frac, relCutoff, gapTol) {
+            let maxVal = 0;
+            for (let i = 0; i < frac.length; i++) {
+                if (frac[i] > maxVal) maxVal = frac[i];
+            }
+            const cutoff = maxVal * relCutoff;
+            let best = null, cur = null, gap = 0;
+            for (let i = 0; i < frac.length; i++) {
+                if (frac[i] >= cutoff) {
+                    if (!cur) cur = { start: i, end: i };
+                    else cur.end = i;
+                    gap = 0;
+                } else if (cur) {
+                    gap++;
+                    if (gap > gapTol) {
+                        if (!best || (cur.end - cur.start) > (best.end - best.start)) best = cur;
+                        cur = null;
+                    }
+                }
+            }
+            if (cur && (!best || (cur.end - cur.start) > (best.end - best.start))) best = cur;
+            return best;
+        }
+
+        function smoothProfile(arr) {
+            const out = new Float32Array(arr.length);
+            for (let i = 0; i < arr.length; i++) {
+                const a = arr[Math.max(0, i - 1)];
+                const c = arr[Math.min(arr.length - 1, i + 1)];
+                out[i] = (a + arr[i] + c) / 3;
+            }
+            return out;
         }
 
         function applyCrop() {
@@ -3750,9 +4490,6 @@
                 return;
             }
 
-            const imageDataUrl = croppedCanvas.toDataURL('image/png');
-            originalCroppedImageSrc = imageDataUrl; // Save original for splitting
-
             // Reset states
             savedSplitState = null;
             wellGroups = [];
@@ -3762,6 +4499,17 @@
             document.getElementById('splitImageToggle').checked = false;
             document.getElementById('groupWellsToggle').checked = false;
             document.getElementById('editGroupsBtn').style.display = 'none';
+
+            useCroppedImage(croppedCanvas.toDataURL('image/png'));
+            autoAlignLadder();
+        }
+
+        // Shared tail of the crop flow: takes a final image data URL, shows it
+        // as the working preview and wires up the downstream render callbacks.
+        // Used by the manual crop modal and by Auto Gel's auto-detected crop.
+        function useCroppedImage(imageDataUrl) {
+            originalCroppedImageSrc = imageDataUrl; // Save original for splitting
+            alignedLadderData = null; // new image — ladder must re-align
 
             document.getElementById('imageControls').style.display = 'flex';
 
@@ -3812,6 +4560,7 @@
             document.getElementById('dropZone').style.display = 'block';
             document.getElementById('imageUploadInput').value = ''; // Reset file input
             document.getElementById('exportSection').style.display = 'none'; // Hide export button
+            alignedLadderData = null;
 
             // Reset split controls
             document.getElementById('imageControls').style.display = 'none';
@@ -5009,6 +5758,12 @@
         // ===== MULTI-GEL MODE =====
 
         function toggleMultiGelMode() {
+            // In Auto Gel mode the title click is the way back to normal mode.
+            if (isAutoMode) {
+                exitAutoGelMode();
+                return;
+            }
+
             isMultiGelMode = !isMultiGelMode;
 
             const sizeButtons = document.getElementById('selection');
