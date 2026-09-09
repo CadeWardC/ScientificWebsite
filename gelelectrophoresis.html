@@ -3259,9 +3259,11 @@
             });
         }
 
-        // Find horizontal band rows inside one well: fraction of dark pixels
-        // per row within the well's x-range, then the runs above a threshold
-        // are the bands. Returns band centers as height fractions, top-down.
+        // Find horizontal band rows inside one well. Broad rows that fill nearly
+        // the whole well are normally the tracking-dye front or a gel edge, not
+        // ladder rungs. After removing those, keep the largest tightly spaced
+        // band stack so comb lines and isolated scratches cannot become labels.
+        // Returns band centers as height fractions, top-down.
         function detectLadderBands(dataUrl, startFrac, endFrac) {
             return new Promise((resolve) => {
                 const img = new Image();
@@ -3294,8 +3296,11 @@
                         let cur = null, gap = 0;
                         for (let y = 0; y < info.sh; y++) {
                             if (rows[y] >= threshold) {
-                                if (!cur) cur = { start: y, end: y };
-                                else cur.end = y;
+                                if (!cur) cur = { start: y, end: y, peak: rows[y] };
+                                else {
+                                    cur.end = y;
+                                    if (rows[y] > cur.peak) cur.peak = rows[y];
+                                }
                                 gap = 0;
                             } else if (cur) {
                                 gap++;
@@ -3303,27 +3308,74 @@
                             }
                         }
                         if (cur) bands.push(cur);
-                        let fracs = bands.map(b => ((b.start + b.end + 1) / 2) / info.sh * 100);
-                        // The comb above the gel leaves stray lines. Real rungs
-                        // form a dense, regular pack rising from the dye front,
-                        // so walking up from the bottom-most band, everything
-                        // beyond the first unusually large gap is comb, not
-                        // bands.
-                        if (fracs.length > 3) {
-                            const desc = fracs.slice().sort((a, b) => b - a);
-                            const allGaps = [];
-                            for (let i = 1; i < desc.length; i++) allGaps.push(desc[i - 1] - desc[i]);
-                            allGaps.sort((a, b) => a - b);
-                            const medGap = allGaps[Math.floor(allGaps.length / 2)] || 1;
-                            const limit = 1.75 * medGap;
-                            const kept = [desc[0]];
-                            for (let i = 1; i < desc.length; i++) {
-                                if (desc[i - 1] - desc[i] > limit) break;
-                                kept.push(desc[i]);
+
+                        let candidates = bands.map(function(b) {
+                            return {
+                                start: b.start / info.sh,
+                                end: b.end / info.sh,
+                                center: ((b.start + b.end + 1) / 2) / info.sh,
+                                peak: b.peak
+                            };
+                        }).filter(function(b) {
+                            return b.center >= 0.04 && b.center <= 0.94;
+                        });
+
+                        // The dye front commonly fills almost the entire well.
+                        // Once a credible set of rungs exists above one of these
+                        // broad rows, nothing below it belongs to the ladder.
+                        let bottomLimit = 0.94;
+                        for (let i = 0; i < candidates.length; i++) {
+                            if (candidates[i].peak < 0.82 || candidates[i].center < 0.20) continue;
+                            let credibleAbove = 0;
+                            for (let j = 0; j < i; j++) {
+                                if (candidates[j].peak >= Math.max(0.10, threshold * 1.2)) credibleAbove++;
                             }
-                            fracs = kept.reverse();
+                            if (credibleAbove >= 3) {
+                                bottomLimit = candidates[i].start;
+                                break;
+                            }
                         }
-                        resolve(fracs.map(p => p / 100));
+
+                        let ordinaryPeak = 0;
+                        candidates.forEach(function(b) {
+                            if (b.center < bottomLimit && b.peak < 0.82 && b.peak > ordinaryPeak) ordinaryPeak = b.peak;
+                        });
+                        const minPeak = Math.max(threshold, Math.min(0.22, ordinaryPeak * 0.25));
+                        candidates = candidates.filter(function(b) {
+                            return b.center < bottomLimit && b.peak >= minPeak && b.peak < 0.82;
+                        });
+
+                        if (candidates.length < 3) {
+                            resolve([]);
+                            return;
+                        }
+
+                        // Split isolated comb/scratch features away at gaps much
+                        // larger than the typical rung spacing, then choose the
+                        // most populated stack (ties favour the taller stack).
+                        const gaps = [];
+                        for (let i = 1; i < candidates.length; i++) gaps.push(candidates[i].center - candidates[i - 1].center);
+                        const sortedGaps = gaps.slice().sort(function(a, b) { return a - b; });
+                        const medianGap = sortedGaps[Math.floor(sortedGaps.length / 2)] || 0.04;
+                        const splitGap = Math.max(0.09, Math.min(0.18, medianGap * 2.2));
+                        const groups = [];
+                        let group = [candidates[0]];
+                        for (let i = 1; i < candidates.length; i++) {
+                            if (candidates[i].center - candidates[i - 1].center > splitGap) {
+                                groups.push(group);
+                                group = [];
+                            }
+                            group.push(candidates[i]);
+                        }
+                        groups.push(group);
+                        groups.sort(function(a, b) {
+                            if (b.length !== a.length) return b.length - a.length;
+                            const spanA = a[a.length - 1].center - a[0].center;
+                            const spanB = b[b.length - 1].center - b[0].center;
+                            return spanB - spanA;
+                        });
+                        const best = groups[0] || [];
+                        resolve(best.length >= 3 ? best.map(function(b) { return b.center; }) : []);
                     } catch (err) {
                         resolve(null);
                     }
@@ -4088,23 +4140,19 @@
         // Detect the lanes on a cropped gel and place that many well cuts on
         // it. The well count picked on the home screen is never changed here \u2014
         // the gel always splits into exactly that many separate wells, and
-        // surplus wells are the user's to remove under "Adjust Wells". With
-        // allowTrim, empty margins are cropped away first. Renders the result
-        // via useCroppedImage. Returns false when no lanes were resolved.
+        // surplus wells are the user's to remove under "Adjust Wells". The
+        // physical slab crop is preserved so faint or empty outer wells are
+        // not silently discarded. Renders via useCroppedImage and returns
+        // false only when no usable profile was resolved.
         async function applyAutoWells(croppedDataUrl, allowTrim) {
             let work = croppedDataUrl;
             let laneInfo = await detectWellCuts(work, currentWellCount);
-            if (allowTrim && laneInfo && laneInfo.runs.length) {
-                // Trim empty margins so the crop spans just the lanes that
-                // have content, then re-detect the cuts on the final crop.
-                // Padding is a share of the lane pitch rather than a fixed
-                // fraction of the width, so a wide scan and a tight one both
-                // keep the same visual breathing room.
-                const runs = laneInfo.runs;
-                const laneSpan = runs[runs.length - 1].end - runs[0].start;
-                const pad = Math.min(0.03, Math.max(0.004, 0.15 * laneSpan / Math.max(1, runs.length)));
-                const startF = Math.max(0, runs[0].start - pad);
-                const endF = Math.min(1, runs[runs.length - 1].end + pad);
+            if (allowTrim && laneInfo && Number.isFinite(laneInfo.cropStart) && Number.isFinite(laneInfo.cropEnd)) {
+                // A detector may offer a high-confidence lane-grid crop. Do
+                // not trim from the first/last dark run alone: faint or empty
+                // outer wells have little ink and were being discarded.
+                const startF = Math.max(0, laneInfo.cropStart);
+                const endF = Math.min(1, laneInfo.cropEnd);
                 if ((startF > 0.005 || endF < 0.995) && endF - startF > 0.2) {
                     const trimmed = await cropRegion(work, startF, endF);
                     if (trimmed) {
@@ -4165,12 +4213,31 @@
                     bg = v;
                 }
             }
+            // Once a scan has been cropped, a clipped-white strip above the
+            // gel can form the tallest single histogram spike even though the
+            // gel's own background is the broad dominant surface. For lane
+            // detection, use that non-white surface whenever it is clearly
+            // represented; otherwise every gel-background pixel looks like a
+            // band and the well grid locks onto slab texture instead.
+            if (bg >= 248) {
+                let localBg = bg, localPeak = -1;
+                for (let v = 130; v <= 247; v++) {
+                    const s = hist[v - 1] + hist[v] + hist[v + 1];
+                    if (s > localPeak) {
+                        localPeak = s;
+                        localBg = v;
+                    }
+                }
+                let clippedWhite = 0;
+                for (let v = 248; v <= 255; v++) clippedWhite += hist[v];
+                if (localPeak >= 0.18 * peakCount && clippedWhite < 0.45 * total) bg = localBg;
+            }
             return { sw, sh, gray, bg };
         }
 
-        // Auto Gel: locate the lane boundaries in a cropped gel. Cuts go at
-        // the lowest-intensity stretch between lanes; lanes without content
-        // are skipped so the cut count follows what is actually on the gel.
+        // Auto Gel: locate the lane boundaries in a cropped gel. Cuts stay
+        // near the regular comb spacing and move into the lowest-intensity
+        // stretch available between neighbouring wells.
         function detectWellCuts(dataUrl, targetCount) {
             return new Promise((resolve) => {
                 const img = new Image();
@@ -4199,7 +4266,40 @@
             if (N < 2) return { laneCount: 1, cuts: [], runs: [{ start: 0, end: 1 }] };
 
             // Column profile: two signals, both measured against the scanner
-            // background. Mean darkness catches faint low-contrast lanes; the
+            // background. Only informative rows take part. Nearly blank rows
+            // add noise, while rows dark across most of the gel are normally
+            // the dye front, the slab edge, or a scan shadow rather than well
+            // evidence. Broad-but-usable rows are down-weighted so an
+            // overloaded sample cannot pull several cuts into the same lane.
+            const rowWeights = new Float32Array(sh);
+            const yMin = Math.round(0.04 * sh);
+            const yMax = Math.round(0.88 * sh);
+            let totalRowWeight = 0;
+            for (let y = 0; y < sh; y++) {
+                let darkCount = 0;
+                const off = y * sw;
+                for (let x = 0; x < sw; x++) {
+                    if (bg - gray[off + x] > 20) darkCount++;
+                }
+                const frac = darkCount / sw;
+                if (y >= yMin && y <= yMax && frac >= 0.002 && frac <= 0.68) {
+                    const weight = frac > 0.30 ? 0.30 / frac : 1;
+                    rowWeights[y] = weight;
+                    totalRowWeight += weight;
+                }
+            }
+            // A very faint gel may not have enough thresholded rows. Keep a
+            // conservative inner-height fallback instead of returning a bad
+            // or empty profile.
+            if (totalRowWeight < Math.max(4, 0.03 * sh)) {
+                totalRowWeight = 0;
+                for (let y = yMin; y <= yMax; y++) {
+                    rowWeights[y] = 1;
+                    totalRowWeight++;
+                }
+            }
+
+            // Mean clipped darkness catches faint low-contrast lanes; the
             // dark-pixel fraction catches sharp bands on a washed-out lane.
             // Each is scaled to its own maximum so neither drowns the other.
             const ink = new Float32Array(sw);
@@ -4208,19 +4308,21 @@
             for (let x = 0; x < sw; x++) {
                 let sumInk = 0, sumHit = 0;
                 for (let y = 0; y < sh; y++) {
+                    const weight = rowWeights[y];
+                    if (!weight) continue;
                     const d = bg - gray[y * sw + x];
-                    if (d > 0) sumInk += d;
-                    if (d > 30) sumHit++;
+                    if (d > 0) sumInk += Math.min(80, d) * weight;
+                    if (d > 20) sumHit += weight;
                 }
-                ink[x] = sumInk / (sh * 255);
-                hit[x] = sumHit / sh;
+                ink[x] = sumInk / (totalRowWeight * 80);
+                hit[x] = sumHit / totalRowWeight;
                 if (ink[x] > inkMax) inkMax = ink[x];
                 if (hit[x] > hitMax) hitMax = hit[x];
             }
             if (inkMax <= 0 && hitMax <= 0) return null;
             const raw = new Float32Array(sw);
             for (let x = 0; x < sw; x++) {
-                raw[x] = 0.5 * (inkMax ? ink[x] / inkMax : 0) + 0.5 * (hitMax ? hit[x] / hitMax : 0);
+                raw[x] = 0.45 * (inkMax ? ink[x] / inkMax : 0) + 0.55 * (hitMax ? hit[x] / hitMax : 0);
             }
             // Rolling-minimum background subtraction (the 1D cousin of
             // ImageJ's rolling ball) walks a window one expected pitch wide
@@ -4235,6 +4337,13 @@
             const cols = boxSmooth(
                 rollingMinSubtract(raw, Math.max(4, Math.round(sw / (2 * N)))),
                 Math.max(1, Math.round(0.12 * (sw / N))));
+
+            // A repeated lane pattern is strong evidence that the user chose
+            // the number of occupied wells rather than every slot in a wider
+            // comb. When that periodic signal is clear, it also gives us safe
+            // outer crop edges. Weak/irregular gels deliberately fall back to
+            // the full slab and the regular valley search below.
+            const periodicGrid = detectPeriodicWellGrid(cols, N);
 
             let colMax = 0;
             for (let x = 0; x < sw; x++) if (cols[x] > colMax) colMax = cols[x];
@@ -4407,13 +4516,173 @@
             cuts = nudgeCutsOffLanes(cuts, finalLanes, 1 / sw);
             cuts = clampWellWidths(cuts, N);
             cuts = nudgeCutsOffLanes(cuts, finalLanes, 0.5 / N);
+            // The selected well count represents a physical comb, whose lanes
+            // remain close to a regular pitch even when several wells are
+            // empty or one sample is overloaded. Use that geometry as the
+            // primary constraint, then let nearby low-intensity valleys move
+            // each cut off real bands. This prevents missing lanes from
+            // pushing all remaining cuts into one blank margin.
+            cuts = periodicGrid ? periodicGrid.cuts : placeRegularWellCuts(cols, N);
             return {
                 laneCount: cuts.length + 1,
                 cuts,
-                // Lane spans as fractions of the image width — used to trim
-                // empty margins off the crop.
+                cropStart: periodicGrid ? periodicGrid.cropStart : null,
+                cropEnd: periodicGrid ? periodicGrid.cropEnd : null,
+                // Lane spans remain available for diagnostics and future
+                // high-confidence grid cropping.
                 runs: finalLanes.map(l => ({ start: l.s, end: l.e }))
             };
+        }
+
+        // Find the dominant repeated lane pitch by normalized
+        // autocorrelation, then slide an N-lane grid across the image. The
+        // winning grid rewards ink at lane centers, quiet boundaries, and
+        // coverage of the useful signal. A confidence threshold keeps random
+        // scratches or sparse single-band gels from driving a destructive
+        // horizontal crop.
+        function detectPeriodicWellGrid(profile, n) {
+            if (n < 2 || !profile || profile.length < 4 * n) return null;
+            const width = profile.length;
+            let mean = 0;
+            for (let x = 0; x < width; x++) mean += profile[x];
+            mean /= width;
+            let variance = 0;
+            const centered = new Float32Array(width);
+            for (let x = 0; x < width; x++) {
+                centered[x] = profile[x] - mean;
+                variance += centered[x] * centered[x];
+            }
+            variance /= width;
+            if (variance < 1e-7) return null;
+
+            const nominalPitch = width / n;
+            const minLag = Math.max(3, Math.round(0.45 * nominalPitch));
+            const maxLag = Math.min(width - 2, Math.round(1.10 * nominalPitch));
+            const correlations = [];
+            for (let lag = minLag; lag <= maxLag; lag++) {
+                let sum = 0;
+                for (let x = 0; x + lag < width; x++) {
+                    sum += centered[x] * centered[x + lag];
+                }
+                correlations.push(sum / Math.max(1, (width - lag) * variance));
+            }
+
+            let pitch = -1, confidence = -Infinity;
+            for (let i = 1; i + 1 < correlations.length; i++) {
+                const value = correlations[i];
+                if (value >= correlations[i - 1] && value > correlations[i + 1] && value > confidence) {
+                    confidence = value;
+                    pitch = minLag + i;
+                }
+            }
+            if (pitch < 0 || confidence < 0.12) return null;
+
+            const sorted = Array.from(profile).sort((a, b) => a - b);
+            const cap = sorted[Math.floor(0.80 * (sorted.length - 1))] || 0;
+            const cappedPrefix = new Float32Array(width + 1);
+            const rawPrefix = new Float32Array(width + 1);
+            let profileMax = 0;
+            for (let x = 0; x < width; x++) {
+                cappedPrefix[x + 1] = cappedPrefix[x] + Math.min(profile[x], cap);
+                rawPrefix[x + 1] = rawPrefix[x] + profile[x];
+                if (profile[x] > profileMax) profileMax = profile[x];
+            }
+
+            function windowMean(prefix, center, radius) {
+                const a = Math.max(0, Math.floor(center - radius));
+                const b = Math.min(width - 1, Math.ceil(center + radius));
+                return (prefix[b + 1] - prefix[a]) / Math.max(1, b - a + 1);
+            }
+
+            const firstMin = Math.max(0, Math.round(0.05 * pitch));
+            const firstMax = Math.floor(width - (n - 1 + 0.05) * pitch);
+            if (firstMax < firstMin) return null;
+            let best = null;
+            for (let first = firstMin; first <= firstMax; first++) {
+                const lanes = [];
+                const gaps = [];
+                for (let i = 0; i < n; i++) {
+                    lanes.push(windowMean(cappedPrefix, first + i * pitch, 0.22 * pitch));
+                    if (i + 1 < n) gaps.push(windowMean(cappedPrefix, first + (i + 0.5) * pitch, 0.11 * pitch));
+                }
+                const laneSorted = lanes.slice().sort((a, b) => a - b);
+                const gapSorted = gaps.slice().sort((a, b) => a - b);
+                const laneMean = lanes.reduce((sum, value) => sum + value, 0) / lanes.length;
+                const gapMean = gaps.reduce((sum, value) => sum + value, 0) / gaps.length;
+                const laneQ25 = laneSorted[Math.floor(0.25 * (laneSorted.length - 1))] || 0;
+                const gapQ75 = gapSorted[Math.floor(0.75 * (gapSorted.length - 1))] || 0;
+                const start = Math.max(0, first - 0.5 * pitch);
+                const end = Math.min(width, first + (n - 0.5) * pitch);
+                const coverage = (rawPrefix[Math.floor(end)] - rawPrefix[Math.floor(start)]) /
+                    Math.max(1e-6, rawPrefix[width]);
+                const score = laneMean + 0.50 * laneQ25 - 1.20 * gapMean - 0.25 * gapQ75 +
+                    0.08 * profileMax * coverage;
+                if (!best || score > best.score) best = { score, first };
+            }
+            if (!best) return null;
+
+            const pad = 0.06 * pitch;
+            const cropStartPx = Math.max(0, best.first - 0.5 * pitch - pad);
+            const cropEndPx = Math.min(width, best.first + (n - 0.5) * pitch + pad);
+            const cuts = [];
+            for (let i = 1; i < n; i++) cuts.push((best.first + (i - 0.5) * pitch) / width);
+            return {
+                cuts,
+                cropStart: cropStartPx / width,
+                cropEnd: cropEndPx / width,
+                confidence
+            };
+        }
+
+        // Place one boundary near each expected comb division. Each boundary
+        // gets its own non-overlapping search window and pays a small distance
+        // penalty, so a large blank area cannot attract several cuts. The
+        // image term is a short local mean rather than a single pixel, which
+        // avoids snapping to scratches or JPEG noise.
+        function placeRegularWellCuts(profile, n) {
+            if (n < 2 || !profile || profile.length < n) return [];
+            const width = profile.length;
+            const pitch = width / n;
+            const searchRadius = 0.28 * pitch;
+            const sampleRadius = Math.max(1, Math.round(0.035 * pitch));
+            const minWell = 0.70 * pitch;
+            const prefix = new Float32Array(width + 1);
+            let profileMax = 0;
+            for (let x = 0; x < width; x++) {
+                prefix[x + 1] = prefix[x] + profile[x];
+                if (profile[x] > profileMax) profileMax = profile[x];
+            }
+
+            function localMean(center) {
+                const a = Math.max(0, center - sampleRadius);
+                const b = Math.min(width - 1, center + sampleRadius);
+                return (prefix[b + 1] - prefix[a]) / Math.max(1, b - a + 1);
+            }
+
+            const pixels = [];
+            let previous = 0;
+            for (let i = 1; i < n; i++) {
+                const ideal = i * pitch;
+                const lo = Math.max(
+                    Math.ceil(ideal - searchRadius),
+                    Math.ceil(previous + minWell));
+                const hi = Math.min(
+                    Math.floor(ideal + searchRadius),
+                    Math.floor(width - (n - i) * minWell));
+                let bestX = Math.round(ideal);
+                let bestCost = Infinity;
+                for (let x = lo; x <= hi; x++) {
+                    const distance = (x - ideal) / searchRadius;
+                    const cost = localMean(x) + 0.12 * profileMax * distance * distance;
+                    if (cost < bestCost) {
+                        bestCost = cost;
+                        bestX = x;
+                    }
+                }
+                pixels.push(bestX);
+                previous = bestX;
+            }
+            return pixels.map(x => x / width);
         }
 
         // Clamp every well to a sane share of the image: no slivers, no double
@@ -4551,7 +4820,11 @@
                 }
             }
 
-            const threshold = bg - 30;
+            // The slab itself can be only a few gray levels darker than the
+            // scanner bed. A 30-level cutoff finds the darkest samples but can
+            // stop before faint or empty wells. Twelve levels still rejects
+            // the white bed while preserving the full low-contrast gel body.
+            const threshold = bg - 12;
             const mask = new Uint8Array(total);
             for (let i = 0; i < total; i++) mask[i] = gray[i] < threshold ? 1 : 0;
 
@@ -4649,6 +4922,7 @@
             for (let i = 0; i < frac.length; i++) {
                 if (frac[i] > maxVal) maxVal = frac[i];
             }
+            if (maxVal <= 0) return null;
             const cutoff = maxVal * relCutoff;
             let best = null, cur = null, gap = 0;
             for (let i = 0; i < frac.length; i++) {
@@ -5772,6 +6046,17 @@
 
         document.getElementById('applySplitBtn').addEventListener('click', applySplit);
         document.getElementById('cancelSplitBtn').addEventListener('click', cancelSplit);
+
+        function cancelSplit() {
+            stopDragLine();
+            document.getElementById('splitterModal').style.display = 'none';
+            // If this was the first attempt to enable splitting, canceling
+            // should restore the off state. When editing an existing Auto Gel
+            // split, keep the current saved result unchanged.
+            if (!savedSplitState) {
+                document.getElementById('splitImageToggle').checked = false;
+            }
+        }
 
         function applySplit() {
             const overlay = document.getElementById('splitterLinesOverlay');
