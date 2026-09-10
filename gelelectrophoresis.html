@@ -729,15 +729,18 @@
             margin-top: 0.75rem;
         }
 
-        #autoBandWell {
-            min-width: 0;
-            max-width: 100%;
-            padding: 0.5rem;
-            font-size: 1rem;
-        }
-
         #bandDetectionStatus:not(:empty) { margin: 0.75rem 0; }
         .add-interest-btn:disabled { opacity: 0.6; cursor: wait; }
+        .ladder-label-marker.unmatched-ladder { outline: 1px dashed #84939a; }
+        #wellPickOverlay { position: absolute; z-index: 45; pointer-events: none; }
+        .well-pick-target {
+            position: absolute; top: 0; padding: 0; border: 2px solid transparent;
+            background: transparent; cursor: crosshair; pointer-events: auto;
+        }
+        .well-pick-target:hover, .well-pick-target:focus-visible,
+        .well-pick-target[aria-pressed="true"] { border-color: #317789; background: #4a90a420; }
+        .well-pick-target span { position: absolute; top: 2px; left: 50%; transform: translateX(-50%);
+            background: white; color: #245464; padding: 3px; border-radius: 3px; white-space: nowrap; font-size: 11px; }
 
         .of-interest-toggle-wrapper {
             display: flex;
@@ -2358,6 +2361,7 @@
                                 <option value="protein" selected>Protein Ladder</option>
                             </select>
                         </div>
+                        <p id="ladderDetectionStatus" role="status" style="font-size:0.85rem"></p>
                         <div class="date-toggle-wrapper">
                             <span class="date-toggle-label">Include Date on Export</span>
                             <label class="date-switch">
@@ -2374,13 +2378,11 @@
                             <button class="add-interest-btn" onclick="addOfInterestMarker()">Add Band</button>
                         </div>
                         <ul id="biomarkerList" class="biomarker-list"></ul>
-                        <button type="button" class="add-interest-btn" onclick="openAutoBandPicker()">Auto-pick from well</button>
+                        <button type="button" class="add-interest-btn" onclick="openAutoBandPicker()">Pick a well in preview</button>
                         <div id="autoBandPicker" hidden>
-                            <label for="autoBandWell">Choose well</label>
-                            <select id="autoBandWell"></select>
                             <label for="autoBandSensitivity">Sensitivity (higher picks fainter bands)</label>
-                            <input id="autoBandSensitivity" type="range" min="1" max="5" value="3" step="1">
-                            <button type="button" id="autoBandDetect" class="add-interest-btn" onclick="autoPickInterestBands()">Pick bands</button>
+                            <input id="autoBandSensitivity" type="range" min="1" max="5" value="3" step="1" onchange="if (selectedBandWell !== null) autoPickInterestBands(selectedBandWell)">
+                            <button type="button" class="add-interest-btn" onclick="closeAutoBandPicker()">Done picking</button>
                         </div>
                         <p id="bandDetectionStatus" role="status" style="font-size:0.85rem"></p>
                         <div class="of-interest-toggle-wrapper">
@@ -2437,6 +2439,7 @@
                         <div id="ofInterestMarkerContainer" class="of-interest-marker-container">
                             <!-- Biomolecule marker will be generated here -->
                         </div>
+                        <div id="wellPickOverlay" hidden aria-label="Choose a well for band detection"></div>
                         <img id="imagePreview" src="#" alt="Image Preview">
                         <button id="removeImageBtn" class="remove-image-btn" title="Remove Image">&times;</button>
                     </div>
@@ -3068,7 +3071,6 @@
 
                 const colIndex = i;
                 markers.forEach(function(m, mi) {
-                    if (i === 0 && alignedLadderData && mi >= alignedLadderData.bands.length) return;
                     const md = document.createElement('div');
                     md.className = 'ladder-label-marker';
                     md.textContent = m.text;
@@ -3179,9 +3181,8 @@
 
         // ===== LADDER AUTO-ALIGN =====
         // When a well is named "ladder", the ladder labels snap to that well's
-        // actual bands: rows of high intensity inside the well, ordered
-        // top-down. If the gel shows fewer bands than the ladder has labels,
-        // the small labels that do not fit are dropped.
+        // actual bands, ordered top-down. Keep every size even when a rung is
+        // too faint to detect; unmatched sizes stay available for adjustment.
         let alignedLadderData = null; // { markers, bands } while auto-aligned
         let ladderAlignTimer = null;
         let ladderAlignRequest = 0;
@@ -3218,6 +3219,34 @@
             return { start: bounds[index], end: bounds[index + 1] };
         }
 
+        // Match in migration order, allowing missing rungs without shifting
+        // every remaining molecular-weight label up the ladder.
+        function matchLadderBands(markers, bands) {
+            const n = markers.length, m = bands.length;
+            const cost = Array.from({ length: n + 1 }, () => Array(m + 1).fill(Infinity));
+            const previous = Array.from({ length: n + 1 }, () => Array(m + 1));
+            cost[0][0] = 0;
+            const offer = (i, j, value, from) => {
+                if (value < cost[i][j]) { cost[i][j] = value; previous[i][j] = from; }
+            };
+            for (let i = 0; i <= n; i++) for (let j = 0; j <= m; j++) {
+                if (i < n) offer(i + 1, j, cost[i][j] + 0.55, [i, j, false]);
+                if (j < m) offer(i, j + 1, cost[i][j] + 0.4, [i, j, false]);
+                if (i < n && j < m) {
+                    const distance = Math.abs(markers[i].pos / 100 - bands[j]);
+                    if (distance < 0.09) offer(i + 1, j + 1, cost[i][j] + (distance / 0.065) ** 2, [i, j, true]);
+                }
+            }
+            const result = markers.map(() => null);
+            let i = n, j = m;
+            while (i || j) {
+                const step = previous[i][j];
+                if (step[2]) result[step[0]] = bands[step[1]];
+                [i, j] = step;
+            }
+            return result;
+        }
+
         function autoAlignLadder(retry) {
             const request = ++ladderAlignRequest;
             if (!originalCroppedImageSrc) return;
@@ -3248,36 +3277,24 @@
             if (!range) return;
 
             const source = originalCroppedImageSrc;
-            const markers = getLadderMarkerData(document.getElementById('ladderType').value);
+            const ladderType = document.getElementById('ladderType').value;
+            const markers = getLadderMarkerData(ladderType);
             detectLadderBands(source, range.start, range.end, markers.length).then((bands) => {
                 if (request !== ladderAlignRequest || source !== originalCroppedImageSrc) return;
-                if (!bands || !bands.length || !markers.length) {
-                    alignedLadderData = { markers: [], bands: [] };
-                    ladderContainer.innerHTML = '';
-                    if (getLadderPosition() === 'M') renderMiddleLadders();
-                    document.getElementById('bandDetectionStatus').textContent = markers.length
-                        ? 'No clear ladder bands detected. Adjust the well boundaries and try again.' : '';
-                    return;
-                }
-
-                let usedMarkers = markers;
-                let usedBands = bands;
-                if (bands.length < markers.length) {
-                    // Not every rung is visible: drop the small labels that
-                    // do not fit and keep the large ones top-down.
-                    usedMarkers = markers.slice(0, bands.length);
-                } else if (bands.length > markers.length) {
-                    usedBands = bands.slice(0, markers.length);
-                }
-                alignedLadderData = { markers: usedMarkers, bands: usedBands };
-                document.getElementById('bandDetectionStatus').textContent = bands.length < markers.length
-                    ? 'Ladder labels assigned top to bottom; fewer bands were detected than expected. Check the size assignments.'
-                    : 'Ladder labels placed on detected bands. Check the size assignments.';
+                const matchedBands = matchLadderBands(markers, bands || []);
+                const manual = alignedLadderData && alignedLadderData.source === source
+                    && alignedLadderData.wellIndex === ladderIndex && alignedLadderData.ladderType === ladderType
+                    ? (alignedLadderData.manual || {}) : {};
+                Object.keys(manual).forEach(i => { if (i < matchedBands.length) matchedBands[i] = manual[i]; });
+                alignedLadderData = { markers, bands: matchedBands, source, wellIndex: ladderIndex, ladderType, manual };
+                const matchedCount = matchedBands.filter(y => y !== null).length;
+                document.getElementById('ladderDetectionStatus').textContent = matchedCount + ' of ' + markers.length
+                    + ' sizes aligned to detected bands. All sizes are kept; outlined labels need manual alignment.';
                 if (getLadderPosition() === 'M') {
                     const well = activeWellPositions && activeWellPositions.find(p => p.index === ladderIndex);
                     ladderMiddlePositions[0] = well ? well.centerPercent * 100 : (range.start + range.end) * 50;
                     ladderMarkerYPercents = ladderMarkerYPercents || [];
-                    ladderMarkerYPercents[0] = markers.map((m, i) => (usedBands[i] == null ? m.pos : sourceBandY(usedBands[i]) * 100));
+                    ladderMarkerYPercents[0] = markers.map((m, i) => (matchedBands[i] == null ? m.pos : sourceBandY(matchedBands[i]) * 100));
                     renderMiddleLadders();
                 }
                 renderAlignedLadder();
@@ -3294,12 +3311,12 @@
             const imagePreview = document.getElementById('imagePreview');
             if (!ladderContainer || !imagePreview) return;
             const cRect = ladderContainer.getBoundingClientRect();
-            const iRect = imagePreview.getBoundingClientRect();
+            const iRect = getRenderedGelRect();
             ladderContainer.innerHTML = '';
             const { markers, bands } = alignedLadderData;
             markers.forEach((item, i) => {
                 let topPercent = item.pos;
-                if (iRect.height > 50 && cRect.height > 50) {
+                if (bands[i] != null && iRect.height > 0 && cRect.height > 0) {
                     // Live offset between the marker column and the rendered
                     // image, so band positions map exactly no matter how the
                     // preview is laid out.
@@ -3307,7 +3324,10 @@
                     topPercent = ((sourceBandY(bands[i]) * iRect.height - topDeltaPx) / cRect.height) * 100;
                     topPercent = Math.max(0, Math.min(100, topPercent));
                 }
-                addLadderMarkerTo(ladderContainer, item, topPercent);
+                const marker = addLadderMarkerTo(ladderContainer, item, topPercent);
+                marker.classList.toggle('unmatched-ladder', bands[i] == null);
+                marker.title = bands[i] == null ? 'No clear band match. Drag this size to its band.' : 'Aligned to a detected band. Drag to adjust.';
+                marker.dataset.markerIndex = i;
             });
         }
 
@@ -3333,6 +3353,7 @@
             const brightBackground = quantile(rows, 0.5) >= 128;
             const noise = quantile(rows.slice(1).map((v, i) => Math.abs(v - rows[i])), 0.5) / 0.954;
             const threshold = Math.max(1.5, noise * 2.5) * (6 - Math.max(1, Math.min(5, sensitivity))) / 3;
+            const strongThreshold = Math.max(4, noise * 4) * (6 - Math.max(1, Math.min(5, sensitivity))) / 3;
             const intensity = rows.map(v => brightBackground ? 255 - v : v);
             const smoothed = intensity.map((v, y) => {
                 let sum = 0;
@@ -3349,22 +3370,45 @@
                 let end = y;
                 while (end + 1 < sh && smoothed[end + 1] === smoothed[y]) end++;
                 if (end >= sh - 1 || smoothed[end + 1] >= smoothed[y]) continue;
-                let leftMin = smoothed[y], rightMin = smoothed[y];
+                let leftMin = smoothed[y], rightMin = smoothed[y], leftY = y, rightY = end;
                 for (let j = y - 1; j >= Math.max(0, y - radius); j--) {
+                    if (smoothed[j] < leftMin) leftY = j;
                     leftMin = Math.min(leftMin, smoothed[j]);
                     if (smoothed[j] > smoothed[y]) break;
                 }
                 for (let j = end + 1; j <= Math.min(sh - 1, end + radius); j++) {
+                    if (smoothed[j] < rightMin) rightY = j;
                     rightMin = Math.min(rightMin, smoothed[j]);
                     if (smoothed[j] > smoothed[y]) break;
                 }
                 const strength = smoothed[y] - Math.max(leftMin, rightMin);
-                if (strength >= threshold) candidates.push({ center: ((y + end) / 2 + 0.5) / sh, strength });
+                // A band must extend across the lane; dust and vertical scratches
+                // can create row peaks but do not have consistent column contrast.
+                let supported = 0;
+                const centerY = Math.round((y + end) / 2);
+                const columnValue = (x, row) => {
+                    let total = 0;
+                    for (let d = -1; d <= 1; d++) total += gray[Math.max(0, Math.min(sh - 1, row + d)) * sw + x];
+                    return (brightBackground ? 255 : 0) + (brightBackground ? -1 : 1) * total / 3;
+                };
+                for (let x = left + inset; x < right - inset; x++) {
+                    const contrast = columnValue(x, centerY) - Math.max(columnValue(x, leftY), columnValue(x, rightY));
+                    if (contrast >= Math.max(0.8, strength * 0.25)) supported++;
+                }
+                const support = supported / (right - left - 2 * inset);
+                if (strength >= threshold && support >= 0.5 && centerY > sh * 0.025 && centerY < sh * 0.975) {
+                    candidates.push({ center: ((y + end) / 2 + 0.5) / sh, strength, support });
+                }
                 y = end;
             }
             const minDistance = Math.max(3, Math.round(sh * 0.009)) / sh;
             const peaks = [];
             candidates.sort((a, b) => b.strength - a.strength).forEach(candidate => {
+                if (candidate.strength < strongThreshold) {
+                    const before = candidates.some(p => p.strength >= strongThreshold && p.center < candidate.center && candidate.center - p.center < 0.12);
+                    const after = candidates.some(p => p.strength >= strongThreshold && p.center > candidate.center && p.center - candidate.center < 0.12);
+                    if (!before || !after) return;
+                }
                 if (peaks.every(p => Math.abs(p.center - candidate.center) >= minDistance)) peaks.push(candidate);
             });
             peaks.sort((a, b) => a.center - b.center);
@@ -3410,6 +3454,14 @@
 
             const stopDrag = () => {
                 marker.classList.remove('dragging');
+                if (alignedLadderData && marker.dataset.markerIndex != null) {
+                    const index = Number(marker.dataset.markerIndex);
+                    const fraction = marker.style.top.endsWith('%') ? parseFloat(marker.style.top) / 100 : parseFloat(marker.style.top) / container.offsetHeight;
+                    alignedLadderData.bands[index] = Math.max(0, Math.min(1, fraction / previewGelHeightRatio));
+                    alignedLadderData.manual = alignedLadderData.manual || {};
+                    alignedLadderData.manual[index] = alignedLadderData.bands[index];
+                    marker.classList.remove('unmatched-ladder');
+                }
                 document.removeEventListener('mousemove', doDrag);
                 document.removeEventListener('mouseup', stopDrag);
             };
@@ -3448,34 +3500,70 @@
             return y * previewGelHeightRatio;
         }
 
+        let selectedBandWell = null;
+        let bandPickRequest = 0;
+
+        function closeAutoBandPicker() {
+            bandPickRequest++;
+            selectedBandWell = null;
+            document.getElementById('wellPickOverlay').hidden = true;
+            document.getElementById('autoBandPicker').hidden = true;
+        }
+
         function openAutoBandPicker() {
             const status = document.getElementById('bandDetectionStatus');
             if (!originalCroppedImageSrc) {
                 status.textContent = 'Upload and crop a gel image first.';
                 return;
             }
-            const select = document.getElementById('autoBandWell');
-            const selected = select.value;
-            select.innerHTML = '';
-            const labels = document.querySelectorAll('.label-slot-input');
-            for (let i = 0; i < currentWellCount; i++) {
-                if (savedSplitState && savedSplitState.removedIndices.includes(i)) continue;
-                const option = document.createElement('option');
-                option.value = i;
-                option.textContent = 'Well ' + (i + 1) + (labels[i] && labels[i].value.trim() ? ' — ' + labels[i].value.trim() : '');
-                select.appendChild(option);
-            }
-            if (Array.from(select.options).some(o => o.value === selected)) select.value = selected;
             document.getElementById('autoBandPicker').hidden = false;
-            status.textContent = 'Choose a well, then pick its bands. Use the pencil beside each result to label it.';
+            document.getElementById('wellPickOverlay').hidden = false;
+            renderWellPicker();
+            status.textContent = 'Click a well directly in the preview. Adjust sensitivity to pick fainter bands. Choose Done picking to edit labels and markers.';
+            document.getElementById('imagePreviewContainer').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
-        async function autoPickInterestBands() {
-            const button = document.getElementById('autoBandDetect');
+        function renderWellPicker() {
+            const overlay = document.getElementById('wellPickOverlay');
+            if (overlay.hidden) return;
+            overlay.innerHTML = '';
+            const image = document.getElementById('imagePreview');
+            const labels = document.querySelectorAll('.label-slot-input');
+            (activeWellPositions || []).forEach(well => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'well-pick-target';
+                button.style.left = (well.startX / image.naturalWidth * 100) + '%';
+                button.style.width = (well.width / image.naturalWidth * 100) + '%';
+                button.style.height = (previewGelHeightRatio * 100) + '%';
+                button.setAttribute('aria-label', 'Pick bands from well ' + (well.index + 1) + (labels[well.index]?.value ? ': ' + labels[well.index].value : ''));
+                button.setAttribute('aria-pressed', String(selectedBandWell === well.index));
+                const badge = document.createElement('span');
+                badge.textContent = 'Well ' + (well.index + 1);
+                button.appendChild(badge);
+                button.addEventListener('click', () => autoPickInterestBands(well.index));
+                overlay.appendChild(button);
+            });
+            positionWellPicker();
+        }
+
+        function positionWellPicker() {
+            const overlay = document.getElementById('wellPickOverlay');
+            const rect = getRenderedGelRect();
+            const parent = document.getElementById('imagePreviewContainer');
+            const parentRect = parent.getBoundingClientRect();
+            overlay.style.left = (rect.left - parentRect.left - parent.clientLeft) + 'px';
+            overlay.style.top = (rect.top - parentRect.top - parent.clientTop) + 'px';
+            overlay.style.width = rect.width + 'px';
+            overlay.style.height = rect.height + 'px';
+        }
+
+        async function autoPickInterestBands(index) {
             const status = document.getElementById('bandDetectionStatus');
-            const value = document.getElementById('autoBandWell').value;
-            if (value === '') return;
-            const index = Number(value);
+            if (!Number.isInteger(index)) return;
+            selectedBandWell = index;
+            const request = ++bandPickRequest;
+            renderWellPicker();
             const range = getWellSourceRange(index);
             if (!range || (savedSplitState && savedSplitState.removedIndices.includes(index))) {
                 openAutoBandPicker();
@@ -3483,11 +3571,11 @@
             }
             const source = originalCroppedImageSrc;
             const split = JSON.stringify(savedSplitState);
-            button.disabled = true;
             status.textContent = 'Detecting bands…';
             try {
                 const sensitivity = Number(document.getElementById('autoBandSensitivity').value);
                 const bands = await detectLadderBands(source, range.start, range.end, Infinity, sensitivity);
+                if (request !== bandPickRequest) return;
                 if (source !== originalCroppedImageSrc || split !== JSON.stringify(savedSplitState)) {
                     status.textContent = 'The image or wells changed. Pick the well again.';
                     return;
@@ -3511,7 +3599,7 @@
                 });
                 renderBiomarkers();
                 status.textContent = added + ' bands added. Use the pencil to label each band; drag its marker to adjust it.';
-            } finally { button.disabled = false; }
+            } catch (error) { status.textContent = 'Band detection could not finish. Please try again.'; }
         }
 
         function addOfInterestMarker() {
@@ -3777,6 +3865,18 @@
         }
 
         // ===== LABEL PREVIEW LOGIC =====
+        // One coordinate system for the image pixels, ladder, annotations and
+        // well hit targets, including object-fit letterboxing and container padding.
+        function getRenderedGelRect() {
+            const image = document.getElementById('imagePreview');
+            const box = image.getBoundingClientRect();
+            const scale = Math.min(box.width / image.naturalWidth, box.height / image.naturalHeight);
+            const width = image.naturalWidth * scale;
+            const height = image.naturalHeight * scale;
+            return { left: box.left + (box.width - width) / 2,
+                top: box.top + (box.height - height) / 2, width, height };
+        }
+
         function adjustPreviewLayout() {
             const imagePreview = document.getElementById('imagePreview');
             const previewContainer = document.getElementById('previewLabelsContainer');
@@ -3792,31 +3892,12 @@
                 imagePreviewContainer.style.paddingRight = bandGutter > 0 ? bandGutter + 'px' : '';
                 settleTransitions(imagePreviewContainer);
 
-                const containerWidth = imagePreview.offsetWidth;
-                const containerHeight = imagePreview.offsetHeight;
-                const naturalWidth = imagePreview.naturalWidth;
-                const naturalHeight = imagePreview.naturalHeight;
-
-                const containerRatio = containerWidth / containerHeight;
-                const imageRatio = naturalWidth / naturalHeight;
-
-                let renderedImageWidth, renderedImageHeight;
-                let imageOffsetLeft = 0, imageOffsetTop = 0;
-
-                // Because of 'object-fit: contain', we must calculate the actual rendered dimensions and offsets.
-                if (imageRatio > containerRatio) {
-                    // Image is wider than the container's aspect ratio (letterboxed).
-                    renderedImageWidth = containerWidth;
-                    renderedImageHeight = containerWidth / imageRatio;
-                    imageOffsetLeft = 0;
-                    imageOffsetTop = (containerHeight - renderedImageHeight) / 2;
-                } else {
-                    // Image is taller than or same as the container's aspect ratio (pillarboxed).
-                    renderedImageHeight = containerHeight;
-                    renderedImageWidth = containerHeight * imageRatio;
-                    imageOffsetTop = 0;
-                    imageOffsetLeft = (containerWidth - renderedImageWidth) / 2;
-                }
+                const gelRect = getRenderedGelRect();
+                const parentRect = imagePreviewContainer.getBoundingClientRect();
+                const renderedImageWidth = gelRect.width;
+                const renderedImageHeight = gelRect.height;
+                const imageOffsetLeft = gelRect.left - parentRect.left - imagePreviewContainer.clientLeft;
+                const imageOffsetTop = gelRect.top - parentRect.top - imagePreviewContainer.clientTop;
 
                 // --- Adjust Top Labels ---
                 // Distribute evenly across the full image width (well-center math handles spacing).
@@ -3833,7 +3914,7 @@
                 const isLadderMiddle = ladderPos === 'M';
 
                 ladderContainer.style.height = `${renderedImageHeight}px`;
-                ladderContainer.style.top = `${imageOffsetTop + 105}px`; // Move down by 105px
+                ladderContainer.style.top = `${imageOffsetTop}px`;
 
                 if (isLadderMiddle) {
                     // Center the ladder column over the image (preview shows a single master column)
@@ -3861,7 +3942,7 @@
                 // --- Adjust Middle Ladders Container (overlays the image exactly) ---
                 const middleContainer = document.getElementById('middleLaddersContainer');
                 if (middleContainer) {
-                    middleContainer.style.top = `${imageOffsetTop + 105}px`;
+                    middleContainer.style.top = `${imageOffsetTop}px`;
                     middleContainer.style.left = `${imageOffsetLeft}px`;
                     middleContainer.style.width = `${renderedImageWidth}px`;
                     middleContainer.style.height = `${renderedImageHeight}px`;
@@ -3869,7 +3950,7 @@
 
                 // --- Adjust Bands of Interest Container (overlays the image exactly) ---
                 const ofInterestContainer = document.getElementById('ofInterestMarkerContainer');
-                ofInterestContainer.style.top = `${imageOffsetTop + 105}px`; // Same offset as ladder
+                ofInterestContainer.style.top = `${imageOffsetTop}px`; // Same offset as ladder
                 ofInterestContainer.style.left = `${imageOffsetLeft}px`;
                 ofInterestContainer.style.width = `${renderedImageWidth}px`;
                 ofInterestContainer.style.height = `${renderedImageHeight}px`;
@@ -3881,6 +3962,7 @@
                  document.getElementById('middleLaddersContainer'),
                  ofInterestContainer].forEach(settleTransitions);
                 layoutBandAnnotations();
+                positionWellPicker();
 
                 // Keep the auto-aligned ladder labels glued to their bands
                 // after any re-flow of the preview.
@@ -5109,6 +5191,7 @@
         // as the working preview and wires up the downstream render callbacks.
         // Used by the manual crop modal and by Auto Gel's auto-detected crop.
         function useCroppedImage(imageDataUrl) {
+            closeAutoBandPicker();
             originalCroppedImageSrc = imageDataUrl; // Save original for splitting
             alignedLadderData = null; // new image — ladder must re-align
 
@@ -5158,6 +5241,7 @@
         }
 
         function resetImageUploader() {
+            closeAutoBandPicker();
             document.getElementById('imagePreview').src = '#';
             document.getElementById('imagePreviewContainer').style.display = 'none';
             document.getElementById('dropZone').style.display = 'block';
@@ -6408,6 +6492,7 @@
                 });
                 document.getElementById('imagePreview').src = canvas.toDataURL('image/png');
                 renderBiomarkers();
+                renderWellPicker();
                 scheduleAutoLadderAlign();
                 updateLabelPreview();
             };

@@ -55,7 +55,7 @@ assert.equal(ui.findLadderWellIndex(), 2, 'Removed ladder well excluded');
 assert.equal(ui.getWellSourceRange(2).start, 0.55);
 async function testPicker() {
     const pickerElements = {
-        autoBandDetect: {}, bandDetectionStatus: {}, autoBandWell: { value: '2' },
+        bandDetectionStatus: {},
         autoBandSensitivity: { value: '3' }
     };
     const picker = vm.createContext({
@@ -68,18 +68,67 @@ async function testPicker() {
     });
     load(picker, 'getWellSourceRange(', 'autoAlignLadder(');
     load(picker, 'clampBandPct(', 'addOfInterestMarker(');
-    await picker.autoPickInterestBands();
+    picker.renderWellPicker = () => {};
+    await picker.autoPickInterestBands(2);
     assert.equal(picker.biomarkers.length, 3);
     assert.equal(picker.biomarkers[0].xPct, 75, 'Anchor uses displayed well after removals/gaps');
     assert.ok(Math.abs(picker.biomarkers[0].yPct - 16) < 1e-8, 'Grouping space excluded from band height');
     picker.biomarkers[0].name = 'My protein';
-    await picker.autoPickInterestBands();
+    await picker.autoPickInterestBands(2);
     assert.equal(picker.biomarkers.length, 3, 'Repeated detection does not duplicate bands');
     assert.equal(picker.biomarkers[0].name, 'My protein', 'User labels preserved');
     picker.detectLadderBands = async () => { picker.originalCroppedImageSrc = 'changed'; return [0.7]; };
-    await picker.autoPickInterestBands();
+    await picker.autoPickInterestBands(2);
     assert.equal(picker.biomarkers.length, 3, 'Stale detection discarded');
-    assert.equal(pickerElements.autoBandDetect.disabled, false);
+    assert.match(pickerElements.bandDetectionStatus.textContent, /changed/);
 }
+// A missing upper rung must never shift all following size labels.
+load(context, 'matchLadderBands(', 'autoAlignLadder(');
+const sizes = [{ text: '245', pos: 10 }, { text: '100', pos: 30 }, { text: '75', pos: 50 }, { text: '25', pos: 80 }];
+const mapping = context.matchLadderBands(sizes, [0.31, 0.5, 0.81]);
+assert.equal(mapping.length, 4);
+assert.equal(mapping[0], null);
+assert.equal(mapping[1], 0.31);
+assert.equal(mapping[2], 0.5);
+assert.equal(mapping[3], 0.81);
+load(context, 'getLadderMarkerData(', 'setLadderPosition(');
+const proteinSizes = context.getLadderMarkerData('protein');
+assert.equal(proteinSizes.length, 12, 'Every existing protein size retained');
+assert.equal(context.matchLadderBands(proteinSizes, []).length, 12, 'Even an empty lane retains all size slots');
+
+// Object-fit containment must use actual pixels, not the surrounding image box.
+const geometry = vm.createContext({ document: { getElementById: () => ({
+    naturalWidth: 800, naturalHeight: 200,
+    getBoundingClientRect: () => ({ left: 10, top: 100, width: 800, height: 450 })
+}) }});
+load(geometry, 'getRenderedGelRect(', 'adjustPreviewLayout(');
+const rect = geometry.getRenderedGelRect();
+assert.equal(rect.top, 225);
+assert.equal(rect.height, 200);
+assert.equal(rect.left, 10);
+assert.equal(rect.width, 800);
+
+const targets = [];
+const overlay = { hidden: false, appendChild: button => targets.push(button) };
+const clicks = [];
+const clickContext = vm.createContext({
+    selectedBandWell: null, previewGelHeightRatio: 0.8,
+    activeWellPositions: [{ index: 0, startX: 0, width: 20 }, { index: 2, startX: 40, width: 60 }],
+    document: {
+        getElementById: id => id === 'wellPickOverlay' ? overlay : { naturalWidth: 100 },
+        querySelectorAll: () => [{ value: 'A' }, { value: 'removed' }, { value: 'B' }],
+        createElement: () => ({ style: {}, setAttribute() {}, appendChild() {}, addEventListener(event, fn) { this.click = fn; } })
+    },
+    positionWellPicker() {}, autoPickInterestBands: index => clicks.push(index)
+});
+load(clickContext, 'renderWellPicker(', 'positionWellPicker(');
+clickContext.renderWellPicker();
+assert.equal(targets.length, 2);
+assert.equal(targets[1].style.left, '40%');
+assert.equal(targets[1].style.width, '60%');
+assert.equal(targets[1].style.height, '80%');
+targets[1].click();
+assert.equal(clicks[0], 2, 'Click selects the original source well, not its displayed ordinal');
+
 testPicker().then(() => console.log('PASS: script syntax, band separation, lane isolation, AutoWell editing, removed-well mapping, picker anchors, duplicate prevention, stale detection'))
     .catch(error => { console.error(error); process.exitCode = 1; });
