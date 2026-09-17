@@ -127,12 +127,9 @@
 
         /* Instrument Toggle */
         .instrument-toggle {
-            position: fixed;
-            top: 92px;
-            left: 2rem;
-            z-index: 999;
-            display: flex;
+            display: inline-flex;
             align-items: center;
+            align-self: flex-start;
             gap: 8px;
             background: var(--pure-white);
             border: 1px solid var(--border-color);
@@ -140,6 +137,7 @@
             padding: 5px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             user-select: none;
+            margin-top: 0.75rem;
         }
 
         .instrument-toggle .toggle-option {
@@ -426,7 +424,7 @@
             }
 
             .main-content {
-                padding-top: 150px;
+                padding-top: 100px;
             }
 
             .section-header h1 {
@@ -435,14 +433,6 @@
 
             .section-header {
                 margin-bottom: 2rem;
-            }
-
-            /* Center the floating instrument toggle so it clears the title */
-            .instrument-toggle {
-                top: 100px;
-                left: 50%;
-                right: auto;
-                transform: translateX(-50%);
             }
 
             .graph-container {
@@ -651,12 +641,6 @@
         </div>
     </header>
 
-    <!-- Instrument Mode Toggle -->
-    <div class="instrument-toggle" id="instrumentToggle">
-        <button class="toggle-option active" id="toggleAKTA" onclick="setInstrument('akta')">ÄKTA</button>
-        <button class="toggle-option" id="toggleBioRad" onclick="setInstrument('biorad')">BioRad</button>
-    </div>
-
     <main class="main-content container">
         <div class="section-header">
             <h1>Size Exclusion Graphing</h1>
@@ -671,6 +655,11 @@
                     <p style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">
                         Format: Two columns (X, Y). No headers or headers in first row.
                     </p>
+                    <!-- Instrument Mode Toggle -->
+                    <div class="instrument-toggle" id="instrumentToggle">
+                        <button class="toggle-option active" id="toggleAKTA" onclick="setInstrument('akta')">ÄKTA</button>
+                        <button class="toggle-option" id="toggleBioRad" onclick="setInstrument('biorad')">BioRad</button>
+                    </div>
                 </div>
                 <div class="control-group">
                     <label>Graph Settings</label>
