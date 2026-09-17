@@ -8,7 +8,7 @@
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔬</text></svg>">
     <title>Scheduling - Scientific Tools</title>
-    <meta name="description" content="Build month calendar tables with tasks that paste into OneNote as editable tables.">
+    <meta name="description" content="Build month or week calendar tables with tasks that paste into OneNote as editable tables.">
     <style>
         * {
             margin: 0;
@@ -198,6 +198,12 @@
 
         .checkbox-field label {
             font-size: 0.9rem;
+        }
+
+        /* Show only the fields that apply to the selected plan mode */
+        body[data-cal-mode="months"] .weeks-only,
+        body[data-cal-mode="weeks"] .months-only {
+            display: none;
         }
 
         .button-row {
@@ -579,12 +585,12 @@
                 font-size: 0.82rem;
             }
 
-            .preview-wrap td span[style*="9pt"] {
-                font-size: 0.68rem !important;
+            .preview-wrap td span[style*="8pt"] {
+                font-size: 0.7rem !important;
             }
 
             .preview-wrap > p[style] {
-                font-size: 1rem !important;
+                font-size: 0.95rem !important;
             }
 
             .button-row {
@@ -702,19 +708,30 @@
     <main class="main-content container">
         <div class="section-header">
             <h1>Scheduling</h1>
-            <p>Build a calendar, click days to add tasks, then paste it into OneNote as an editable table.</p>
+            <p>Build a month or week calendar, click days to add tasks, then paste it into OneNote as an editable table.</p>
         </div>
 
         <div class="control-panel" id="controls">
             <div class="control-field">
+                <label for="cal-mode">Plan by</label>
+                <select id="cal-mode">
+                    <option value="months" selected>Months</option>
+                    <option value="weeks">Weeks</option>
+                </select>
+            </div>
+            <div class="control-field months-only">
                 <label for="cal-month">Month</label>
                 <select id="cal-month"></select>
             </div>
-            <div class="control-field">
+            <div class="control-field months-only">
                 <label for="cal-year">Year</label>
                 <input type="number" id="cal-year" min="1900" max="2200" step="1">
             </div>
-            <div class="control-field">
+            <div class="control-field weeks-only">
+                <label for="cal-week-of">First week contains</label>
+                <input type="date" id="cal-week-of">
+            </div>
+            <div class="control-field months-only">
                 <label for="cal-count">Months to include</label>
                 <select id="cal-count">
                     <option value="1" selected>1</option>
@@ -723,6 +740,17 @@
                     <option value="4">4</option>
                     <option value="6">6</option>
                     <option value="12">12</option>
+                </select>
+            </div>
+            <div class="control-field weeks-only">
+                <label for="cal-week-count">Weeks to include</label>
+                <select id="cal-week-count">
+                    <option value="1" selected>1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="6">6</option>
+                    <option value="8">8</option>
                 </select>
             </div>
             <div class="control-field">
@@ -746,7 +774,7 @@
                 <input type="checkbox" id="cal-shade-weekends" checked>
                 <label for="cal-shade-weekends">Shade weekends</label>
             </div>
-            <div class="control-field checkbox-field">
+            <div class="control-field checkbox-field months-only">
                 <input type="checkbox" id="cal-adjacent" checked>
                 <label for="cal-adjacent">Show adjacent-month days (gray)</label>
             </div>
@@ -755,8 +783,8 @@
         <div class="button-row">
             <button class="action-button" onclick="copyCalendar()">Copy Calendar for OneNote</button>
             <button class="action-button secondary" onclick="selectCalendar()">Select Table (manual copy)</button>
-            <button class="action-button secondary small" onclick="shiftMonth(-1)">◀ Prev Month</button>
-            <button class="action-button secondary small" onclick="shiftMonth(1)">Next Month ▶</button>
+            <button class="action-button secondary small" id="btn-prev" onclick="shiftMonth(-1)">◀ Prev Month</button>
+            <button class="action-button secondary small" id="btn-next" onclick="shiftMonth(1)">Next Month ▶</button>
             <button class="action-button danger small" onclick="clearAllTasks()">Clear All Tasks</button>
         </div>
 
@@ -765,7 +793,8 @@
         <details class="help-box">
             <summary>How to use tasks and get this into OneNote</summary>
             <ol>
-                <li>Set the month, year, and options above — the preview updates automatically.</li>
+                <li>Pick <b>Plan by Months</b> for whole-month calendars, or <b>Plan by Weeks</b> for one or more week strips — set <b>First week contains</b> to any day in the first week you want.</li>
+                <li>Set the options above — the preview updates automatically.</li>
                 <li><b>Click any day cell</b> in the calendar to add tasks for that day. Tasks are saved in this browser and shown in the day's cell.</li>
                 <li>Click <b>Copy Calendar for OneNote</b>.</li>
                 <li>In OneNote, click on the page where you want the calendar and press <b>Ctrl+V</b>.</li>
@@ -820,6 +849,8 @@
         const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
             'July', 'August', 'September', 'October', 'November', 'December'];
         const DOW_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const NBSP = '\u00A0';
         const STORAGE_KEY = 'schedulingCalendarTasks';
 
@@ -892,19 +923,27 @@
             return colIdx === 5 || colIdx === 6;
         }
 
+        // Tinted title bar above each calendar block. Light background with dark
+        // text so the banner stays readable in OneNote even if shading is dropped.
+        function bannerHtml(text, compact) {
+            const size = compact ? '11pt' : '12pt';
+            return `<p style="margin:14px 0 6px 0; padding:5px 10px; background-color:#c8dce4; font-size:${size};"><b>${text}</b></p>`;
+        }
+
         // HTML built for OneNote: plain 7-column table, no merged cells,
-        // month title as its own paragraph, day cells hold tasks then blank lines.
-        // When forPreview is true, clickable cells carry data-date attributes.
+        // month banner as its own paragraph, day cells hold bulleted tasks
+        // then blank lines. When forPreview is true, clickable cells carry
+        // data-date attributes.
         function monthHtml(year, month, opts, forPreview) {
             const cells = buildGrid(year, month, opts.weekStart);
-            let html = `<p style="margin:10px 0 4px 0; font-size:14pt;"><b>${MONTHS[month]} ${year}</b></p>`;
-            html += `<table border="1" style="border-collapse: collapse;"><tr>`;
+            let html = bannerHtml(`${MONTHS[month]} ${year}`);
+            html += `<table border="1" style="border-collapse: collapse; font-size:10pt;"><tr>`;
 
             for (let col = 0; col < 7; col++) {
                 const label = DOW_SHORT[(opts.weekStart + col) % 7];
                 const bg = opts.shadeWeekends && isWeekendColumn(col, opts.weekStart)
                     ? ' background-color: #e8eef1;' : ' background-color: #f1f3f5;';
-                html += `<th style="padding: 5px; text-align: left; width: 110px;${bg}">${label}</th>`;
+                html += `<th style="padding: 5px; text-align: left; width: 110px; font-size:9pt;${bg}">${label}</th>`;
             }
             html += `</tr>`;
 
@@ -921,7 +960,7 @@
                     if (cell.inMonth) {
                         const dayTasks = tasks[dateKey(year, month, cell.num)] || [];
                         dayTasks.forEach(task => {
-                            content += `<br><span style="font-size:9pt;">${escapeHtml(task)}</span>`;
+                            content += `<br><span style="color: ${color}; font-size:8pt;">• ${escapeHtml(task)}</span>`;
                         });
                     }
                     content += `<br>${NBSP}`.repeat(opts.lines);
@@ -953,7 +992,7 @@
                 if (cell.inMonth) {
                     const dayTasks = tasks[dateKey(year, month, cell.num)] || [];
                     content = dayTasks.length > 0
-                        ? `${cell.num} — ${dayTasks.join('; ')}` : String(cell.num);
+                        ? `${cell.num} — ${dayTasks.map(t => `• ${t}`).join(' ')}` : String(cell.num);
                 } else {
                     content = opts.adjacent ? String(cell.num) : NBSP;
                 }
@@ -963,8 +1002,123 @@
             return text + '\n';
         }
 
+        function getMode() {
+            return document.getElementById('cal-mode').value;
+        }
+
+        function startOfWeek(date, weekStart) {
+            const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            d.setDate(d.getDate() - ((d.getDay() - weekStart + 7) % 7));
+            return d;
+        }
+
+        function getWeekStartDate() {
+            const value = document.getElementById('cal-week-of').value;
+            if (value) {
+                const [y, m, d] = value.split('-').map(Number);
+                if (y && m && d) return new Date(y, m - 1, d);
+            }
+            const now = new Date();
+            return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        }
+
+        function setWeekStartDate(date) {
+            const iso = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            document.getElementById('cal-week-of').value = iso;
+        }
+
+        function weekDays(start) {
+            const days = [];
+            for (let i = 0; i < 7; i++) {
+                days.push(new Date(start.getFullYear(), start.getMonth(), start.getDate() + i));
+            }
+            return days;
+        }
+
+        function weekTitle(days) {
+            const first = days[0];
+            const last = days[6];
+            if (first.getMonth() === last.getMonth() && first.getFullYear() === last.getFullYear()) {
+                return `Week of ${MONTHS[first.getMonth()]} ${first.getDate()}–${last.getDate()}, ${first.getFullYear()}`;
+            }
+            return `Week of ${MONTHS_SHORT[first.getMonth()]} ${first.getDate()} – ${MONTHS_SHORT[last.getMonth()]} ${last.getDate()}, ${last.getFullYear()}`;
+        }
+
+        // One week as a single-row 7-column table under a title banner, same
+        // cell format as the month calendar (bulleted tasks + blank lines).
+        function weekHtml(start, opts, forPreview) {
+            const days = weekDays(start);
+            let html = bannerHtml(weekTitle(days), true);
+            html += `<table border="1" style="border-collapse: collapse; font-size:10pt;"><tr>`;
+
+            for (let col = 0; col < 7; col++) {
+                const label = DOW_SHORT[(opts.weekStart + col) % 7];
+                const bg = opts.shadeWeekends && isWeekendColumn(col, opts.weekStart)
+                    ? ' background-color: #e8eef1;' : ' background-color: #f1f3f5;';
+                html += `<th style="padding: 5px; text-align: left; width: 110px; font-size:9pt;${bg}">${label}</th>`;
+            }
+            html += `</tr><tr>`;
+
+            days.forEach((d, col) => {
+                const bg = opts.shadeWeekends && isWeekendColumn(col, opts.weekStart)
+                    ? ' background-color: #e8eef1;' : '';
+                const dateAttr = forPreview
+                    ? ` data-date="${dateKey(d.getFullYear(), d.getMonth(), d.getDate())}" title="Click to add tasks"` : '';
+                // Month abbreviation on days that fall outside the banner's starting month
+                const label = d.getMonth() === start.getMonth()
+                    ? `${d.getDate()}` : `${MONTHS_SHORT[d.getMonth()]} ${d.getDate()}`;
+                let content = `<span>${label}</span>`;
+                const dayTasks = tasks[dateKey(d.getFullYear(), d.getMonth(), d.getDate())] || [];
+                dayTasks.forEach(task => {
+                    content += `<br><span style="font-size:8pt;">• ${escapeHtml(task)}</span>`;
+                });
+                content += `<br>${NBSP}`.repeat(opts.lines);
+                html += `<td style="padding: 5px; vertical-align: top;${bg}"${dateAttr}>${content}</td>`;
+            });
+
+            html += `</tr></table>`;
+            return html;
+        }
+
+        function weekPlainText(start, opts) {
+            const days = weekDays(start);
+            let text = `${weekTitle(days)}\n`;
+
+            for (let col = 0; col < 7; col++) {
+                text += DOW_SHORT[(opts.weekStart + col) % 7] + (col < 6 ? '\t' : '');
+            }
+            text += '\n';
+
+            days.forEach((d, i) => {
+                const label = d.getMonth() === start.getMonth()
+                    ? `${d.getDate()}` : `${MONTHS_SHORT[d.getMonth()]} ${d.getDate()}`;
+                const dayTasks = tasks[dateKey(d.getFullYear(), d.getMonth(), d.getDate())] || [];
+                const content = dayTasks.length > 0
+                    ? `${label} — ${dayTasks.map(t => `• ${t}`).join(' ')}` : label;
+                text += content + (i % 7 < 6 ? '\t' : '');
+            });
+
+            return text + '\n';
+        }
+
         function buildCalendar(forPreview) {
             const opts = getOptions();
+
+            if (getMode() === 'weeks') {
+                const count = parseInt(document.getElementById('cal-week-count').value, 10);
+                const first = startOfWeek(getWeekStartDate(), opts.weekStart);
+                let html = '';
+                let plain = '';
+                for (let i = 0; i < count; i++) {
+                    const weekBeginning = new Date(first.getFullYear(), first.getMonth(), first.getDate() + i * 7);
+                    if (i > 0) html += `<br>`;
+                    html += weekHtml(weekBeginning, opts, forPreview);
+                    if (i > 0) plain += '\n';
+                    plain += weekPlainText(weekBeginning, opts);
+                }
+                return { html, plain };
+            }
+
             const startMonth = parseInt(document.getElementById('cal-month').value, 10);
             const startYear = parseInt(document.getElementById('cal-year').value, 10);
             const count = parseInt(document.getElementById('cal-count').value, 10);
@@ -1020,6 +1174,12 @@
         }
 
         function shiftMonth(delta) {
+            if (getMode() === 'weeks') {
+                const base = getWeekStartDate();
+                setWeekStartDate(new Date(base.getFullYear(), base.getMonth(), base.getDate() + delta * 7));
+                renderPreview();
+                return;
+            }
             const monthSelect = document.getElementById('cal-month');
             const yearInput = document.getElementById('cal-year');
             let m = parseInt(monthSelect.value, 10) + delta;
@@ -1029,6 +1189,13 @@
             monthSelect.value = m;
             yearInput.value = y;
             renderPreview();
+        }
+
+        function syncModeUI() {
+            const weeks = getMode() === 'weeks';
+            document.body.dataset.calMode = weeks ? 'weeks' : 'months';
+            document.getElementById('btn-prev').textContent = weeks ? '◀ Prev Week' : '◀ Prev Month';
+            document.getElementById('btn-next').textContent = weeks ? 'Next Week ▶' : 'Next Month ▶';
         }
 
         // ---- Day editor (add tasks to a day) ----
@@ -1126,7 +1293,10 @@
             });
             monthSelect.value = now.getMonth();
             document.getElementById('cal-year').value = now.getFullYear();
+            setWeekStartDate(new Date(now.getFullYear(), now.getMonth(), now.getDate()));
 
+            document.getElementById('cal-mode').addEventListener('change', syncModeUI);
+            syncModeUI();
             document.getElementById('controls').addEventListener('input', renderPreview);
             document.getElementById('controls').addEventListener('change', renderPreview);
 
