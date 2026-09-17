@@ -761,6 +761,7 @@
         let fractionGroups = [];  // [{name, color, fractionIndices: []}]
         let activeGroupIndex = -1;
         let currentFractions = []; // stored globally for click detection
+        let seriesRenames = {};   // original series label -> custom display name
 
         function setInstrument(mode) {
             currentInstrument = mode;
@@ -1192,7 +1193,7 @@
                 const chartDatasets = datasetsInfo.map((ds, index) => {
                     const axisId = 'y-axis-' + index;
                     return {
-                        label: ds.label,
+                        label: getSeriesLabel(ds.label),
                         data: ds.dataPoints,
                         borderColor: graphColors[index % graphColors.length],
                         backgroundColor: graphColors[index % graphColors.length] + '1A',
@@ -1241,7 +1242,7 @@
 
                 datasetsInfo.forEach((ds, index) => {
                     const axisId = 'y-axis-' + index;
-                    const dsLabel = index === 0 && userYLabel ? userYLabel : ds.label;
+                    const dsLabel = index === 0 && userYLabel && !seriesRenames[ds.label] ? userYLabel : getSeriesLabel(ds.label);
                     configScales[axisId] = {
                         type: 'linear',
                         position: index % 2 === 0 ? 'left' : 'right',
@@ -1394,16 +1395,64 @@
 
                 const label = document.createElement('label');
                 label.htmlFor = 'toggle-series-' + index;
-                label.textContent = ds.label;
+                label.textContent = getSeriesLabel(ds.label);
+                label.title = 'Double-click to rename';
                 label.style.fontWeight = 'normal';
                 label.style.cursor = 'pointer';
                 label.style.color = graphColors[index % graphColors.length];
                 label.style.fontSize = '0.95rem';
+                label.ondblclick = (e) => {
+                    e.preventDefault();
+                    renameSeries(index, ds.label);
+                };
+
+                const renameBtn = document.createElement('button');
+                renameBtn.type = 'button';
+                renameBtn.textContent = '✎';
+                renameBtn.title = 'Rename series';
+                renameBtn.style.cssText = 'border:none; background:transparent; cursor:pointer; color:#999; font-size:0.8rem; padding:0 0.15rem; line-height:1;';
+                renameBtn.onclick = (e) => {
+                    e.preventDefault();
+                    renameSeries(index, ds.label);
+                };
 
                 wrapper.appendChild(checkbox);
                 wrapper.appendChild(label);
+                wrapper.appendChild(renameBtn);
                 container.appendChild(wrapper);
             });
+        }
+
+        function getSeriesLabel(originalLabel) {
+            return seriesRenames[originalLabel] || originalLabel;
+        }
+
+        function renameSeries(index, originalLabel) {
+            const currentName = getSeriesLabel(originalLabel);
+            const input = prompt('Rename series:', currentName);
+            if (input === null) return;
+
+            const newName = input.trim();
+            if (!newName || newName === currentName) return;
+
+            // Back to the original name clears the custom one
+            if (newName === originalLabel) {
+                delete seriesRenames[originalLabel];
+            } else {
+                seriesRenames[originalLabel] = newName;
+            }
+
+            const labelEl = document.querySelector('label[for="toggle-series-' + index + '"]');
+            if (labelEl) labelEl.textContent = newName;
+
+            if (myChart) {
+                myChart.data.datasets[index].label = newName;
+                const axisId = 'y-axis-' + index;
+                if (myChart.options.scales[axisId] && myChart.options.scales[axisId].title) {
+                    myChart.options.scales[axisId].title.text = newName;
+                }
+                myChart.update();
+            }
         }
 
         function toggleSeries(index, isVisible) {
@@ -1486,6 +1535,7 @@
             fractionGroups = [];
             activeGroupIndex = -1;
             currentFractions = [];
+            seriesRenames = {};
             document.getElementById('fractionGroupsPanel').style.display = 'none';
             renderGroupList();
         }
