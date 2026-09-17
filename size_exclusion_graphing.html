@@ -128,21 +128,22 @@
         /* Instrument Toggle */
         .instrument-toggle {
             position: fixed;
-            top: 80px;
+            top: 92px;
             left: 2rem;
             z-index: 999;
             display: flex;
             align-items: center;
+            gap: 8px;
             background: var(--pure-white);
             border: 1px solid var(--border-color);
             border-radius: 999px;
-            padding: 4px;
+            padding: 5px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             user-select: none;
         }
 
         .instrument-toggle .toggle-option {
-            padding: 0.4rem 1rem;
+            padding: 0.45rem 1.4rem;
             border-radius: 999px;
             font-size: 0.85rem;
             font-weight: 600;
@@ -438,7 +439,7 @@
 
             /* Center the floating instrument toggle so it clears the title */
             .instrument-toggle {
-                top: 84px;
+                top: 100px;
                 left: 50%;
                 right: auto;
                 transform: translateX(-50%);
@@ -686,7 +687,7 @@
                     </div>
                     <div id="fractionVolumeRow" style="margin-top: 0.5rem; display: none; align-items: center; gap: 0.5rem;">
                         <label for="fractionVolume" style="font-weight: normal; white-space: nowrap;">Fraction Vol (mL):</label>
-                        <input type="number" id="fractionVolume" placeholder="e.g. 1" value="1" min="0.1" step="0.1"
+                        <input type="number" id="fractionVolume" placeholder="e.g. 0.5" value="0.5" min="0.1" step="0.1"
                             style="width: 80px; padding: 0.4rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem;">
                         <label for="fractionStart" style="font-weight: normal; white-space: nowrap; margin-left: 0.5rem;">Start:</label>
                         <input type="number" id="fractionStart" placeholder="auto" min="0" step="0.1"
@@ -769,6 +770,10 @@
             document.getElementById('toggleBioRad').classList.toggle('active', mode === 'biorad');
             // Show/hide the fraction volume input
             document.getElementById('fractionVolumeRow').style.display = mode === 'biorad' ? 'flex' : 'none';
+            // Default fraction volume for BioRad traces
+            if (mode === 'biorad') {
+                document.getElementById('fractionVolume').value = 0.5;
+            }
         }
 
         function parseData(text) {
