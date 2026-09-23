@@ -674,6 +674,11 @@
                             onchange="updateShowGridlines()">
                         <label for="showGridlines" style="font-weight: normal; cursor: pointer;">Gridlines</label>
                     </div>
+                    <div style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" id="snapZoom" checked style="width: auto;" onchange="updateSnapZoom()">
+                        <label for="snapZoom" style="font-weight: normal; cursor: pointer;">Snap zoom to evenly spaced mL ticks</label>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #666;">Uncheck for exact zoom bounds.</p>
                     <div id="fractionVolumeRow" style="margin-top: 0.5rem; display: none; align-items: center; gap: 0.5rem;">
                         <label for="fractionVolume" style="font-weight: normal; white-space: nowrap;">Fraction Vol (mL):</label>
                         <input type="number" id="fractionVolume" placeholder="e.g. 0.5" value="0.5" min="0.1" step="0.1"
@@ -684,7 +689,8 @@
                     </div>
                 </div>
                 <div class="control-group">
-                    <label>Series Toggles</label>
+                    <label>Series &amp; Line Colors</label>
+                    <p style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">Click a color swatch to change that line’s color.</p>
                     <div id="seriesTogglesContainer"
                         style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 200px; overflow-y: auto; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px; background: #fafafa;">
                         <em style="color: #888; font-size: 0.9rem;">Upload a CSV to see available series</em>
@@ -752,6 +758,12 @@
         let activeGroupIndex = -1;
         let currentFractions = []; // stored globally for click detection
         let seriesRenames = {};   // original series label -> custom display name
+        const seriesColors = new Map();
+        const defaultGraphColors = ['#4a90a4', '#d9534f', '#5cb85c', '#f0ad4e', '#5bc0de', '#9b59b6', '#34495e', '#e67e22'];
+
+        function getSeriesColorKey(ds) {
+            return JSON.stringify([currentInstrument, ds.xIndex, ds.yIndex, ds.label]);
+        }
 
         function setInstrument(mode) {
             currentInstrument = mode;
@@ -1182,7 +1194,8 @@
                     myChart.destroy();
                 }
 
-                const graphColors = ['#4a90a4', '#d9534f', '#5cb85c', '#f0ad4e', '#5bc0de', '#9b59b6', '#34495e', '#e67e22'];
+                const graphColors = datasetsInfo.map((ds, index) =>
+                    seriesColors.get(getSeriesColorKey(ds)) || defaultGraphColors[index % defaultGraphColors.length]);
 
                 const chartDatasets = datasetsInfo.map((ds, index) => {
                     const axisId = 'y-axis-' + index;
@@ -1334,6 +1347,7 @@
                                         borderWidth: 1
                                     },
                                     mode: 'x',
+                                    onZoomComplete: snapVolumeZoom,
                                 }
                             }
                         },
@@ -1395,6 +1409,8 @@
                 label.style.cursor = 'pointer';
                 label.style.color = graphColors[index % graphColors.length];
                 label.style.fontSize = '0.95rem';
+                label.style.minWidth = '0';
+                label.style.overflowWrap = 'anywhere';
                 label.ondblclick = (e) => {
                     e.preventDefault();
                     renameSeries(index, ds.label);
@@ -1410,7 +1426,31 @@
                     renameSeries(index, ds.label);
                 };
 
+                const colorInput = document.createElement('input');
+                colorInput.type = 'color';
+                colorInput.id = 'color-series-' + index;
+                colorInput.value = graphColors[index];
+                colorInput.title = 'Line color: ' + getSeriesLabel(ds.label);
+                colorInput.setAttribute('aria-label', colorInput.title);
+                colorInput.style.cssText = 'width:32px; height:32px; flex-shrink:0; padding:2px; cursor:pointer;';
+                const colorKey = getSeriesColorKey(ds);
+                colorInput.oninput = () => {
+                    const color = colorInput.value;
+                    seriesColors.set(colorKey, color);
+                    checkbox.style.accentColor = color;
+                    label.style.color = color;
+                    const dataset = myChart.data.datasets[index];
+                    dataset.borderColor = color;
+                    dataset.backgroundColor = color + '1A';
+                    const axis = myChart.options.scales[dataset.yAxisID];
+                    axis.title.color = color;
+                    axis.ticks.color = color;
+                    axis.border.color = color;
+                    myChart.update('none');
+                };
+
                 wrapper.appendChild(checkbox);
+                wrapper.appendChild(colorInput);
                 wrapper.appendChild(label);
                 wrapper.appendChild(renameBtn);
                 container.appendChild(wrapper);
@@ -1438,6 +1478,11 @@
 
             const labelEl = document.querySelector('label[for="toggle-series-' + index + '"]');
             if (labelEl) labelEl.textContent = newName;
+            const colorInput = document.getElementById('color-series-' + index);
+            if (colorInput) {
+                colorInput.title = 'Line color: ' + newName;
+                colorInput.setAttribute('aria-label', colorInput.title);
+            }
 
             if (myChart) {
                 myChart.data.datasets[index].label = newName;
@@ -1502,8 +1547,56 @@
             }
         }
 
+        function snapVolumeZoom({ chart }) {
+            const { min, max } = chart.scales.x;
+            if (!Number.isFinite(min) || !Number.isFinite(max) || max <= min) return;
+            chart._exactVolumeZoom = { min, max };
+            applyVolumeZoom(chart);
+        }
+
+        function clearVolumeTickSpacing(chart) {
+            const ticks = chart.options.scales.x.ticks;
+            delete ticks.stepSize;
+            delete ticks.precision;
+            delete ticks.autoSkip;
+            delete ticks.maxTicksLimit;
+        }
+
+        function applyVolumeZoom(chart) {
+            const { min, max } = chart._exactVolumeZoom;
+            clearVolumeTickSpacing(chart);
+            if (!document.getElementById('snapZoom').checked) {
+                chart.zoomScale('x', { min, max }, 'none');
+                return;
+            }
+
+            // Choose a readable whole-mL interval and expand BOTH edges to its multiples.
+            const targetIntervals = Math.max(2, Math.min(10, Math.floor(chart.scales.x.width / 80)));
+            const roughStep = Math.max(1, (max - min) / targetIntervals);
+            const magnitude = 10 ** Math.floor(Math.log10(roughStep));
+            const step = [1, 2, 5, 10].find(n => n * magnitude >= roughStep) * magnitude;
+            Object.assign(chart.options.scales.x.ticks, {
+                stepSize: step, precision: 0, autoSkip: false, maxTicksLimit: 20
+            });
+            chart.zoomScale('x', {
+                min: Math.floor(min / step) * step,
+                max: Math.ceil(max / step) * step
+            }, 'none');
+        }
+
+        function updateSnapZoom() {
+            if (!myChart) return;
+            if (!myChart._exactVolumeZoom) {
+                snapVolumeZoom({ chart: myChart });
+            } else {
+                applyVolumeZoom(myChart);
+            }
+        }
+
         function resetZoom() {
             if (myChart) {
+                delete myChart._exactVolumeZoom;
+                clearVolumeTickSpacing(myChart);
                 myChart.resetZoom();
             }
         }
@@ -1530,6 +1623,7 @@
             activeGroupIndex = -1;
             currentFractions = [];
             seriesRenames = {};
+            seriesColors.clear();
             document.getElementById('fractionGroupsPanel').style.display = 'none';
             renderGroupList();
         }
