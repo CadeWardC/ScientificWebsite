@@ -1055,6 +1055,186 @@
             }
         }
 
+        /* === FLUORESCENCE COLORING === */
+        .fluor-toolbar {
+            display: none;
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.5rem 0;
+            align-items: flex-end;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .fluor-toolbar.show {
+            display: flex;
+        }
+
+        .fluor-toolbar .control-group > div {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .fluor-check {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            padding-bottom: 0.5rem;
+        }
+
+        .fluor-check input {
+            accent-color: var(--muted-blue);
+        }
+
+        .fluor-toolbar .fluor-swatch {
+            width: 38px;
+            height: 36px;
+            opacity: 1;
+            border-color: transparent;
+            transform: none;
+        }
+
+        .fluor-toolbar .fluor-swatch:hover {
+            transform: translateY(-2px);
+        }
+
+        .fluor-toolbar .download-btn {
+            margin-left: auto;
+        }
+
+        .fluor-hint {
+            display: none;
+            font-size: 0.85rem;
+            color: rgba(10, 10, 10, 0.6);
+            margin-bottom: 1rem;
+        }
+
+        .fluor-hint.show {
+            display: block;
+        }
+
+        .fluor-hint kbd {
+            font-family: 'Courier New', monospace;
+            background: var(--pure-white);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0 0.3rem;
+        }
+
+        .fluor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .fluor-tile {
+            position: relative;
+            background: var(--pure-white);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.6rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            outline: none;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .fluor-tile:focus {
+            border-color: var(--muted-blue);
+            box-shadow: 0 0 0 3px var(--light-blue);
+        }
+
+        .fluor-tile.unassigned {
+            border-color: var(--warning-orange);
+        }
+
+        .fluor-tile canvas {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            object-fit: contain;
+            background: #000;
+            border-radius: 8px;
+            display: block;
+        }
+
+        .fluor-name {
+            font-size: 0.8rem;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .fluor-source {
+            font-size: 0.72rem;
+            color: rgba(10, 10, 10, 0.55);
+            min-height: 1em;
+        }
+
+        .fluor-tile.unassigned .fluor-source {
+            color: var(--warning-orange);
+            font-weight: 500;
+        }
+
+        .fluor-swatches {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.35rem;
+        }
+
+        .fluor-swatch {
+            height: 30px;
+            border-radius: 6px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.8rem;
+            opacity: 0.45;
+            transition: opacity 0.12s ease, transform 0.12s ease;
+        }
+
+        .fluor-swatch:hover {
+            opacity: 0.8;
+        }
+
+        .fluor-swatch.active {
+            opacity: 1;
+            border-color: var(--primary-black);
+            transform: scale(1.05);
+        }
+
+        .fluor-swatch[data-color="red"] { background: #e02424; }
+        .fluor-swatch[data-color="green"] { background: #1f9d3a; }
+        .fluor-swatch[data-color="blue"] { background: #1d4ed8; }
+        .fluor-swatch[data-color="magenta"] { background: #c026d3; }
+
+        .fluor-remove {
+            position: absolute;
+            top: 0.9rem;
+            right: 0.9rem;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            cursor: pointer;
+            font-size: 0.9rem;
+            line-height: 24px;
+            padding: 0;
+        }
+
+        .fluor-remove:hover {
+            background: var(--danger-red);
+        }
+
         /* === FILE QUEUE === */
         .queue-container {
             display: none;
@@ -1287,6 +1467,13 @@
                     <p>Upload and view chromatograms.</p>
                     <div class="card-badge">Viewer</div>
                 </div>
+                <div class="conversion-card category-card" onclick="selectCategory('fluor')">
+                    <div class="card-icon">&#128300;</div>
+                    <h3>Fluorescence Coloring</h3>
+                    <div class="card-format">Red, Green, Blue, Magenta</div>
+                    <p>Pseudocolor microscopy channels in bulk.</p>
+                    <div class="card-badge">Microscopy</div>
+                </div>
             </div>
         </div>
     </section>
@@ -1386,6 +1573,65 @@
                     Download</button>
             </div>
             <div id="statusMessage-images" class="status-message"></div>
+        </div>
+    </section>
+
+    <!-- FLUORESCENCE COLORING -->
+    <section id="conv-fluor" class="conversion-section">
+        <div class="container">
+            <button class="back-button" onclick="backToCategories()">&larr; Back to Categories</button>
+            <div class="section-header">
+                <h2>Fluorescence Coloring</h2>
+                <p>Upload grayscale channel images, pick a color for each, export them all.</p>
+            </div>
+            <div class="file-uploader-section">
+                <div id="dropZone-fluor" class="drop-zone" data-conv="fluor">
+                    <p>Drop fluorescence images here</p>
+                    <span>TIFF (8/16-bit), PNG, JPG, BMP, WebP &middot; colors are guessed from file names (DAPI, GFP, Cy5, 488&hellip;)</span>
+                    <button class="choose-file-btn">Choose Files</button>
+                </div>
+                <input type="file" id="fileInput-fluor" accept=".tif,.tiff,.png,.jpg,.jpeg,.bmp,.webp"
+                    style="display: none;" multiple>
+                <div id="progressContainer-fluor" class="progress-container">
+                    <div class="progress-bar">
+                        <div id="progressFill-fluor" class="progress-fill"></div>
+                    </div>
+                    <div id="progressText-fluor" class="progress-text">Processing...</div>
+                </div>
+            </div>
+            <div id="fluorToolbar" class="fluor-toolbar">
+                <div class="control-group">
+                    <label>Set all to</label>
+                    <div>
+                        <button class="fluor-swatch active" data-color="red" onclick="setAllFluorColors('red')" title="All red">R</button>
+                        <button class="fluor-swatch active" data-color="green" onclick="setAllFluorColors('green')" title="All green">G</button>
+                        <button class="fluor-swatch active" data-color="blue" onclick="setAllFluorColors('blue')" title="All blue">B</button>
+                        <button class="fluor-swatch active" data-color="magenta" onclick="setAllFluorColors('magenta')" title="All magenta">M</button>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label for="fluorFormat">Export Format</label>
+                    <select id="fluorFormat">
+                        <option value="image/png">PNG (lossless)</option>
+                        <option value="image/jpeg">JPG</option>
+                        <option value="image/tiff">TIFF (RGB)</option>
+                    </select>
+                </div>
+                <label class="fluor-check" title="Stretch each image from its 0.1% to 99.9% intensity. Turn off to keep raw intensities.">
+                    <input type="checkbox" id="fluorAutoContrast" checked> Auto contrast
+                </label>
+                <label class="fluor-check" title="Append _red / _green / ... to exported file names">
+                    <input type="checkbox" id="fluorSuffix" checked> Add color to file name
+                </label>
+                <button class="back-button" onclick="clearFluorImages()">Clear All</button>
+                <button class="download-btn" onclick="exportAllFluor()">Export All (ZIP)</button>
+            </div>
+            <div id="fluorHint" class="fluor-hint">
+                Click an image, then press <kbd>R</kbd> <kbd>G</kbd> <kbd>B</kbd> <kbd>M</kbd> (or <kbd>1</kbd>&ndash;<kbd>4</kbd>) to color it and jump to the next one.
+                Arrow keys move between images, <kbd>Del</kbd> removes one.
+            </div>
+            <div id="statusMessage-fluor" class="status-message"></div>
+            <div id="fluorGrid" class="fluor-grid"></div>
         </div>
     </section>
 
@@ -1746,6 +1992,8 @@
         </div>
     </footer>
 
+    <script src="utif/pako.min.js"></script>
+    <script src="utif/UTIF.js"></script>
     <script src="libheif/libheif-bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script>
@@ -1759,7 +2007,7 @@
         const conversionZips = {};
         const activeFile = {}; // activeFile[convType] tracks current file
         const completedFiles = {}; // tracks done files
-        const CONV_TYPES = ['structure', 'ligand', 'sdf2pdb', 'cif2pdb', 'mol2pdb', 'images', 'ab1'];
+        const CONV_TYPES = ['structure', 'ligand', 'sdf2pdb', 'cif2pdb', 'mol2pdb', 'images', 'ab1', 'fluor'];
 
         function renderQueueUI(convType) {
             const container = document.getElementById('queueContainer-' + convType);
@@ -1816,6 +2064,13 @@
                     section.classList.add('show');
                     section.scrollIntoView({ behavior: 'smooth' });
                 });
+            } else if (cat === 'fluor') {
+                const section = document.getElementById('conv-fluor');
+                section.style.display = 'block';
+                requestAnimationFrame(() => {
+                    section.classList.add('show');
+                    section.scrollIntoView({ behavior: 'smooth' });
+                });
             } else if (cat === 'other') {
                 const section = document.getElementById('conv-ab1');
                 section.style.display = 'block';
@@ -1834,6 +2089,11 @@
                 section.classList.remove('show');
                 section.style.display = 'none';
                 resetImageConverter();
+            } else if (activeCategory === 'fluor') {
+                // Keep loaded images so a quick trip back doesn't lose assignments.
+                const section = document.getElementById('conv-fluor');
+                section.classList.remove('show');
+                section.style.display = 'none';
             } else if (activeCategory === 'other') {
                 const section = document.getElementById('conv-ab1');
                 section.classList.remove('show');
@@ -1909,7 +2169,8 @@
             'cif2pdb': ['cif'],
             'mol2pdb': ['mol2'],
             'images': ['heic', 'heif', 'jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif', 'tiff', 'tif'],
-            'ab1': ['ab1', 'abif']
+            'ab1': ['ab1', 'abif'],
+            'fluor': ['tif', 'tiff', 'png', 'jpg', 'jpeg', 'bmp', 'webp']
         };
 
         function initFileUploaders() {
@@ -1954,6 +2215,11 @@
 
             if (validCount === 0) {
                 showStatus(convType, 'Unsupported file format.', 'error');
+                return;
+            }
+
+            if (convType === 'fluor') {
+                addFluorFiles(toEnqueue);
                 return;
             }
 
@@ -3709,6 +3975,518 @@
             document.getElementById('imagePreview').src = '';
             document.getElementById('imageInfo').textContent = '';
         }
+
+        // ========================================
+        // MODULE 15b: FLUORESCENCE COLORING
+        // ========================================
+        // Each upload becomes a single-channel intensity array (8- or 16-bit kept
+        // at native depth) that is pseudocolored with a LUT on demand.
+        const FLUOR_COLORS = {
+            red: [1, 0, 0],
+            green: [0, 1, 0],
+            blue: [0, 0, 1],
+            magenta: [1, 0, 1]
+        };
+        const FLUOR_KEYS = { r: 'red', g: 'green', b: 'blue', m: 'magenta', '1': 'red', '2': 'green', '3': 'blue', '4': 'magenta' };
+        const FLUOR_THUMB_MAX = 320;
+
+        // Wavelengths (nm) found in file names, e.g. "well_A1_470.tif" -> green.
+        // Covers excitation LEDs/lasers (385, 405, 470, 488, 565, 640...) and
+        // common emission values (460, 520, 610...).
+        const FLUOR_WAVELENGTH_RANGES = [
+            { min: 350, max: 435, color: 'blue' },
+            { min: 436, max: 540, color: 'green' },
+            { min: 541, max: 610, color: 'red' },
+            { min: 611, max: 800, color: 'magenta' }
+        ];
+
+        // Dye / protein / color names. Matched on letter boundaries so "red"
+        // doesn't hit "reduced"; longer matches (e.g. "far-red") win over the
+        // shorter ones they contain.
+        const FLUOR_NAME_KEYWORDS = [
+            { color: 'blue', words: ['dapi', 'hoechst', 'blue', 'bfp', 'cfp', 'uv', 'nucblue'] },
+            { color: 'green', words: ['gfp', 'egfp', 'fitc', 'green', 'yfp', 'cy2', 'calcein', 'af488', 'alexa488'] },
+            { color: 'red', words: ['red', 'rfp', 'mcherry', 'cherry', 'tritc', 'cy3', 'tdtomato', 'dsred', 'texas red', 'texasred', 'rhodamine', 'mscarlet'] },
+            { color: 'magenta', words: ['magenta', 'far red', 'far-red', 'far_red', 'farred', 'cy5', 'cy5.5', 'draq5', 'mkate', 'irfp', 'apc'] }
+        ];
+
+        let fluorItems = [];
+        let fluorNextId = 1;
+
+        function escapeRegex(s) {
+            return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function guessFluorColorFromName(fileName) {
+            const name = fileName.replace(/\.[^.]+$/, '').toLowerCase();
+            const matches = [];
+
+            for (const group of FLUOR_NAME_KEYWORDS) {
+                for (const word of group.words) {
+                    const re = new RegExp('(?<![a-z])' + escapeRegex(word) + '(?![a-z0-9])', 'g');
+                    let m;
+                    while ((m = re.exec(name)) !== null) {
+                        matches.push({ start: m.index, end: m.index + m[0].length, color: group.color, label: '"' + m[0] + '"' });
+                    }
+                }
+            }
+
+            const numRe = /(?<!\d)(\d{3})(?!\d)/g;
+            let m;
+            while ((m = numRe.exec(name)) !== null) {
+                const nm = parseInt(m[1], 10);
+                const range = FLUOR_WAVELENGTH_RANGES.find(r => nm >= r.min && nm <= r.max);
+                if (range) matches.push({ start: m.index, end: m.index + 3, color: range.color, label: m[1] + ' nm' });
+            }
+
+            // Drop matches swallowed by a longer one ("red" inside "far-red", "488" inside "af488").
+            const kept = matches.filter(a => !matches.some(b => b !== a &&
+                b.start <= a.start && b.end >= a.end && (b.end - b.start) > (a.end - a.start)));
+            if (kept.length === 0) return null;
+
+            // Channel tags are usually at the end of the name, so the last match wins.
+            kept.sort((a, b) => a.start - b.start);
+            return kept[kept.length - 1];
+        }
+
+        // Fallback for already-tinted RGB exports: look at which channels carry the signal.
+        function guessFluorColorFromPixels(sums) {
+            if (!sums) return null;
+            const [r, g, b] = sums;
+            const total = r + g + b;
+            if (total === 0) return null;
+            const dom = 1.5;
+            if (r > g * dom && b > g * dom && Math.min(r, b) > Math.max(r, b) * 0.5) return 'magenta';
+            if (r > g * dom && r > b * dom) return 'red';
+            if (g > r * dom && g > b * dom) return 'green';
+            if (b > r * dom && b > g * dom) return 'blue';
+            return null;
+        }
+
+        function isTiffName(name) {
+            return /\.tiff?$/i.test(name);
+        }
+
+        // Returns { width, height, data (Uint8Array|Uint16Array), maxVal, channelSums|null }
+        async function decodeFluorFile(file) {
+            if (isTiffName(file.name)) return decodeFluorTiff(file);
+
+            const { img, objectURL } = await loadBlobIntoImage(file);
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            URL.revokeObjectURL(objectURL);
+            const rgba = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            return intensityFromRGBA(rgba, canvas.width, canvas.height);
+        }
+
+        // Max of R/G/B keeps a pure-blue or pure-red source at full brightness
+        // (luminance would dim it).
+        function intensityFromRGBA(rgba, width, height) {
+            const n = width * height;
+            const data = new Uint8Array(n);
+            let sr = 0, sg = 0, sb = 0;
+            for (let i = 0, q = 0; i < n; i++, q += 4) {
+                const r = rgba[q], g = rgba[q + 1], b = rgba[q + 2];
+                data[i] = r > g ? (r > b ? r : b) : (g > b ? g : b);
+                sr += r; sg += g; sb += b;
+            }
+            return { width, height, data, maxVal: 255, channelSums: [sr, sg, sb] };
+        }
+
+        async function decodeFluorTiff(file) {
+            if (typeof UTIF === 'undefined') {
+                throw new Error('TIFF decoder not loaded (utif/UTIF.js is missing).');
+            }
+            const buffer = new Uint8Array(await file.arrayBuffer());
+            const pages = UTIF.decode(buffer);
+            if (!pages || pages.length === 0) throw new Error('no image found in the file.');
+
+            // Multi-page TIFFs often carry a small thumbnail first — use the largest page.
+            let best = null;
+            for (const page of pages) {
+                try {
+                    UTIF.decodeImage(buffer, page, pages);
+                    if (!page.width || !page.height) continue;
+                    if (!best || page.width * page.height > best.width * best.height) best = page;
+                } catch (err) { /* skip undecodable pages */ }
+            }
+            if (!best) throw new Error('none of the pages could be decoded (unsupported compression?).');
+
+            const w = best.width, h = best.height, n = w * h;
+            const bps = best.t258 ? best.t258[0] : 1;
+            const spp = best.t277 ? best.t277[0] : 1;
+            const photometric = best.t262 ? best.t262[0] : 1;
+            const sampleFormat = best.t339 ? best.t339[0] : 1;
+            const raw = best.data;
+
+            // Grayscale single channel: read at native bit depth so 12/16-bit
+            // camera data keeps its dynamic range.
+            if (spp === 1 && (photometric === 0 || photometric === 1)) {
+                const invert = photometric === 0;
+                if (bps === 8) {
+                    const data = new Uint8Array(n);
+                    for (let y = 0; y < h; y++) {
+                        const off = y * w;
+                        for (let x = 0; x < w; x++) data[off + x] = invert ? 255 - raw[off + x] : raw[off + x];
+                    }
+                    return { width: w, height: h, data, maxVal: 255, channelSums: null };
+                }
+                if (bps === 16) {
+                    // UTIF has already converted 16-bit samples to little-endian.
+                    const data = new Uint16Array(n);
+                    for (let i = 0; i < n; i++) {
+                        const v = raw[2 * i] | (raw[2 * i + 1] << 8);
+                        data[i] = invert ? 65535 - v : v;
+                    }
+                    return { width: w, height: h, data, maxVal: 65535, channelSums: null };
+                }
+                if (bps === 32 && sampleFormat === 3) {
+                    const view = new DataView(raw.buffer, raw.byteOffset, raw.byteLength);
+                    const floats = new Float32Array(n);
+                    let lo = Infinity, hi = -Infinity;
+                    for (let i = 0; i < n; i++) {
+                        const v = view.getFloat32(4 * i, best.isLE);
+                        floats[i] = v;
+                        if (isFinite(v)) { if (v < lo) lo = v; if (v > hi) hi = v; }
+                    }
+                    const span = hi > lo ? hi - lo : 1;
+                    const data = new Uint16Array(n);
+                    for (let i = 0; i < n; i++) {
+                        const v = isFinite(floats[i]) ? (floats[i] - lo) / span : 0;
+                        data[i] = Math.round(v * 65535);
+                    }
+                    return { width: w, height: h, data, maxVal: 65535, channelSums: null };
+                }
+            }
+
+            const rgba = UTIF.toRGBA8(best);
+            return intensityFromRGBA(rgba, w, h);
+        }
+
+        // Auto-contrast levels: 0.1% / 99.9% percentiles of the histogram.
+        function computeFluorLevels(data, maxVal) {
+            const hist = new Uint32Array(maxVal + 1);
+            for (let i = 0; i < data.length; i++) hist[data[i]]++;
+            const cutLo = data.length * 0.001;
+            const cutHi = data.length * 0.999;
+            let acc = 0, lo = 0, hi = maxVal;
+            let foundLo = false;
+            for (let v = 0; v <= maxVal; v++) {
+                acc += hist[v];
+                if (!foundLo && acc > cutLo) { lo = v; foundLo = true; }
+                if (acc >= cutHi) { hi = v; break; }
+            }
+            if (hi <= lo) hi = Math.min(maxVal, lo + 1);
+            return { lo, hi };
+        }
+
+        function makeFluorThumb(dec) {
+            const scale = Math.min(1, FLUOR_THUMB_MAX / Math.max(dec.width, dec.height));
+            const tw = Math.max(1, Math.round(dec.width * scale));
+            const th = Math.max(1, Math.round(dec.height * scale));
+            const data = new dec.data.constructor(tw * th);
+            for (let y = 0; y < th; y++) {
+                const sy = Math.min(dec.height - 1, Math.floor(y / scale));
+                for (let x = 0; x < tw; x++) {
+                    const sx = Math.min(dec.width - 1, Math.floor(x / scale));
+                    data[y * tw + x] = dec.data[sy * dec.width + sx];
+                }
+            }
+            return { width: tw, height: th, data };
+        }
+
+        // Maps raw intensity -> 0..255 for the current contrast setting.
+        function buildFluorLUT(item) {
+            const auto = document.getElementById('fluorAutoContrast').checked;
+            const lo = auto ? item.lo : 0;
+            const hi = auto ? item.hi : item.maxVal;
+            const span = hi - lo;
+            const lut = new Uint8Array(item.maxVal + 1);
+            for (let v = 0; v <= item.maxVal; v++) {
+                const t = (v - lo) / span;
+                lut[v] = t <= 0 ? 0 : t >= 1 ? 255 : Math.round(t * 255);
+            }
+            return lut;
+        }
+
+        function colorizeFluor(data, width, height, lut, color) {
+            const mask = color ? FLUOR_COLORS[color] : [1, 1, 1];
+            const out = new ImageData(width, height);
+            const px = out.data;
+            for (let i = 0, q = 0; i < data.length; i++, q += 4) {
+                const v = lut[data[i]];
+                px[q] = v * mask[0];
+                px[q + 1] = v * mask[1];
+                px[q + 2] = v * mask[2];
+                px[q + 3] = 255;
+            }
+            return out;
+        }
+
+        function renderFluorThumb(item, lut) {
+            const t = item.thumb;
+            const canvas = item.canvasEl;
+            canvas.width = t.width;
+            canvas.height = t.height;
+            canvas.getContext('2d').putImageData(colorizeFluor(t.data, t.width, t.height, lut || buildFluorLUT(item), item.color), 0, 0);
+        }
+
+        function updateFluorTileState(item) {
+            item.tileEl.classList.toggle('unassigned', !item.color);
+            item.tileEl.querySelectorAll('.fluor-swatch').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.color === item.color);
+            });
+            const src = item.tileEl.querySelector('.fluor-source');
+            if (!item.color) src.textContent = 'Pick a color';
+            else if (item.source === 'manual') src.textContent = 'Set manually';
+            else src.textContent = 'Auto: ' + item.source;
+        }
+
+        function setFluorColor(item, color, source) {
+            item.color = color;
+            item.source = source;
+            updateFluorTileState(item);
+            renderFluorThumb(item);
+        }
+
+        function setAllFluorColors(color) {
+            for (const item of fluorItems) setFluorColor(item, color, 'manual');
+        }
+
+        function fluorGridColumns() {
+            const cols = getComputedStyle(document.getElementById('fluorGrid')).gridTemplateColumns;
+            return Math.max(1, cols.split(' ').filter(Boolean).length);
+        }
+
+        function focusFluorIndex(i) {
+            if (fluorItems.length === 0) return;
+            const idx = Math.max(0, Math.min(fluorItems.length - 1, i));
+            fluorItems[idx].tileEl.focus();
+        }
+
+        function removeFluorItem(item) {
+            const idx = fluorItems.indexOf(item);
+            if (idx === -1) return;
+            fluorItems.splice(idx, 1);
+            item.tileEl.remove();
+            if (fluorItems.length === 0) clearFluorImages();
+            return idx;
+        }
+
+        function buildFluorTile(item) {
+            const tile = document.createElement('div');
+            tile.className = 'fluor-tile';
+            tile.tabIndex = 0;
+
+            const canvas = document.createElement('canvas');
+            const name = document.createElement('div');
+            name.className = 'fluor-name';
+            name.textContent = item.name;
+            name.title = item.name + ' (' + item.width + ' × ' + item.height + ', ' + (item.maxVal > 255 ? '16' : '8') + '-bit)';
+            const source = document.createElement('div');
+            source.className = 'fluor-source';
+
+            const swatches = document.createElement('div');
+            swatches.className = 'fluor-swatches';
+            for (const color of Object.keys(FLUOR_COLORS)) {
+                const btn = document.createElement('button');
+                btn.className = 'fluor-swatch';
+                btn.dataset.color = color;
+                btn.textContent = color[0].toUpperCase();
+                btn.title = color.charAt(0).toUpperCase() + color.slice(1);
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    setFluorColor(item, color, 'manual');
+                    tile.focus();
+                });
+                swatches.appendChild(btn);
+            }
+
+            const remove = document.createElement('button');
+            remove.className = 'fluor-remove';
+            remove.innerHTML = '&times;';
+            remove.title = 'Remove';
+            remove.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const idx = removeFluorItem(item);
+                focusFluorIndex(idx);
+            });
+
+            tile.addEventListener('keydown', (e) => {
+                if (e.ctrlKey || e.metaKey || e.altKey) return;
+                const idx = fluorItems.indexOf(item);
+                const key = e.key.toLowerCase();
+                if (FLUOR_KEYS[key]) {
+                    e.preventDefault();
+                    setFluorColor(item, FLUOR_KEYS[key], 'manual');
+                    focusFluorIndex(idx + 1);
+                } else if (e.key === 'ArrowRight') { e.preventDefault(); focusFluorIndex(idx + 1); }
+                else if (e.key === 'ArrowLeft') { e.preventDefault(); focusFluorIndex(idx - 1); }
+                else if (e.key === 'ArrowDown') { e.preventDefault(); focusFluorIndex(idx + fluorGridColumns()); }
+                else if (e.key === 'ArrowUp') { e.preventDefault(); focusFluorIndex(idx - fluorGridColumns()); }
+                else if (e.key === 'Delete' || e.key === 'Backspace') {
+                    e.preventDefault();
+                    focusFluorIndex(removeFluorItem(item));
+                }
+            });
+
+            tile.append(remove, canvas, name, source, swatches);
+            item.tileEl = tile;
+            item.canvasEl = canvas;
+            return tile;
+        }
+
+        async function addFluorFiles(files) {
+            const progressContainer = document.getElementById('progressContainer-fluor');
+            progressContainer.style.display = 'block';
+            const grid = document.getElementById('fluorGrid');
+            const failed = [];
+            let added = 0;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                updateProgress('fluor', (i / files.length) * 100, `Loading ${i + 1}/${files.length}: ${file.name}`);
+                await yieldToUI();
+                try {
+                    const dec = await decodeFluorFile(file);
+                    const levels = computeFluorLevels(dec.data, dec.maxVal);
+                    const item = {
+                        id: fluorNextId++,
+                        name: file.name,
+                        width: dec.width,
+                        height: dec.height,
+                        data: dec.data,
+                        maxVal: dec.maxVal,
+                        lo: levels.lo,
+                        hi: levels.hi,
+                        thumb: makeFluorThumb(dec),
+                        color: null,
+                        source: null
+                    };
+                    const byName = guessFluorColorFromName(file.name);
+                    if (byName) {
+                        item.color = byName.color;
+                        item.source = byName.label + ' in name';
+                    } else {
+                        const byPixels = guessFluorColorFromPixels(dec.channelSums);
+                        if (byPixels) {
+                            item.color = byPixels;
+                            item.source = 'tint of image';
+                        }
+                    }
+                    fluorItems.push(item);
+                    grid.appendChild(buildFluorTile(item));
+                    updateFluorTileState(item);
+                    renderFluorThumb(item);
+                    added++;
+                } catch (err) {
+                    console.error('Failed to load ' + file.name, err);
+                    failed.push(file.name);
+                }
+            }
+
+            progressContainer.style.display = 'none';
+            if (fluorItems.length > 0) {
+                document.getElementById('fluorToolbar').classList.add('show');
+                document.getElementById('fluorHint').classList.add('show');
+            }
+
+            const unassigned = fluorItems.filter(it => !it.color).length;
+            if (failed.length > 0) {
+                showStatus('fluor', `Loaded ${added} image(s). Could not read: ${failed.join(', ')}`, 'error');
+            } else if (unassigned > 0) {
+                showStatus('fluor', `Loaded ${added} image(s). ${unassigned} need a color (outlined in orange).`, 'warning');
+            } else {
+                showStatus('fluor', `Loaded ${added} image(s). Colors were guessed from file names — change any that are wrong.`, 'success');
+            }
+
+            const firstUnassigned = fluorItems.find(it => !it.color);
+            if (firstUnassigned) firstUnassigned.tileEl.focus({ preventScroll: true });
+        }
+
+        function rerenderAllFluorThumbs() {
+            for (const item of fluorItems) renderFluorThumb(item);
+        }
+
+        function clearFluorImages() {
+            fluorItems = [];
+            document.getElementById('fluorGrid').innerHTML = '';
+            document.getElementById('fluorToolbar').classList.remove('show');
+            document.getElementById('fluorHint').classList.remove('show');
+            document.getElementById('statusMessage-fluor').className = 'status-message';
+        }
+
+        async function renderFluorFullBlob(item, format) {
+            const imageData = colorizeFluor(item.data, item.width, item.height, buildFluorLUT(item), item.color);
+            if (format === 'image/tiff') {
+                const tiff = UTIF.encodeImage(imageData.data.buffer, item.width, item.height);
+                return new Blob([tiff], { type: 'image/tiff' });
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = item.width;
+            canvas.height = item.height;
+            canvas.getContext('2d').putImageData(imageData, 0, 0);
+            return new Promise(res => canvas.toBlob(res, format, format === 'image/jpeg' ? 0.95 : undefined));
+        }
+
+        function triggerDownload(blob, fileName) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        async function exportAllFluor() {
+            if (fluorItems.length === 0) {
+                showStatus('fluor', 'No images loaded.', 'error');
+                return;
+            }
+            const unassigned = fluorItems.filter(it => !it.color);
+            if (unassigned.length > 0) {
+                showStatus('fluor', `${unassigned.length} image(s) still need a color (outlined in orange).`, 'warning');
+                unassigned[0].tileEl.focus();
+                return;
+            }
+
+            const format = document.getElementById('fluorFormat').value;
+            const ext = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/tiff': 'tif' }[format];
+            const addSuffix = document.getElementById('fluorSuffix').checked;
+            const progressContainer = document.getElementById('progressContainer-fluor');
+            progressContainer.style.display = 'block';
+
+            const usedNames = new Set();
+            const outputs = [];
+            for (let i = 0; i < fluorItems.length; i++) {
+                const item = fluorItems[i];
+                updateProgress('fluor', (i / fluorItems.length) * 100, `Coloring ${i + 1}/${fluorItems.length}: ${item.name}`);
+                await yieldToUI();
+                const blob = await renderFluorFullBlob(item, format);
+                if (!blob) continue;
+                const base = item.name.replace(/\.[^.]+$/, '') + (addSuffix ? '_' + item.color : '');
+                let outName = base + '.' + ext;
+                for (let n = 2; usedNames.has(outName); n++) outName = `${base}_${n}.${ext}`;
+                usedNames.add(outName);
+                outputs.push({ name: outName, blob });
+            }
+
+            if (outputs.length === 1) {
+                triggerDownload(outputs[0].blob, outputs[0].name);
+            } else {
+                updateProgress('fluor', 100, 'Generating ZIP...');
+                const zip = new JSZip();
+                for (const o of outputs) zip.file(o.name, o.blob);
+                triggerDownload(await zip.generateAsync({ type: 'blob' }), 'colored_fluorescence.zip');
+            }
+            progressContainer.style.display = 'none';
+            showStatus('fluor', `Exported ${outputs.length} colored image(s).`, 'success');
+        }
+
+        document.getElementById('fluorAutoContrast').addEventListener('change', rerenderAllFluorThumbs);
 
         // ========================================
         // MODULE 15: 3D DOCKING BOX VIEWER
