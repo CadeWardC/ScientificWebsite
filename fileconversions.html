@@ -1537,10 +1537,10 @@
             <div class="file-uploader-section">
                 <div id="dropZone-images" class="drop-zone" data-conv="images">
                     <p>Drop image file here</p>
-                    <span>Supports HEIC, JPG, PNG, WebP, BMP, GIF, TIFF</span>
+                    <span>Supports HEIC, JPG, PNG, WebP, BMP, GIF, TIFF, MRC</span>
                     <button class="choose-file-btn">Choose File</button>
                 </div>
-                <input type="file" id="fileInput-images" accept=".heic,.heif,.jpg,.jpeg,.png,.webp,.bmp,.gif,.tiff,.tif"
+                <input type="file" id="fileInput-images" accept=".heic,.heif,.jpg,.jpeg,.png,.webp,.bmp,.gif,.tiff,.tif,.mrc,.mrcs"
                     style="display: none;" multiple>
                 <div id="progressContainer-images" class="progress-container">
                     <div class="progress-bar">
@@ -2168,7 +2168,7 @@
             'sdf2pdb': ['sdf', 'mol'],
             'cif2pdb': ['cif'],
             'mol2pdb': ['mol2'],
-            'images': ['heic', 'heif', 'jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif', 'tiff', 'tif'],
+            'images': ['heic', 'heif', 'jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif', 'tiff', 'tif', 'mrc', 'mrcs'],
             'ab1': ['ab1', 'abif'],
             'fluor': ['tif', 'tiff', 'png', 'jpg', 'jpeg', 'bmp', 'webp']
         };
@@ -3806,6 +3806,82 @@
             return canvas;
         }
 
+        // Decode an MRC/CCP4 file (cryo-EM micrographs, maps, stacks) to an 8-bit grayscale canvas.
+        // Uses the first section of a stack, stretches 0.1%-99.9% intensity, and flips Y
+        // since MRC stores rows bottom-up.
+        async function decodeMRC(file) {
+            const buffer = await file.arrayBuffer();
+            if (buffer.byteLength < 1024) throw new Error('File too small to be an MRC file.');
+            const view = new DataView(buffer);
+            // Machine stamp at byte 212: 0x44 = little endian, 0x11 = big endian.
+            // Fall back to a sanity check on nx if the stamp is missing.
+            const stamp = view.getUint8(212);
+            let le = stamp !== 0x11;
+            if (stamp !== 0x44 && stamp !== 0x11) {
+                const nxLE = view.getInt32(0, true);
+                le = nxLE > 0 && nxLE < 1e6;
+            }
+            const nx = view.getInt32(0, le);
+            const ny = view.getInt32(4, le);
+            const mode = view.getInt32(12, le);
+            const nsymbt = view.getInt32(92, le);
+            if (nx <= 0 || ny <= 0) throw new Error('Invalid MRC header (bad dimensions).');
+
+            const n = nx * ny;
+            const offset = 1024 + Math.max(0, nsymbt);
+            const bytesPer = { 0: 1, 1: 2, 2: 4, 6: 2, 12: 2 }[mode];
+            if (!bytesPer) throw new Error(`Unsupported MRC mode ${mode}.`);
+            if (offset + n * bytesPer > buffer.byteLength) throw new Error('MRC file is truncated.');
+
+            const halfToFloat = (h) => {
+                const s = (h & 0x8000) ? -1 : 1, e = (h >> 10) & 0x1f, f = h & 0x3ff;
+                if (e === 0) return s * Math.pow(2, -14) * (f / 1024);
+                if (e === 31) return f ? NaN : s * Infinity;
+                return s * Math.pow(2, e - 15) * (1 + f / 1024);
+            };
+            const vals = new Float32Array(n);
+            for (let i = 0; i < n; i++) {
+                const p = offset + i * bytesPer;
+                switch (mode) {
+                    case 0: vals[i] = view.getInt8(p); break;
+                    case 1: vals[i] = view.getInt16(p, le); break;
+                    case 2: vals[i] = view.getFloat32(p, le); break;
+                    case 6: vals[i] = view.getUint16(p, le); break;
+                    case 12: vals[i] = halfToFloat(view.getUint16(p, le)); break;
+                }
+            }
+
+            // Percentile limits from a sample of finite values.
+            const step = Math.max(1, Math.floor(n / 200000));
+            const sample = [];
+            for (let i = 0; i < n; i += step) if (Number.isFinite(vals[i])) sample.push(vals[i]);
+            if (sample.length === 0) throw new Error('MRC file contains no finite pixel values.');
+            sample.sort((a, b) => a - b);
+            const lo = sample[Math.floor(sample.length * 0.001)];
+            let hi = sample[Math.min(sample.length - 1, Math.floor(sample.length * 0.999))];
+            if (hi <= lo) hi = lo + 1;
+            const scale = 255 / (hi - lo);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = nx;
+            canvas.height = ny;
+            const ctx = canvas.getContext('2d');
+            const out = ctx.createImageData(nx, ny);
+            const d = out.data;
+            for (let y = 0; y < ny; y++) {
+                const src = (ny - 1 - y) * nx;
+                for (let x = 0; x < nx; x++) {
+                    let v = (vals[src + x] - lo) * scale;
+                    v = v < 0 || !(v === v) ? 0 : v > 255 ? 255 : v;
+                    const j = (y * nx + x) * 4;
+                    d[j] = d[j + 1] = d[j + 2] = v;
+                    d[j + 3] = 255;
+                }
+            }
+            ctx.putImageData(out, 0, 0);
+            return canvas;
+        }
+
         async function handleImageFileQueue() {
             const queue = conversionQueues['images'];
             if (!queue || queue.length === 0) return;
@@ -3841,6 +3917,10 @@
                             imageCanvas = await decodeHEICWithLibheif(file);
                             previewURL = imageCanvas.toDataURL('image/png');
                         }
+                    } else if (ext === 'mrc' || ext === 'mrcs') {
+                        updateProgress('images', 50, 'Decoding MRC...');
+                        imageCanvas = await decodeMRC(file);
+                        previewURL = imageCanvas.toDataURL('image/png');
                     } else {
                         const result = await loadBlobIntoImage(file);
                         const canvas = document.createElement('canvas');
@@ -3931,6 +4011,8 @@
                             if (!nativeWorked) {
                                 canvas = await decodeHEICWithLibheif(file);
                             }
+                        } else if (ext === 'mrc' || ext === 'mrcs') {
+                            canvas = await decodeMRC(file);
                         } else {
                             const result = await loadBlobIntoImage(file);
                             canvas = document.createElement('canvas');

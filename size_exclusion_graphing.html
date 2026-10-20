@@ -663,9 +663,9 @@
                 </div>
                 <div class="control-group">
                     <label>Graph Settings</label>
-                    <input type="text" id="graphTitle" placeholder="Graph Title" value="SEC Chromatogram">
-                    <input type="text" id="xAxisLabel" placeholder="X-Axis Label" value="Volume (mL)">
-                    <input type="text" id="yAxisLabel" placeholder="Y-Axis Label" value="Absorbance (mAU)">
+                    <input type="text" id="graphTitle" placeholder="Graph Title" value="SEC Chromatogram" oninput="updateChartLabels()">
+                    <input type="text" id="xAxisLabel" placeholder="X-Axis Label" value="Volume (mL)" oninput="updateChartLabels()">
+                    <input type="text" id="yAxisLabel" placeholder="Y-Axis Label" value="Absorbance (mAU)" oninput="updateChartLabels()">
                     <div style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
                         <input type="checkbox" id="showFractions" style="width: auto;" onchange="updateShowFractions()">
                         <label for="showFractions" style="font-weight: normal; cursor: pointer;">Fraction</label>
@@ -762,6 +762,37 @@
         let seriesOrder = []; // Stable series keys, in y-axis order
         let currentDatasetsInfo = [];
         const defaultGraphColors = ['#4a90a4', '#d9534f', '#5cb85c', '#f0ad4e', '#5bc0de', '#9b59b6', '#34495e', '#e67e22'];
+        const EXPORT_PIXEL_RATIO = 3;
+        let chartUpdateFrame = null;
+
+        // Coalesce rapid edits (color dragging, typing) into one redraw per frame
+        function scheduleChartUpdate() {
+            if (!myChart || chartUpdateFrame !== null) return;
+            if (typeof requestAnimationFrame !== 'function') {
+                myChart.update('none');
+                return;
+            }
+            chartUpdateFrame = requestAnimationFrame(() => {
+                chartUpdateFrame = null;
+                if (myChart) myChart.update('none');
+            });
+        }
+
+        function getFirstYAxisLabel() {
+            const first = currentDatasetsInfo[0];
+            if (!first) return '';
+            const userYLabel = document.getElementById('yAxisLabel').value;
+            return userYLabel && !seriesRenames[first.label] ? userYLabel : getSeriesLabel(first.label);
+        }
+
+        function updateChartLabels() {
+            if (!myChart) return;
+            myChart.options.plugins.title.text = document.getElementById('graphTitle').value;
+            myChart.options.scales.x.title.text = document.getElementById('xAxisLabel').value;
+            const firstAxis = myChart.options.scales['y-axis-0'];
+            if (firstAxis) firstAxis.title.text = getFirstYAxisLabel();
+            scheduleChartUpdate();
+        }
 
         function getSeriesColorKey(ds) {
             return JSON.stringify([currentInstrument, ds.xIndex, ds.yIndex, ds.label]);
@@ -1195,7 +1226,6 @@
                 const ctx = document.getElementById('secChart').getContext('2d');
                 const title = document.getElementById('graphTitle').value;
                 const xLabel = document.getElementById('xAxisLabel').value;
-                const userYLabel = document.getElementById('yAxisLabel').value;
                 const showFractions = document.getElementById('showFractions').checked;
                 const showGridlines = document.getElementById('showGridlines').checked;
 
@@ -1259,7 +1289,7 @@
                 datasetsInfo.forEach((ds, index) => {
                     const axisId = 'y-axis-' + index;
                     const orderIndex = seriesOrder.indexOf(getSeriesColorKey(ds));
-                    const dsLabel = index === 0 && userYLabel && !seriesRenames[ds.label] ? userYLabel : getSeriesLabel(ds.label);
+                    const dsLabel = index === 0 ? getFirstYAxisLabel() : getSeriesLabel(ds.label);
                     configScales[axisId] = {
                         type: 'linear',
                         position: orderIndex % 2 === 0 ? 'left' : 'right',
@@ -1287,7 +1317,9 @@
                         datasets: chartDatasets
                     },
                     options: {
-                        devicePixelRatio: 3,
+                        // Screen DPR while interacting; export bumps this temporarily.
+                        // Chart-level parsing:false is required for decimation to run.
+                        parsing: false,
                         onClick: (e) => {
                             // Check if a fraction label was clicked first
                             const rect = myChart.canvas.getBoundingClientRect();
@@ -1461,7 +1493,7 @@
                     axis.title.color = color;
                     axis.ticks.color = color;
                     axis.border.color = color;
-                    myChart.update('none');
+                    scheduleChartUpdate();
                 };
 
                 wrapper.appendChild(checkbox);
@@ -1535,7 +1567,7 @@
                 myChart.data.datasets[index].label = newName;
                 const axisId = 'y-axis-' + index;
                 if (myChart.options.scales[axisId] && myChart.options.scales[axisId].title) {
-                    myChart.options.scales[axisId].title.text = newName;
+                    myChart.options.scales[axisId].title.text = index === 0 ? getFirstYAxisLabel() : newName;
                 }
                 myChart.update();
             }
@@ -1637,7 +1669,11 @@
             }
             const link = document.createElement('a');
             link.download = 'sec-chromatogram.png';
+            myChart.options.devicePixelRatio = EXPORT_PIXEL_RATIO;
+            myChart.resize();
             link.href = myChart.toBase64Image();
+            delete myChart.options.devicePixelRatio;
+            myChart.resize();
             link.click();
         }
 
